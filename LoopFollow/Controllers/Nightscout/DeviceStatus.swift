@@ -282,11 +282,15 @@ extension MainViewController {
                     if let memoryLatest = additional["memoryUsageLatest"] as? NSNumber,
                        let memoryMax = additional["memoryUsageMax"] as? NSNumber {
 
+                        let isHighMemoryUsage = memoryLatest.doubleValue > 250 // Visa varning om Trio minne överstiger 250 MiB
+                        infoManager.setPriority(isHighMemoryUsage, for: .memoryLatest)
+                        let memoryWarning = isHighMemoryUsage ? " ⚠️" : ""
+
                         let memoryLatestString = String(
                             format: "%.0f(%.0f) MiB",
                             memoryLatest.doubleValue,
                             memoryMax.doubleValue
-                        )
+                        ) + memoryWarning
 
                         infoManager.updateInfoData(
                             type: .memoryLatest,

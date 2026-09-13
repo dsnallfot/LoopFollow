@@ -1384,7 +1384,7 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
                 case .cob, .carbsToday:
                     cell.textLabel?.textColor = .carbs
                     cell.detailTextLabel?.textColor = .carbs
-                case .minMax, .bgi, .dev, .totIob, .SMBUAMmin, .smbRatio, .af, .autosensMinMax, .target, .bgDataSource, .memoryLatest, .latestRestart:
+                case .minMax, .bgi, .dev, .totIob, .SMBUAMmin, .smbRatio, .af, .autosensMinMax, .target, .bgDataSource, .memoryLatest, .latestRestart, .recBolus, .carbReq:
                     cell.textLabel?.textColor = .secondaryLabel
                     cell.detailTextLabel?.textColor = .secondaryLabel
                 default:
