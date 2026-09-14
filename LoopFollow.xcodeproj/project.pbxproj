@@ -827,7 +827,6 @@
 		650A60712EE0D17A00EF4C93 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				654C042D305383FC00EA8C12 /* MemoryLogView.swift */,
 				657BB13B2F3605D5009E2667 /* ActiveAlarmsViewController.swift */,
 				655B23042EDE2A3F0092DBDE /* AddManualPumpView.swift */,
 				6540EF952D7DD4C5008BC98D /* AddManualSensorNoteView.swift */,
@@ -838,6 +837,7 @@
 				6582C4B62ED23B490047658C /* GlucoseView.swift */,
 				650543F52EE1B34F00C38C06 /* LowTreatmentsStatsViewController.swift */,
 				6540979D2DB79FF600983772 /* MealAnalysisView.swift */,
+				654C042D305383FC00EA8C12 /* MemoryLogView.swift */,
 				653A8D972F33F23A0026A491 /* ModernAlarmViewController.swift */,
 				653A8D952F33F1FA0026A491 /* ModernAlarmViewModel.swift */,
 				654454D02D6E8ABE0015BC5E /* ProfileSchedulesView.swift */,

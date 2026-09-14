@@ -458,15 +458,17 @@ final class MemoryLogViewController: ThemedViewController, UITableViewDataSource
     }
 }
 
-/// Memory stats view with Day / Week visualization.
+/// Memory stats view with day, week and 30-day visualization.
 final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegate {
 
     private enum Mode: Int {
         case day = 0
         case week = 1
+        case thirtyDays = 2
     }
 
     private var mode: Mode = .day
+    private var thirtyDayStart: Date?
     var selectedDate: Date = Date()
 
     private let headerStack = UIStackView()
@@ -492,7 +494,7 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
     }()
 
     private let modeSegment: UISegmentedControl = {
-        let s = UISegmentedControl(items: ["Dag", "Vecka"])
+        let s = UISegmentedControl(items: ["Dag", "Vecka", "30 dagar"])
         s.selectedSegmentIndex = 0
         s.translatesAutoresizingMaskIntoConstraints = false
         return s
@@ -512,7 +514,10 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         return v
     }()
 
-    private let weekChartView: CandleStickChartView = {
+    private let weekChartView = makeCandleChartView()
+    private let thirtyDaysChartView = makeCandleChartView()
+
+    private static func makeCandleChartView() -> CandleStickChartView {
         let v = CandleStickChartView()
         v.translatesAutoresizingMaskIntoConstraints = false
         v.legend.enabled = false
@@ -524,11 +529,12 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         v.highlightPerTapEnabled = true
         v.highlightPerDragEnabled = false
         return v
-    }()
+    }
 
     // Formatters
     private let dayXAxisFormatter = DayMemoryXAxisFormatter()
     private let weekXAxisFormatter = WeekMemoryXAxisFormatter()
+    private let thirtyDaysXAxisFormatter = WeekMemoryXAxisFormatter()
     private let yAxisFormatter = MemoryYAxisValueFormatter()
 
     override func viewDidLoad() {
@@ -608,21 +614,26 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
     private func setupCharts() {
         view.addSubview(dayChartView)
         view.addSubview(weekChartView)
+        view.addSubview(thirtyDaysChartView)
         view.addSubview(dayLegendLabel)
         updateLegendText(for: .day)
 
         dayChartView.delegate = self
         weekChartView.delegate = self
+        thirtyDaysChartView.delegate = self
 
         configureYAxis(for: dayChartView.leftAxis, rightAxis: dayChartView.rightAxis)
         configureYAxis(for: weekChartView.leftAxis, rightAxis: weekChartView.rightAxis)
 
         configureDayXAxis()
-        configureWeekXAxis()
+        configureYAxis(for: thirtyDaysChartView.leftAxis, rightAxis: thirtyDaysChartView.rightAxis)
+        configureCandleXAxis(for: weekChartView, dayCount: 7, formatter: weekXAxisFormatter)
+        configureCandleXAxis(for: thirtyDaysChartView, dayCount: 30, formatter: thirtyDaysXAxisFormatter)
 
         // Initial visibility
         dayChartView.isHidden = false
         weekChartView.isHidden = true
+        thirtyDaysChartView.isHidden = true
 
         // Background / grid aesthetics
         //dayChartView.backgroundColor = .clear
@@ -635,6 +646,9 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
 
         // Ensure content isn't clipped at edges, and give extra room for edge labels
         weekChartView.setExtraOffsets(left: 14, top: 0, right: 14, bottom: 0)
+        thirtyDaysChartView.drawGridBackgroundEnabled = true
+        thirtyDaysChartView.gridBackgroundColor = NSUIColor.systemBackground.withAlphaComponent(0.5)
+        thirtyDaysChartView.setExtraOffsets(left: 14, top: 0, right: 14, bottom: 0)
     }
 
     private func setupConstraints() {
@@ -658,7 +672,13 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
             weekChartView.leadingAnchor.constraint(equalTo: safe.leadingAnchor),//, constant: 8),
             weekChartView.trailingAnchor.constraint(equalTo: safe.trailingAnchor, constant: -8),
             weekChartView.heightAnchor.constraint(equalToConstant: 300),
-            weekChartView.bottomAnchor.constraint(lessThanOrEqualTo: safe.bottomAnchor, constant: -8)
+            weekChartView.bottomAnchor.constraint(lessThanOrEqualTo: safe.bottomAnchor, constant: -8),
+
+            thirtyDaysChartView.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 10),
+            thirtyDaysChartView.leadingAnchor.constraint(equalTo: safe.leadingAnchor),
+            thirtyDaysChartView.trailingAnchor.constraint(equalTo: safe.trailingAnchor, constant: -8),
+            thirtyDaysChartView.heightAnchor.constraint(equalToConstant: 300),
+            thirtyDaysChartView.bottomAnchor.constraint(lessThanOrEqualTo: safe.bottomAnchor, constant: -8)
         ])
     }
 
@@ -702,33 +722,32 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         dayChartView.leftAxis.spaceBottom = 0
     }
 
-    private func configureWeekXAxis() {
-        let x = weekChartView.xAxis
+    private func configureCandleXAxis(for chart: CandleStickChartView, dayCount: Int, formatter: WeekMemoryXAxisFormatter) {
+        let x = chart.xAxis
         x.labelPosition = .bottom
         x.drawGridLinesEnabled = false
         x.drawAxisLineEnabled = true
         x.axisLineColor = UIColor.label.withAlphaComponent(1.0)
         x.axisLineWidth = 0.5
         x.labelTextColor = .secondaryLabel
-        // We want ticks at integer day indices (0...6). When using padded min/max (-0.5..6.5),
-        // do NOT force label count; forced labels are evenly distributed across the padded range
-        // (step = 7/6) and would produce non-integer values that get rounded by the formatter.
+        // Keep ticks on whole days, with five-day spacing for the 30-day chart.
+        // Do not force label count across the padded range.
         x.granularityEnabled = true
-        x.granularity = 1
+        x.granularity = dayCount == 30 ? 5 : 1
 
-        // Add half-step padding so day 0 and day 6 candles are not clipped
+        // Add half-step padding so the first and last candles are not clipped
         x.axisMinimum = -0.5
-        x.axisMaximum = 6.5
+        x.axisMaximum = Double(dayCount) - 0.5
 
         // Hint desired count, but do not force.
-        x.setLabelCount(7, force: false)
-        x.valueFormatter = weekXAxisFormatter
+        x.setLabelCount(dayCount == 30 ? 6 : 7, force: false)
+        x.valueFormatter = formatter
 
         // Keep first/last labels visible (prevents clipping/vanishing at edges)
         x.avoidFirstLastClippingEnabled = false
 
-        weekChartView.leftAxis.spaceTop = 5
-        weekChartView.leftAxis.spaceBottom = 0
+        chart.leftAxis.spaceTop = 5
+        chart.leftAxis.spaceBottom = 0
     }
 
     // MARK: - Actions
@@ -738,8 +757,14 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
     }
 
     @objc private func modeChanged(_ sender: UISegmentedControl) {
-        let newMode: Mode = sender.selectedSegmentIndex == 0 ? .day : .week
-        applyMode(newMode, keepingDate: selectedDate)
+        guard let newMode = Mode(rawValue: sender.selectedSegmentIndex) else { return }
+        if newMode == .thirtyDays {
+            let cal = Calendar.current
+            let defaultStart = cal.date(byAdding: .day, value: -29, to: cal.startOfDay(for: Date())) ?? Date()
+            applyMode(newMode, keepingDate: thirtyDayStart ?? defaultStart)
+        } else {
+            applyMode(newMode, keepingDate: selectedDate)
+        }
     }
 
     @objc private func dateChanged(_ sender: UIDatePicker) {
@@ -760,6 +785,8 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         case .week:
             selectedDate = cal.date(byAdding: .day, value: -7, to: selectedDate) ?? selectedDate
             selectedDate = startOfWeek(for: selectedDate)
+        case .thirtyDays:
+            selectedDate = cal.date(byAdding: .day, value: -30, to: selectedDate) ?? selectedDate
         }
         datePicker.date = selectedDate
         reload()
@@ -774,6 +801,8 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         case .week:
             selectedDate = cal.date(byAdding: .day, value: 7, to: selectedDate) ?? selectedDate
             selectedDate = startOfWeek(for: selectedDate)
+        case .thirtyDays:
+            selectedDate = cal.date(byAdding: .day, value: 30, to: selectedDate) ?? selectedDate
         }
 
         // Prevent navigating into the future
@@ -792,23 +821,13 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         mode = newMode
         modeSegment.selectedSegmentIndex = newMode.rawValue
 
-        switch newMode {
-        case .day:
-            dayChartView.isHidden = false
-            weekChartView.isHidden = true
-            dayLegendLabel.isHidden = false
-            updateLegendText(for: .day)
-            selectedDate = date
-            datePicker.date = selectedDate
-
-        case .week:
-            dayChartView.isHidden = true
-            weekChartView.isHidden = false
-            dayLegendLabel.isHidden = false   // 👈 fortfarande synlig
-            updateLegendText(for: .week)
-            selectedDate = startOfWeek(for: date)
-            datePicker.date = selectedDate
-        }
+        dayChartView.isHidden = newMode != .day
+        weekChartView.isHidden = newMode != .week
+        thirtyDaysChartView.isHidden = newMode != .thirtyDays
+        dayLegendLabel.isHidden = false
+        updateLegendText(for: newMode)
+        selectedDate = newMode == .week ? startOfWeek(for: date) : Calendar.current.startOfDay(for: date)
+        datePicker.date = selectedDate
 
         reload()
     }
@@ -820,7 +839,11 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         case .day:
             Task { await buildDayChart(for: selectedDate) }
         case .week:
-            Task { await buildWeekChart(startingAt: startOfWeek(for: selectedDate)) }
+            Task { await buildCandleChart(startingAt: startOfWeek(for: selectedDate), chartMode: .week) }
+        case .thirtyDays:
+            selectedDate = Calendar.current.startOfDay(for: selectedDate)
+            thirtyDayStart = selectedDate
+            Task { await buildCandleChart(startingAt: selectedDate, chartMode: .thirtyDays) }
         }
     }
 
@@ -853,36 +876,38 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         }
     }
 
-    private func buildWeekChart(startingAt weekStart: Date) async {
-        var cal = Calendar.current
-        cal.firstWeekday = 2 // Monday
-        let start = cal.startOfDay(for: weekStart)
-        let end = cal.date(byAdding: .day, value: 6, to: start) ?? start
+    private func buildCandleChart(startingAt date: Date, chartMode: Mode) async {
+        let cal = Calendar.current
+        let dayCount = chartMode == .thirtyDays ? 30 : 7
+        let chart = chartMode == .thirtyDays ? thirtyDaysChartView : weekChartView
+        let formatter = chartMode == .thirtyDays ? thirtyDaysXAxisFormatter : weekXAxisFormatter
+        let start = cal.startOfDay(for: date)
+        guard let end = cal.date(byAdding: .day, value: dayCount, to: start) else { return }
 
-        // Load all samples in the week window (inclusive).
-        let endOfLastDay = cal.date(byAdding: .day, value: 1, to: end)!.addingTimeInterval(-1)
-        let samples = await MemoryCache.loadWindow(from: start, to: endOfLastDay)
+        // Use calendar days and an exclusive end, including fractional-second samples at midnight.
+        let samples = await MemoryCache.loadWindow(from: start, to: end)
+            .filter { $0.date < end.timeIntervalSince1970 }
 
         // Build min/max per day
-        var perDay: [[MemorySampleJSON]] = Array(repeating: [], count: 7)
+        var perDay: [[MemorySampleJSON]] = Array(repeating: [], count: dayCount)
         for s in samples {
             let d = Date(timeIntervalSince1970: s.date)
             let idx = cal.dateComponents([.day], from: start, to: cal.startOfDay(for: d)).day ?? 0
-            if idx >= 0 && idx < 7 {
+            if idx >= 0 && idx < dayCount {
                 perDay[idx].append(s)
             }
         }
 
         var candleEntries: [CandleChartDataEntry] = []
-        guard mode == .week, startOfWeek(for: selectedDate) == start else { return }
-        weekXAxisFormatter.reset()
+        guard mode == chartMode, cal.startOfDay(for: selectedDate) == start else { return }
+        formatter.reset()
 
-        for i in 0..<7 {
+        for i in 0..<dayCount {
             let daySamples = perDay[i].sorted { $0.date < $1.date }
             let dayDate = cal.date(byAdding: .day, value: i, to: start) ?? start
 
             // ✅ Always set x-axis label (even if the day has no samples)
-            weekXAxisFormatter.setLabel(forIndex: i, date: dayDate)
+            formatter.setLabel(forIndex: i, date: dayDate)
 
             guard !daySamples.isEmpty else { continue }
 
@@ -913,11 +938,11 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         let data = CandleChartData(dataSet: set)
 
         await MainActor.run {
-            guard self.mode == .week, self.startOfWeek(for: self.selectedDate) == start else { return }
+            guard self.mode == chartMode, cal.startOfDay(for: self.selectedDate) == start else { return }
             let maximumMiB = samples.map { $0.mib }.max() ?? 0
-            self.weekChartView.leftAxis.axisMaximum = maximumMiB > 0 ? maximumMiB : 1
-            self.weekChartView.data = data
-            self.weekChartView.notifyDataSetChanged()
+            chart.leftAxis.axisMaximum = maximumMiB > 0 ? maximumMiB : 1
+            chart.data = data
+            chart.notifyDataSetChanged()
         }
     }
 
@@ -945,13 +970,14 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
     // MARK: - ChartViewDelegate (tap-to-navigate)
 
     func chartValueSelected(_ chartView: ChartViewBase, entry: ChartDataEntry, highlight: Highlight) {
-        if chartView === weekChartView {
-            // Week -> Day: x is 0..6 for the day index in the selected week
+        if chartView === weekChartView || chartView === thirtyDaysChartView {
+            // Open the selected day from either multi-day chart.
+            let dayCount = chartView === thirtyDaysChartView ? 30 : 7
             let idx = Int(round(entry.x))
-            guard idx >= 0 && idx < 7 else { return }
+            guard idx >= 0 && idx < dayCount else { return }
 
             let cal = Calendar.current
-            let weekStart = startOfWeek(for: selectedDate)
+            let weekStart = chartView === thirtyDaysChartView ? selectedDate : startOfWeek(for: selectedDate)
             guard let dayDate = cal.date(byAdding: .day, value: idx, to: weekStart) else { return }
 
             // Switch to day mode and show that date
@@ -961,7 +987,7 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
             reload()
 
             // Clear highlight to avoid accidental re-selection
-            weekChartView.highlightValues(nil)
+            chartView.highlightValues(nil)
 
         } else if chartView === dayChartView {
             // Day -> Week: any bar tap opens the week containing the current selected day (Monday start)
