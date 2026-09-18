@@ -7,7 +7,28 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		058A5F7B3ADD4ECE1DFFD6B1 /* TreatmentsTableView+Cache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A07E7CF92D381BE1A8133C49 /* TreatmentsTableView+Cache.swift */; };
+		084E4389FD623A05EFFAACDE /* TreatmentsTableView+SwipeActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 538075BE375D1C89B7D598AC /* TreatmentsTableView+SwipeActions.swift */; };
+		10E1F30348362CB14B4FED46 /* ClippyHistoryStatsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A69C6F310A480649892FC5C /* ClippyHistoryStatsViewController.swift */; };
+		171585708E28CD1F6B3A17B4 /* ClippyHistoryStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D042488D3AB4EA042FCE95 /* ClippyHistoryStatsView.swift */; };
+		22EB7A259D07289394DCD61F /* TreatmentsTableView+RemoteDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C373A28404333B4FF524E2C8 /* TreatmentsTableView+RemoteDeletion.swift */; };
+		2A14C9462B52269477EC7282 /* BGCheckEditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0BAA535BD80F2525C7972 /* BGCheckEditViewController.swift */; };
+		2A717C8967CFB2594AA9B7E6 /* StatsDataService+Placeholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8424685F1D4E24F59F404CE9 /* StatsDataService+Placeholder.swift */; };
+		324999BAB252AA279E065E02 /* DailyStatsView+Toolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF5EA6528D0372D595AF66A /* DailyStatsView+Toolbar.swift */; };
+		368BF52BD10F70FC42F9F6E8 /* DailyStatRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E71C7BD51702992E01A1B2 /* DailyStatRow.swift */; };
+		37024B83B8205871EC14BE9E /* RealCRandTITRChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8D3DCEFC8D59F43C39BBC0 /* RealCRandTITRChartView.swift */; };
+		38BDA4BC84C881C0F50C37AB /* DailyStatsDatabaseInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62020FBDF710910C50CD6B27 /* DailyStatsDatabaseInfoView.swift */; };
+		3A109D33A94A751505C3834E /* DailyCarbsTDDBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 326BFB1F5404A62992FA30B2 /* DailyCarbsTDDBarChartView.swift */; };
 		3F1335F351590E573D8E6962 /* Pods_LoopFollow.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A7D55B42A22051DAD69E89D0 /* Pods_LoopFollow.framework */; };
+		3F8FC7F4AEA3E9A940A8E239 /* TreatmentsTableView+MealAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = E02D491EB21672CEFD2CCC87 /* TreatmentsTableView+MealAnalysis.swift */; };
+		4160CF41CFB8B7BDAA72BF94 /* TreatmentsTableView+Glucose.swift in Sources */ = {isa = PBXBuildFile; fileRef = 519284AF82BF8CCF0C9EBF11 /* TreatmentsTableView+Glucose.swift */; };
+		43815A51141ABB172FAB029D /* DailyStatsChartsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9867D55F38192201B4867C95 /* DailyStatsChartsView.swift */; };
+		43AA4F8179A95FDEF0322C25 /* ClippyHistoryStatsViewController+Chart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D24E656FB209A1B00C1F69C /* ClippyHistoryStatsViewController+Chart.swift */; };
+		495017119790C94D5EA9B054 /* TreatmentsTableView+Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A500F4F6AB47DBE78413A79 /* TreatmentsTableView+Layout.swift */; };
+		4F7443FADF83A5B2F0CD99DD /* ClippyHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 374047A591D5A328A405A3F1 /* ClippyHistoryView.swift */; };
+		50B13C3C5C55AE2BD18DC098 /* DailyStatsViewModel+Summary.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D58DE86B26743007B848FD /* DailyStatsViewModel+Summary.swift */; };
+		60FECECDCAE97105FDAC5865 /* DailyStatsTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB6B277E69991AA4E7DE840F /* DailyStatsTableView.swift */; };
+		640690FBB17F426CC99C3A3B /* TreatmentsTableView+TableDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD61BE5DDD6729B583C9EC81 /* TreatmentsTableView+TableDataSource.swift */; };
 		650543F62EE1B35700C38C06 /* LowTreatmentsStatsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 650543F52EE1B34F00C38C06 /* LowTreatmentsStatsViewController.swift */; };
 		6508DEBE2EDF1419009F84FE /* NightscoutDayReportViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6508DEBD2EDF1416009F84FE /* NightscoutDayReportViewController.swift */; };
 		650A60732EE0D1C800EF4C93 /* BasalIOBCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 650A60722EE0D1C300EF4C93 /* BasalIOBCalculator.swift */; };
@@ -97,6 +118,22 @@
 		65FF0D4D2F8DA865000F1DC0 /* NightscoutSocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65FF0D4C2F8DA861000F1DC0 /* NightscoutSocketManager.swift */; };
 		65FF0D502F8DAC36000F1DC0 /* SocketIO in Frameworks */ = {isa = PBXBuildFile; productRef = 65FF0D4F2F8DAC36000F1DC0 /* SocketIO */; };
 		65FF0D522F8FD1D3000F1DC0 /* ComboView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65FF0D512F8FD1CD000F1DC0 /* ComboView.swift */; };
+		6C73D840FB6033552794FFE4 /* DailyStatsViewModel+Loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2A5E50B628C80D6F49F27AB /* DailyStatsViewModel+Loading.swift */; };
+		6EF443CC1C96D135B03F057F /* TreatmentsTableView+Details.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04F8CA9CB690D162D4A5666 /* TreatmentsTableView+Details.swift */; };
+		7178C97BD2A9ADAC47318993 /* DailyStatsSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23722B1A51A4B5C642B2F3A /* DailyStatsSummaryView.swift */; };
+		736FF94B6D2EDD611C007006 /* WeekdayFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0A508C86BF096EE3DD804E /* WeekdayFilterView.swift */; };
+		8EC4BAD8F76E6A39E9C84339 /* TreatmentsTableView+Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E9C79B56F7A6D02C8766C6F /* TreatmentsTableView+Formatting.swift */; };
+		959F8246F879DB8A4C197244 /* DailyStatsView+Reports.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7FFEE6838766C3AA48C3379 /* DailyStatsView+Reports.swift */; };
+		96844108D1E4E5D25F69DE86 /* NoteEditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90EBB3D85BE1E1F066360986 /* NoteEditViewController.swift */; };
+		A06F85C905C94CDA834CAE18 /* NightscoutDayReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8572348D2DEABD2D843F9AD8 /* NightscoutDayReportView.swift */; };
+		A939E01C7C7E7EB387A0BD1A /* DailyStatsTableView+Cells.swift in Sources */ = {isa = PBXBuildFile; fileRef = A636B4349EA556E1E16C42AD /* DailyStatsTableView+Cells.swift */; };
+		AADE0554B7A2D4B182DB56CF /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBDE0DD6C5CAB5933A4BC28 /* ActivityView.swift */; };
+		AC467F7B2581883A7F8F1A61 /* Value1TableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0E6836F88802B9F5E37B15C /* Value1TableViewCell.swift */; };
+		AF9AA6F440DD29E5A71AC79F /* DailyStatsAveragesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8D5B9FECE08781975F73ED /* DailyStatsAveragesView.swift */; };
+		BC896253DB8B392672B04AF2 /* TreatmentsTableView+Editing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8671A9C09529A71103A1475 /* TreatmentsTableView+Editing.swift */; };
+		C4DE963965C1AB527EF740FA /* Treatment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79870C6C5B83AAAA5F6F2E7F /* Treatment.swift */; };
+		CC72E2006EABFEA684FD0DB4 /* DailyStatsViewModel+Filtering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9158A54AD8A211A407B78E20 /* DailyStatsViewModel+Filtering.swift */; };
+		D9E08D571C0BEE4C0C3989AC /* DailyStatsViewModel+Export.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E4E00A82D94081FD442D44 /* DailyStatsViewModel+Export.swift */; };
 		DD07B5C929E2F9C400C6A635 /* NightscoutUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD07B5C829E2F9C400C6A635 /* NightscoutUtils.swift */; };
 		DD0C0C602C415B9D00DBADDF /* ProfileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0C0C5F2C415B9D00DBADDF /* ProfileManager.swift */; };
 		DD0C0C622C4175FD00DBADDF /* NSProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0C0C612C4175FD00DBADDF /* NSProfile.swift */; };
@@ -209,6 +246,9 @@
 		DDFF3D852D14279B00BF9D9E /* BackgroundRefreshSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDFF3D842D14279B00BF9D9E /* BackgroundRefreshSettingsView.swift */; };
 		DDFF3D872D14280500BF9D9E /* BackgroundRefreshSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDFF3D862D14280500BF9D9E /* BackgroundRefreshSettingsViewModel.swift */; };
 		DDFF3D892D1429AB00BF9D9E /* BackgroundRefreshType.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDFF3D882D1429AB00BF9D9E /* BackgroundRefreshType.swift */; };
+		E3CB891CCA6B79B63F93E4DC /* TreatmentsTableView+DaySections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E8FC485BCB8810EF0CD051 /* TreatmentsTableView+DaySections.swift */; };
+		EA8E3079AFA16E75DF227207 /* TreatmentsTableView+Loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB4578E2BDF82EAFD9ACE25A /* TreatmentsTableView+Loading.swift */; };
+		F493BE352252D0BB6D0E359A /* TreatmentsTableView+Refresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = E693F1368395461C0F864304 /* TreatmentsTableView+Refresh.swift */; };
 		FC16A97A24996673003D6245 /* NightScout.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC16A97924996673003D6245 /* NightScout.swift */; };
 		FC16A97B249966A3003D6245 /* AlarmSound.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC7CE589248ABEA3001F83B8 /* AlarmSound.swift */; };
 		FC16A97D24996747003D6245 /* Alarms.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC16A97C24996747003D6245 /* Alarms.swift */; };
@@ -361,6 +401,7 @@
 		FCFEEC9E2486E68E00402A7F /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FCFEEC9D2486E68E00402A7F /* WebKit.framework */; };
 		FCFEECA02488157B00402A7F /* Chart.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCFEEC9F2488157B00402A7F /* Chart.swift */; };
 		FCFEECA2248857A600402A7F /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCFEECA1248857A600402A7F /* SettingsViewController.swift */; };
+		FDFEFC522BCD5D8D878BF6A6 /* DailyStatsPresentationData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05EA1F29558DB2520538012A /* DailyStatsPresentationData.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -403,6 +444,20 @@
 
 /* Begin PBXFileReference section */
 		059B0FA59AABFE72FE13DDDA /* Pods-LoopFollow.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LoopFollow.release.xcconfig"; path = "Target Support Files/Pods-LoopFollow/Pods-LoopFollow.release.xcconfig"; sourceTree = "<group>"; };
+		05EA1F29558DB2520538012A /* DailyStatsPresentationData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsPresentationData.swift; sourceTree = "<group>"; };
+		0BF5EA6528D0372D595AF66A /* DailyStatsView+Toolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsView+Toolbar.swift"; sourceTree = "<group>"; };
+		0D24E656FB209A1B00C1F69C /* ClippyHistoryStatsViewController+Chart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ClippyHistoryStatsViewController+Chart.swift"; sourceTree = "<group>"; };
+		1118C5CF74013EA3C338153C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		2A500F4F6AB47DBE78413A79 /* TreatmentsTableView+Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Layout.swift"; sourceTree = "<group>"; };
+		326BFB1F5404A62992FA30B2 /* DailyCarbsTDDBarChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyCarbsTDDBarChartView.swift; sourceTree = "<group>"; };
+		374047A591D5A328A405A3F1 /* ClippyHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippyHistoryView.swift; sourceTree = "<group>"; };
+		3AA0BAA535BD80F2525C7972 /* BGCheckEditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BGCheckEditViewController.swift; sourceTree = "<group>"; };
+		44E8FC485BCB8810EF0CD051 /* TreatmentsTableView+DaySections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+DaySections.swift"; sourceTree = "<group>"; };
+		519284AF82BF8CCF0C9EBF11 /* TreatmentsTableView+Glucose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Glucose.swift"; sourceTree = "<group>"; };
+		538075BE375D1C89B7D598AC /* TreatmentsTableView+SwipeActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+SwipeActions.swift"; sourceTree = "<group>"; };
+		5A0A508C86BF096EE3DD804E /* WeekdayFilterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekdayFilterView.swift; sourceTree = "<group>"; };
+		5A69C6F310A480649892FC5C /* ClippyHistoryStatsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippyHistoryStatsViewController.swift; sourceTree = "<group>"; };
+		62020FBDF710910C50CD6B27 /* DailyStatsDatabaseInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsDatabaseInfoView.swift; sourceTree = "<group>"; };
 		650543F52EE1B34F00C38C06 /* LowTreatmentsStatsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LowTreatmentsStatsViewController.swift; sourceTree = "<group>"; };
 		6508DEBD2EDF1416009F84FE /* NightscoutDayReportViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutDayReportViewController.swift; sourceTree = "<group>"; };
 		650A60722EE0D1C300EF4C93 /* BasalIOBCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasalIOBCalculator.swift; sourceTree = "<group>"; };
@@ -492,7 +547,30 @@
 		65FF0D4A2F8DA81C000F1DC0 /* NightscoutSocketDataHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutSocketDataHandler.swift; sourceTree = "<group>"; };
 		65FF0D4C2F8DA861000F1DC0 /* NightscoutSocketManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutSocketManager.swift; sourceTree = "<group>"; };
 		65FF0D512F8FD1CD000F1DC0 /* ComboView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComboView.swift; sourceTree = "<group>"; };
+		79870C6C5B83AAAA5F6F2E7F /* Treatment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Treatment.swift; sourceTree = "<group>"; };
+		7A8D3DCEFC8D59F43C39BBC0 /* RealCRandTITRChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealCRandTITRChartView.swift; sourceTree = "<group>"; };
+		7D8D5B9FECE08781975F73ED /* DailyStatsAveragesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsAveragesView.swift; sourceTree = "<group>"; };
+		7E9C79B56F7A6D02C8766C6F /* TreatmentsTableView+Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Formatting.swift"; sourceTree = "<group>"; };
+		80E71C7BD51702992E01A1B2 /* DailyStatRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatRow.swift; sourceTree = "<group>"; };
+		8424685F1D4E24F59F404CE9 /* StatsDataService+Placeholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StatsDataService+Placeholder.swift"; sourceTree = "<group>"; };
+		8572348D2DEABD2D843F9AD8 /* NightscoutDayReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutDayReportView.swift; sourceTree = "<group>"; };
+		90EBB3D85BE1E1F066360986 /* NoteEditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteEditViewController.swift; sourceTree = "<group>"; };
+		9158A54AD8A211A407B78E20 /* DailyStatsViewModel+Filtering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsViewModel+Filtering.swift"; sourceTree = "<group>"; };
+		9867D55F38192201B4867C95 /* DailyStatsChartsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsChartsView.swift; sourceTree = "<group>"; };
+		A07E7CF92D381BE1A8133C49 /* TreatmentsTableView+Cache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Cache.swift"; sourceTree = "<group>"; };
+		A2A5E50B628C80D6F49F27AB /* DailyStatsViewModel+Loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsViewModel+Loading.swift"; sourceTree = "<group>"; };
+		A636B4349EA556E1E16C42AD /* DailyStatsTableView+Cells.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsTableView+Cells.swift"; sourceTree = "<group>"; };
 		A7D55B42A22051DAD69E89D0 /* Pods_LoopFollow.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LoopFollow.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A8671A9C09529A71103A1475 /* TreatmentsTableView+Editing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Editing.swift"; sourceTree = "<group>"; };
+		B04F8CA9CB690D162D4A5666 /* TreatmentsTableView+Details.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Details.swift"; sourceTree = "<group>"; };
+		B0E6836F88802B9F5E37B15C /* Value1TableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Value1TableViewCell.swift; sourceTree = "<group>"; };
+		B23722B1A51A4B5C642B2F3A /* DailyStatsSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsSummaryView.swift; sourceTree = "<group>"; };
+		BD61BE5DDD6729B583C9EC81 /* TreatmentsTableView+TableDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+TableDataSource.swift"; sourceTree = "<group>"; };
+		C373A28404333B4FF524E2C8 /* TreatmentsTableView+RemoteDeletion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+RemoteDeletion.swift"; sourceTree = "<group>"; };
+		C7FFEE6838766C3AA48C3379 /* DailyStatsView+Reports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsView+Reports.swift"; sourceTree = "<group>"; };
+		D6E4E00A82D94081FD442D44 /* DailyStatsViewModel+Export.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsViewModel+Export.swift"; sourceTree = "<group>"; };
+		D8D042488D3AB4EA042FCE95 /* ClippyHistoryStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippyHistoryStatsView.swift; sourceTree = "<group>"; };
+		D8D58DE86B26743007B848FD /* DailyStatsViewModel+Summary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsViewModel+Summary.swift"; sourceTree = "<group>"; };
 		DD07B5C829E2F9C400C6A635 /* NightscoutUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutUtils.swift; sourceTree = "<group>"; };
 		DD0C0C5F2C415B9D00DBADDF /* ProfileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileManager.swift; sourceTree = "<group>"; };
 		DD0C0C612C4175FD00DBADDF /* NSProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSProfile.swift; sourceTree = "<group>"; };
@@ -605,7 +683,13 @@
 		DDFF3D842D14279B00BF9D9E /* BackgroundRefreshSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshSettingsView.swift; sourceTree = "<group>"; };
 		DDFF3D862D14280500BF9D9E /* BackgroundRefreshSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshSettingsViewModel.swift; sourceTree = "<group>"; };
 		DDFF3D882D1429AB00BF9D9E /* BackgroundRefreshType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshType.swift; sourceTree = "<group>"; };
+		DFBDE0DD6C5CAB5933A4BC28 /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
+		E02D491EB21672CEFD2CCC87 /* TreatmentsTableView+MealAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+MealAnalysis.swift"; sourceTree = "<group>"; };
+		E693F1368395461C0F864304 /* TreatmentsTableView+Refresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Refresh.swift"; sourceTree = "<group>"; };
+		EB4578E2BDF82EAFD9ACE25A /* TreatmentsTableView+Loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Loading.swift"; sourceTree = "<group>"; };
+		EB6B277E69991AA4E7DE840F /* DailyStatsTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsTableView.swift; sourceTree = "<group>"; };
 		ECA3EFB4037410B4973BB632 /* Pods-LoopFollow.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LoopFollow.debug.xcconfig"; path = "Target Support Files/Pods-LoopFollow/Pods-LoopFollow.debug.xcconfig"; sourceTree = "<group>"; };
+		F980238A9463DBF06E93E828 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		FC16A97924996673003D6245 /* NightScout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightScout.swift; sourceTree = "<group>"; };
 		FC16A97C24996747003D6245 /* Alarms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alarms.swift; sourceTree = "<group>"; };
 		FC16A97E249969E2003D6245 /* Graphs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Graphs.swift; sourceTree = "<group>"; };
@@ -824,6 +908,51 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1B05F1982A630E63801A89EF /* Clippy */ = {
+			isa = PBXGroup;
+			children = (
+				D8D042488D3AB4EA042FCE95 /* ClippyHistoryStatsView.swift */,
+				0D24E656FB209A1B00C1F69C /* ClippyHistoryStatsViewController+Chart.swift */,
+				5A69C6F310A480649892FC5C /* ClippyHistoryStatsViewController.swift */,
+				374047A591D5A328A405A3F1 /* ClippyHistoryView.swift */,
+			);
+			path = Clippy;
+			sourceTree = "<group>";
+		};
+		4F4275CDAA5E680EB90F3D81 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				79870C6C5B83AAAA5F6F2E7F /* Treatment.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		5A74672437995EF0B8291D72 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				DFBDE0DD6C5CAB5933A4BC28 /* ActivityView.swift */,
+				7D8D5B9FECE08781975F73ED /* DailyStatsAveragesView.swift */,
+				62020FBDF710910C50CD6B27 /* DailyStatsDatabaseInfoView.swift */,
+				B23722B1A51A4B5C642B2F3A /* DailyStatsSummaryView.swift */,
+				A636B4349EA556E1E16C42AD /* DailyStatsTableView+Cells.swift */,
+				EB6B277E69991AA4E7DE840F /* DailyStatsTableView.swift */,
+				5A0A508C86BF096EE3DD804E /* WeekdayFilterView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		61BCFD88AD9660411C66993E /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				D6E4E00A82D94081FD442D44 /* DailyStatsViewModel+Export.swift */,
+				9158A54AD8A211A407B78E20 /* DailyStatsViewModel+Filtering.swift */,
+				A2A5E50B628C80D6F49F27AB /* DailyStatsViewModel+Loading.swift */,
+				D8D58DE86B26743007B848FD /* DailyStatsViewModel+Summary.swift */,
+				6577653A2ED9C966001D1AC7 /* DailyStatsViewModel.swift */,
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
 		650A60712EE0D17A00EF4C93 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -847,7 +976,7 @@
 				6578DBD22EB8DD3C00AF4942 /* SnoozeStatusView.swift */,
 				653A8D992F33F37B0026A491 /* SoundSelectionViewController.swift */,
 				65BFAF1D2DA6E8FB00947A66 /* SyncNewSensorView.swift */,
-				659AC6822D7C59430069FC7C /* TreatmentsTableView.swift */,
+				F30FFAAEBF33A04B4A22F512 /* Treatments */,
 				65EBBB522DA5526000212D5C /* TrioOrefView.swift */,
 				65EBBB502DA5520900212D5C /* TrioOrefViewModel.swift */,
 				654B9C802D6B55D500095D89 /* TrioPreferencesView.swift */,
@@ -861,9 +990,15 @@
 		650A60742EE0DDE600EF4C93 /* Daily Stats */ = {
 			isa = PBXGroup;
 			children = (
+				0BF5EA6528D0372D595AF66A /* DailyStatsView+Toolbar.swift */,
 				6577653C2ED9C995001D1AC7 /* DailyStatsView.swift */,
-				6577653A2ED9C966001D1AC7 /* DailyStatsViewModel.swift */,
-				6508DEBD2EDF1416009F84FE /* NightscoutDayReportViewController.swift */,
+				F980238A9463DBF06E93E828 /* README.md */,
+				5A74672437995EF0B8291D72 /* Views */,
+				CF037F2FF081FF7D39F86BE8 /* Charts */,
+				D4D76E2E804821F2552C17A4 /* Models */,
+				61BCFD88AD9660411C66993E /* ViewModel */,
+				96D0EC71AF2639DA573A3894 /* Reports */,
+				1B05F1982A630E63801A89EF /* Clippy */,
 			);
 			path = "Daily Stats";
 			sourceTree = "<group>";
@@ -1003,6 +1138,46 @@
 				059B0FA59AABFE72FE13DDDA /* Pods-LoopFollow.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		96D0EC71AF2639DA573A3894 /* Reports */ = {
+			isa = PBXGroup;
+			children = (
+				C7FFEE6838766C3AA48C3379 /* DailyStatsView+Reports.swift */,
+				8572348D2DEABD2D843F9AD8 /* NightscoutDayReportView.swift */,
+				6508DEBD2EDF1416009F84FE /* NightscoutDayReportViewController.swift */,
+			);
+			path = Reports;
+			sourceTree = "<group>";
+		};
+		BC1F119B359ECAFC9C147241 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B0E6836F88802B9F5E37B15C /* Value1TableViewCell.swift */,
+				90EBB3D85BE1E1F066360986 /* NoteEditViewController.swift */,
+				3AA0BAA535BD80F2525C7972 /* BGCheckEditViewController.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		CF037F2FF081FF7D39F86BE8 /* Charts */ = {
+			isa = PBXGroup;
+			children = (
+				326BFB1F5404A62992FA30B2 /* DailyCarbsTDDBarChartView.swift */,
+				9867D55F38192201B4867C95 /* DailyStatsChartsView.swift */,
+				7A8D3DCEFC8D59F43C39BBC0 /* RealCRandTITRChartView.swift */,
+			);
+			path = Charts;
+			sourceTree = "<group>";
+		};
+		D4D76E2E804821F2552C17A4 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				80E71C7BD51702992E01A1B2 /* DailyStatRow.swift */,
+				05EA1F29558DB2520538012A /* DailyStatsPresentationData.swift */,
+				8424685F1D4E24F59F404CE9 /* StatsDataService+Placeholder.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 		DD0C0C692C4852A100DBADDF /* Metric */ = {
@@ -1257,6 +1432,38 @@
 				DD5334AF2D1447C500CDD6EA /* BLEManager.swift */,
 			);
 			path = BT;
+			sourceTree = "<group>";
+		};
+		E9168CEB050C6ED949066D64 /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				519284AF82BF8CCF0C9EBF11 /* TreatmentsTableView+Glucose.swift */,
+				7E9C79B56F7A6D02C8766C6F /* TreatmentsTableView+Formatting.swift */,
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
+		F30FFAAEBF33A04B4A22F512 /* Treatments */ = {
+			isa = PBXGroup;
+			children = (
+				1118C5CF74013EA3C338153C /* README.md */,
+				659AC6822D7C59430069FC7C /* TreatmentsTableView.swift */,
+				44E8FC485BCB8810EF0CD051 /* TreatmentsTableView+DaySections.swift */,
+				2A500F4F6AB47DBE78413A79 /* TreatmentsTableView+Layout.swift */,
+				E02D491EB21672CEFD2CCC87 /* TreatmentsTableView+MealAnalysis.swift */,
+				E693F1368395461C0F864304 /* TreatmentsTableView+Refresh.swift */,
+				EB4578E2BDF82EAFD9ACE25A /* TreatmentsTableView+Loading.swift */,
+				BD61BE5DDD6729B583C9EC81 /* TreatmentsTableView+TableDataSource.swift */,
+				538075BE375D1C89B7D598AC /* TreatmentsTableView+SwipeActions.swift */,
+				C373A28404333B4FF524E2C8 /* TreatmentsTableView+RemoteDeletion.swift */,
+				A8671A9C09529A71103A1475 /* TreatmentsTableView+Editing.swift */,
+				B04F8CA9CB690D162D4A5666 /* TreatmentsTableView+Details.swift */,
+				A07E7CF92D381BE1A8133C49 /* TreatmentsTableView+Cache.swift */,
+				4F4275CDAA5E680EB90F3D81 /* Models */,
+				BC1F119B359ECAFC9C147241 /* Views */,
+				E9168CEB050C6ED949066D64 /* Helpers */,
+			);
+			path = Treatments;
 			sourceTree = "<group>";
 		};
 		FC16A97624995FEE003D6245 /* Application */ = {
@@ -1994,6 +2201,23 @@
 				DD58171A2D299EF80041FB98 /* DexcomHeartbeatBluetoothDevice.swift in Sources */,
 				651C9D372ED5D2D40077D40A /* TIRView.swift in Sources */,
 				659AC6832D7C594D0069FC7C /* TreatmentsTableView.swift in Sources */,
+				AC467F7B2581883A7F8F1A61 /* Value1TableViewCell.swift in Sources */,
+				C4DE963965C1AB527EF740FA /* Treatment.swift in Sources */,
+				E3CB891CCA6B79B63F93E4DC /* TreatmentsTableView+DaySections.swift in Sources */,
+				495017119790C94D5EA9B054 /* TreatmentsTableView+Layout.swift in Sources */,
+				3F8FC7F4AEA3E9A940A8E239 /* TreatmentsTableView+MealAnalysis.swift in Sources */,
+				F493BE352252D0BB6D0E359A /* TreatmentsTableView+Refresh.swift in Sources */,
+				EA8E3079AFA16E75DF227207 /* TreatmentsTableView+Loading.swift in Sources */,
+				4160CF41CFB8B7BDAA72BF94 /* TreatmentsTableView+Glucose.swift in Sources */,
+				8EC4BAD8F76E6A39E9C84339 /* TreatmentsTableView+Formatting.swift in Sources */,
+				640690FBB17F426CC99C3A3B /* TreatmentsTableView+TableDataSource.swift in Sources */,
+				084E4389FD623A05EFFAACDE /* TreatmentsTableView+SwipeActions.swift in Sources */,
+				22EB7A259D07289394DCD61F /* TreatmentsTableView+RemoteDeletion.swift in Sources */,
+				BC896253DB8B392672B04AF2 /* TreatmentsTableView+Editing.swift in Sources */,
+				6EF443CC1C96D135B03F057F /* TreatmentsTableView+Details.swift in Sources */,
+				058A5F7B3ADD4ECE1DFFD6B1 /* TreatmentsTableView+Cache.swift in Sources */,
+				96844108D1E4E5D25F69DE86 /* NoteEditViewController.swift in Sources */,
+				2A14C9462B52269477EC7282 /* BGCheckEditViewController.swift in Sources */,
 				DDFF3D872D14280500BF9D9E /* BackgroundRefreshSettingsViewModel.swift in Sources */,
 				DD50C7502D0828800057AE6F /* ContactSettingsViewModel.swift in Sources */,
 				DDAD162F2D2EF9830084BE10 /* RileyLinkHeartbeatBluetoothDevice.swift in Sources */,
@@ -2022,6 +2246,30 @@
 				DDEF503C2D31BE2D00999A5D /* TaskScheduler.swift in Sources */,
 				DD0C0C6B2C48562000DBADDF /* InsulinMetric.swift in Sources */,
 				6577653D2ED9C99B001D1AC7 /* DailyStatsView.swift in Sources */,
+				3A109D33A94A751505C3834E /* DailyCarbsTDDBarChartView.swift in Sources */,
+				43815A51141ABB172FAB029D /* DailyStatsChartsView.swift in Sources */,
+				37024B83B8205871EC14BE9E /* RealCRandTITRChartView.swift in Sources */,
+				171585708E28CD1F6B3A17B4 /* ClippyHistoryStatsView.swift in Sources */,
+				43AA4F8179A95FDEF0322C25 /* ClippyHistoryStatsViewController+Chart.swift in Sources */,
+				10E1F30348362CB14B4FED46 /* ClippyHistoryStatsViewController.swift in Sources */,
+				4F7443FADF83A5B2F0CD99DD /* ClippyHistoryView.swift in Sources */,
+				324999BAB252AA279E065E02 /* DailyStatsView+Toolbar.swift in Sources */,
+				368BF52BD10F70FC42F9F6E8 /* DailyStatRow.swift in Sources */,
+				FDFEFC522BCD5D8D878BF6A6 /* DailyStatsPresentationData.swift in Sources */,
+				2A717C8967CFB2594AA9B7E6 /* StatsDataService+Placeholder.swift in Sources */,
+				959F8246F879DB8A4C197244 /* DailyStatsView+Reports.swift in Sources */,
+				A06F85C905C94CDA834CAE18 /* NightscoutDayReportView.swift in Sources */,
+				D9E08D571C0BEE4C0C3989AC /* DailyStatsViewModel+Export.swift in Sources */,
+				CC72E2006EABFEA684FD0DB4 /* DailyStatsViewModel+Filtering.swift in Sources */,
+				6C73D840FB6033552794FFE4 /* DailyStatsViewModel+Loading.swift in Sources */,
+				50B13C3C5C55AE2BD18DC098 /* DailyStatsViewModel+Summary.swift in Sources */,
+				AADE0554B7A2D4B182DB56CF /* ActivityView.swift in Sources */,
+				AF9AA6F440DD29E5A71AC79F /* DailyStatsAveragesView.swift in Sources */,
+				38BDA4BC84C881C0F50C37AB /* DailyStatsDatabaseInfoView.swift in Sources */,
+				7178C97BD2A9ADAC47318993 /* DailyStatsSummaryView.swift in Sources */,
+				A939E01C7C7E7EB387A0BD1A /* DailyStatsTableView+Cells.swift in Sources */,
+				60FECECDCAE97105FDAC5865 /* DailyStatsTableView.swift in Sources */,
+				736FF94B6D2EDD611C007006 /* WeekdayFilterView.swift in Sources */,
 				DD493AD92ACF2171009A6922 /* Carbs.swift in Sources */,
 				DD493AE92ACF2445009A6922 /* BGData.swift in Sources */,
 				FCC6886B24898FD800A0279D /* ObservationToken.swift in Sources */,
