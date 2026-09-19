@@ -7,49 +7,80 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		006AB2ABBCB70B0C9D3A41C4 /* ActiveAlarmsViewController+Table.swift in Sources */ = {isa = PBXBuildFile; fileRef = 292A7796B993C38C8C3CE57E /* ActiveAlarmsViewController+Table.swift */; };
 		017078C29FE3469F57D05495 /* SickDayMiniMonthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D206CCB9498343CAB7C51E7 /* SickDayMiniMonthView.swift */; };
 		0309F952C1F845857BA76175 /* MealAnalysisView+RowBuilders.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16BD79F5DA898FCCB97E741D /* MealAnalysisView+RowBuilders.swift */; };
 		032CBFE0E160AFA3C1958A36 /* LogSearchItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FA4374D6148044F1AC3EC8 /* LogSearchItem.swift */; };
+		03E291C4F6240335D0CF166B /* GlucoseView+Filtering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80FAB85DF7BFF01782312DCE /* GlucoseView+Filtering.swift */; };
+		040B514BA92D2CE39ABE344E /* GlucoseView+Summary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 903A479499E5A85A4E4AB481 /* GlucoseView+Summary.swift */; };
 		058A5F7B3ADD4ECE1DFFD6B1 /* TreatmentsTableView+Cache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A07E7CF92D381BE1A8133C49 /* TreatmentsTableView+Cache.swift */; };
+		0778FB05331F6144194B7AB3 /* AlarmViewModel+ToggleUpdates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41DA9523281851DC8117F6A9 /* AlarmViewModel+ToggleUpdates.swift */; };
 		084E4389FD623A05EFFAACDE /* TreatmentsTableView+SwipeActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 538075BE375D1C89B7D598AC /* TreatmentsTableView+SwipeActions.swift */; };
+		09FC339E7A882789973B40D0 /* ModernAlarmViewController+Table.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7530D7E7B116C91A3003F7D4 /* ModernAlarmViewController+Table.swift */; };
+		0AEB98B80D0584F621C5D0F0 /* BGCheckView+LowTreatmentLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0FA0C74009427F193571174 /* BGCheckView+LowTreatmentLoading.swift */; };
+		0EBE184BF3CE4469901583BF /* DextroBgMarker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155F97988FBAC1CB4118D8F9 /* DextroBgMarker.swift */; };
 		0F818E569BC878AB4FEE7D56 /* MealAnalysisView+DateSyncOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 859A83737D5EFB7C95CBE225 /* MealAnalysisView+DateSyncOverlay.swift */; };
 		10E1F30348362CB14B4FED46 /* ClippyHistoryStatsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A69C6F310A480649892FC5C /* ClippyHistoryStatsViewController.swift */; };
 		1377416DBCFB9F561DBA666E /* TrainingSessionEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01D2D62449CEF7F154CFB933 /* TrainingSessionEntry.swift */; };
+		13A20C49B74126B2E8A13ED7 /* AlarmViewModel+LowGlucoseRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C79009E7857F8F955585A06 /* AlarmViewModel+LowGlucoseRows.swift */; };
+		1403A2D12BBC3B58EA0D0554 /* BGCheckStatsViewController+ChartLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FBF7944B69A12896740BFCD /* BGCheckStatsViewController+ChartLayout.swift */; };
+		152C1152D5723F88F75DE80B /* GlucoseView+Loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1167C087E528BDF0C617C5E /* GlucoseView+Loading.swift */; };
 		171585708E28CD1F6B3A17B4 /* ClippyHistoryStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D042488D3AB4EA042FCE95 /* ClippyHistoryStatsView.swift */; };
+		184FA7D1D529084D5ACB9FE1 /* GlucoseView+Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = C98670755CE745F00811C4F2 /* GlucoseView+Models.swift */; };
+		19A72B059C8F98D438C620B0 /* GlucoseView+SensorNotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 468ED4132BD4410A9F9DC69C /* GlucoseView+SensorNotes.swift */; };
 		1AB26DBBCAB4811941D20910 /* TrainingStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0189EE44A57AD3835B0BB655 /* TrainingStatsView.swift */; };
 		1B62AB6F5E54DE634B31BAF0 /* UserDataStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8712A6176084C7AD16AF7B6A /* UserDataStatsView.swift */; };
+		1CF74215241CAD97CFAA6530 /* AlarmViewModel+OptionUpdates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 218010D412154D34CB602F63 /* AlarmViewModel+OptionUpdates.swift */; };
 		20A150148DA837A8A2076725 /* MealAnalysisView+Totals.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F164E844AA4B02DFCF99E32 /* MealAnalysisView+Totals.swift */; };
+		21BE19BF466722C0ED28CEEF /* GlucoseStatsViewController+ChartLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A970A9CA561DF6AEB0CBFEE /* GlucoseStatsViewController+ChartLayout.swift */; };
 		22EB7A259D07289394DCD61F /* TreatmentsTableView+RemoteDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C373A28404333B4FF524E2C8 /* TreatmentsTableView+RemoteDeletion.swift */; };
 		244E7D7D820E8A5E9B460970 /* UserProfileCSVDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9272B7681A075A7ECC6B4AD3 /* UserProfileCSVDocument.swift */; };
+		2461C45EE82EBFC03C2CF089 /* GlucoseView+Table.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41956711BFA6F24CAE5515F0 /* GlucoseView+Table.swift */; };
+		25C1CD52F28A3970A551B0DA /* GlucoseView+Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2AF1FC01FCEED797053B966 /* GlucoseView+Layout.swift */; };
+		27890869D7D357D7C7F67649 /* GlucoseStatsViewController+GlucoseChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2DCA1E77CF99769624DE2E2 /* GlucoseStatsViewController+GlucoseChart.swift */; };
+		29B8F44EBA367D3E7FACEC36 /* ModernAlarmViewController+Categories.swift in Sources */ = {isa = PBXBuildFile; fileRef = 498D804BE1C2548BA5FF3266 /* ModernAlarmViewController+Categories.swift */; };
 		2A14C9462B52269477EC7282 /* BGCheckEditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AA0BAA535BD80F2525C7972 /* BGCheckEditViewController.swift */; };
 		2A717C8967CFB2594AA9B7E6 /* StatsDataService+Placeholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8424685F1D4E24F59F404CE9 /* StatsDataService+Placeholder.swift */; };
+		2B4FB15801AB4640218793FA /* GlucoseView+Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF6084B05ED9B6B4CAC69936 /* GlucoseView+Navigation.swift */; };
+		2BC1EAF12012FF76723605A4 /* ActiveAlarmsViewController+Rows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77B9913AFC4603704D9994A4 /* ActiveAlarmsViewController+Rows.swift */; };
+		2BDAD432473E6C5327DFB69C /* BGCheckView+Loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68B1017F1EA7EE0DFDADC72E /* BGCheckView+Loading.swift */; };
+		31D76C25411A9E0E10C85DCE /* GlucoseStatsViewController+DailyCounts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E340C066CA78D6CAB622C1B /* GlucoseStatsViewController+DailyCounts.swift */; };
 		324999BAB252AA279E065E02 /* DailyStatsView+Toolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF5EA6528D0372D595AF66A /* DailyStatsView+Toolbar.swift */; };
 		365E76389BDF533348986B4A /* MealAnalysisView+Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0979CA74249400FCAEF42CAE /* MealAnalysisView+Navigation.swift */; };
 		368BF52BD10F70FC42F9F6E8 /* DailyStatRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E71C7BD51702992E01A1B2 /* DailyStatRow.swift */; };
 		37024B83B8205871EC14BE9E /* RealCRandTITRChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8D3DCEFC8D59F43C39BBC0 /* RealCRandTITRChartView.swift */; };
 		388C56C356E5592E6472378B /* MealAnalysisView+Cache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0521041350C5FBEA738336AA /* MealAnalysisView+Cache.swift */; };
 		38BDA4BC84C881C0F50C37AB /* DailyStatsDatabaseInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62020FBDF710910C50CD6B27 /* DailyStatsDatabaseInfoView.swift */; };
+		3A039822E51B4B725BE334BB /* GlucoseStatsViewController+Summary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 484B289FFD35060232631B87 /* GlucoseStatsViewController+Summary.swift */; };
 		3A109D33A94A751505C3834E /* DailyCarbsTDDBarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 326BFB1F5404A62992FA30B2 /* DailyCarbsTDDBarChartView.swift */; };
 		3E141FA2E28CE267ABFD8919 /* BGEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4FAA44401F1EF0511909E49 /* BGEntry.swift */; };
+		3E929F889F034BB7450222AE /* GlucoseView+TrioDecision.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6546871C070B15C2FFE4181F /* GlucoseView+TrioDecision.swift */; };
 		3F1335F351590E573D8E6962 /* Pods_LoopFollow.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A7D55B42A22051DAD69E89D0 /* Pods_LoopFollow.framework */; };
 		3F8FC7F4AEA3E9A940A8E239 /* TreatmentsTableView+MealAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = E02D491EB21672CEFD2CCC87 /* TreatmentsTableView+MealAnalysis.swift */; };
 		3F92A6749A3D22A39D7BDD3A /* MealAnalysisView+GlucoseSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A5F159A194585F3D229AC72 /* MealAnalysisView+GlucoseSummary.swift */; };
+		4006D98863FCB61AA5CD5DE0 /* AlarmViewModel+HighGlucoseRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF0EABA5A63EE77AF09AD73B /* AlarmViewModel+HighGlucoseRows.swift */; };
 		4160CF41CFB8B7BDAA72BF94 /* TreatmentsTableView+Glucose.swift in Sources */ = {isa = PBXBuildFile; fileRef = 519284AF82BF8CCF0C9EBF11 /* TreatmentsTableView+Glucose.swift */; };
 		43815A51141ABB172FAB029D /* DailyStatsChartsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9867D55F38192201B4867C95 /* DailyStatsChartsView.swift */; };
 		43AA4F8179A95FDEF0322C25 /* ClippyHistoryStatsViewController+Chart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D24E656FB209A1B00C1F69C /* ClippyHistoryStatsViewController+Chart.swift */; };
 		495017119790C94D5EA9B054 /* TreatmentsTableView+Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A500F4F6AB47DBE78413A79 /* TreatmentsTableView+Layout.swift */; };
+		49B48BE6857F85FA6761A45E /* BGCheckView+Table.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1784758FBCEFF40DEB83C00F /* BGCheckView+Table.swift */; };
 		4A734464C5385DD0D6BE92AF /* ProfileSchedulesViewModel+Calculations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31CA1EED9AFDE804B21EB8D5 /* ProfileSchedulesViewModel+Calculations.swift */; };
 		4BE20BA70EFAB0A2B9900046 /* MealAnalysisView+RangeBars.swift in Sources */ = {isa = PBXBuildFile; fileRef = 047FD573F0713F6C5967D2C6 /* MealAnalysisView+RangeBars.swift */; };
 		4F351FD5AE4E32C40678CEA1 /* ProfileSettingsLogModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 851A3EE1A969854E89F8D0CD /* ProfileSettingsLogModal.swift */; };
+		4F501D85EA1E5A3D7894483A /* BGCheckView+Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3B9D1EF3072F1E2884E158F /* BGCheckView+Models.swift */; };
 		4F7443FADF83A5B2F0CD99DD /* ClippyHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 374047A591D5A328A405A3F1 /* ClippyHistoryView.swift */; };
+		4F747F4AE97448433235E84C /* GlucoseStatsViewController+Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE3F0B076CF2D100A425D6D /* GlucoseStatsViewController+Models.swift */; };
 		50B13C3C5C55AE2BD18DC098 /* DailyStatsViewModel+Summary.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D58DE86B26743007B848FD /* DailyStatsViewModel+Summary.swift */; };
+		54158A28376F8632F0E6143F /* BGCheckStatsViewController+Summary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E609DFB312762F7AFBC5527 /* BGCheckStatsViewController+Summary.swift */; };
 		57A234D1AEEDFAA602F76078 /* ProfileSchedulesView+Analysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21AD0C74C94F09DD3253A73 /* ProfileSchedulesView+Analysis.swift */; };
 		5833DBA33ADF92E4684D826B /* ScheduleEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6AE077AA29957C7CC65D069 /* ScheduleEntry.swift */; };
 		599D9096FA744C0B1A3736F9 /* UserProfileRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83189DEEFB2BA3914724D157 /* UserProfileRow.swift */; };
 		5D332E39716048F995DF435E /* AddUserDataView+Autofill.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A0C50D4CD6B6E0FE67F1B20 /* AddUserDataView+Autofill.swift */; };
+		5D9C16CE2C1A5173DFC69806 /* ModernAlarmViewController+Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AC1270867D2427E25041C7E /* ModernAlarmViewController+Navigation.swift */; };
 		5E256D54777CE3228E9F5C7E /* AddUserDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 598F50DA0503E845241EB575 /* AddUserDataView.swift */; };
 		5FE4D1B49F3F1FFFC3FAED9C /* MealAnalysisView+GlucoseLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DA3C0F2C03066D50DE00EE9 /* MealAnalysisView+GlucoseLoading.swift */; };
 		60FECECDCAE97105FDAC5865 /* DailyStatsTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB6B277E69991AA4E7DE840F /* DailyStatsTableView.swift */; };
+		63195C68D3FA59A53BC5C95A /* AlarmViewModel+DateUpdates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0C166B3EFB92C6D936A349 /* AlarmViewModel+DateUpdates.swift */; };
 		640690FBB17F426CC99C3A3B /* TreatmentsTableView+TableDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD61BE5DDD6729B583C9EC81 /* TreatmentsTableView+TableDataSource.swift */; };
 		650543F62EE1B35700C38C06 /* LowTreatmentsStatsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 650543F52EE1B34F00C38C06 /* LowTreatmentsStatsViewController.swift */; };
 		6508DEBE2EDF1419009F84FE /* NightscoutDayReportViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6508DEBD2EDF1416009F84FE /* NightscoutDayReportViewController.swift */; };
@@ -145,44 +176,76 @@
 		6D00C69A70FE96C976063327 /* ProfileSchedulesViewModel+Loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 767F4CE5195FE316D8C160F4 /* ProfileSchedulesViewModel+Loading.swift */; };
 		6E3A0F1EBA01AFC84AEABCA8 /* UserDataStatsView+ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4D38CBF029975219466728 /* UserDataStatsView+ChartData.swift */; };
 		6EF443CC1C96D135B03F057F /* TreatmentsTableView+Details.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04F8CA9CB690D162D4A5666 /* TreatmentsTableView+Details.swift */; };
+		703F0ABFED7B6937597C2CC6 /* GlucoseView+SensorAlerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A350BF77CA74C774D6D841B /* GlucoseView+SensorAlerts.swift */; };
 		7178C97BD2A9ADAC47318993 /* DailyStatsSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23722B1A51A4B5C642B2F3A /* DailyStatsSummaryView.swift */; };
 		7272ED0766F80B5A36119771 /* ProfileSchedulesView+Sections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65343509F048D52933BAE23B /* ProfileSchedulesView+Sections.swift */; };
 		727CEC53530F57CAD310B623 /* SickDayCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7E288C8CF94DB5C4BD25D4 /* SickDayCalendarView.swift */; };
+		733B82180C999CFF0A775B70 /* DateAxisFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFB965A370811A9AE86A6139 /* DateAxisFormatter.swift */; };
 		736FF94B6D2EDD611C007006 /* WeekdayFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0A508C86BF096EE3DD804E /* WeekdayFilterView.swift */; };
+		767AEB4C90617CE3941EEF83 /* BGCheckView+Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1529B49EF0288F5EDBE664 /* BGCheckView+Navigation.swift */; };
+		780F868D5FF1B2CE7C4E3CDF /* LowTreatmentsStatsViewController+Filtering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CCB178428CCE2A6E7210686 /* LowTreatmentsStatsViewController+Filtering.swift */; };
 		7DE6500F8AB023CB72E42B14 /* ProfileSchedulesViewModel+SickDays.swift in Sources */ = {isa = PBXBuildFile; fileRef = E93F939358FFBDE82D7E8003 /* ProfileSchedulesViewModel+SickDays.swift */; };
+		7E450BE3D155A7D33370EC36 /* GlucoseView+Refresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434FEE48D53D070EA40F6C5D /* GlucoseView+Refresh.swift */; };
+		80695AD842E7EE302BF5AF28 /* AlarmViewModel+TherapyRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1105025B687E11CF93F3558D /* AlarmViewModel+TherapyRows.swift */; };
+		80D524CCB8A77D21F9F6B3DB /* LowTreatmentsStatsViewController+Options.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFCF778244ABD4355B5A53C7 /* LowTreatmentsStatsViewController+Options.swift */; };
+		824252493BCE440AF4BDB6C8 /* BGCheckView+FingerstickLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7828D106D8E6D96F20EB8FFC /* BGCheckView+FingerstickLoading.swift */; };
 		84734A5AAEA97D3AE47F7C59 /* TrainingSessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3778447D31E2C5099161B45 /* TrainingSessionsView.swift */; };
+		847B5658FD4396059270BA5E /* LowTreatmentsStatsViewController+ComparisonChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = B98226D49FBE1E83308FB4AB /* LowTreatmentsStatsViewController+ComparisonChart.swift */; };
 		85291E3387202A58175AE8CC /* UserProfileFieldsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A5CCEC1A2BE2737680E8C94 /* UserProfileFieldsView.swift */; };
+		85A5EA08151DB10A49BE05E8 /* GlucoseStatsViewController+Loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D13CC9B604B2BF8FB2CE1B /* GlucoseStatsViewController+Loading.swift */; };
+		88D33B2824FACA4B32B751DB /* BGCheckStatsViewController+Filtering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BC7A52667ABD44DCC11897 /* BGCheckStatsViewController+Filtering.swift */; };
 		8A7C9B839B2902CED87820B6 /* ProfileScheduleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3422EB0E5976CBB0ED762CFA /* ProfileScheduleData.swift */; };
+		8BD4A7E07C218429F9BD4F20 /* AlarmViewModel+GeneralRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E330F7D84C06075CCB702DB /* AlarmViewModel+GeneralRows.swift */; };
+		8C9F485120AEE965331A6977 /* BGCheckView+Statistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19E52680AEA54759BD14D271 /* BGCheckView+Statistics.swift */; };
+		8CC9F89D02B0B1267AB65966 /* LowTreatmentsStatsViewController+Summary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5E75C4C4226848FDEF7BC0 /* LowTreatmentsStatsViewController+Summary.swift */; };
 		8EC4BAD8F76E6A39E9C84339 /* TreatmentsTableView+Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E9C79B56F7A6D02C8766C6F /* TreatmentsTableView+Formatting.swift */; };
 		8F59FB8997E1D4CFCFF2DC30 /* UserDataViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAC7625AE34A32C73CA44D6A /* UserDataViewController.swift */; };
 		8FCBDBA508BF84C593F48BEC /* AddSickDayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0086D9D3DA5C3F8C67A15BD6 /* AddSickDayView.swift */; };
 		90D2E05AC6C8461C578B7233 /* UserProfileWalshView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38B0C3FFBD122DA164B045FB /* UserProfileWalshView.swift */; };
 		94CB1AC28BF053DE8A9B0098 /* AddUserDataView+Calculations.swift in Sources */ = {isa = PBXBuildFile; fileRef = D06F12E88A22C95288A77A73 /* AddUserDataView+Calculations.swift */; };
 		959F8246F879DB8A4C197244 /* DailyStatsView+Reports.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7FFEE6838766C3AA48C3379 /* DailyStatsView+Reports.swift */; };
+		960C22F1AA8F8476CA20761F /* GlucoseStatsViewController+Filtering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 183DA90D3FB49FEB703F9596 /* GlucoseStatsViewController+Filtering.swift */; };
 		96844108D1E4E5D25F69DE86 /* NoteEditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90EBB3D85BE1E1F066360986 /* NoteEditViewController.swift */; };
 		9B66D964FFB00A3EC4A6A9B3 /* AddUserDataView+Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686043B1C0E14FAB4D2BF51F /* AddUserDataView+Persistence.swift */; };
+		9B76B7032F82FCC1CD42566B /* GlucoseStatsViewController+SensorOutages.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5C7E1731A85F55794895AF7 /* GlucoseStatsViewController+SensorOutages.swift */; };
+		9BD5F717A95C1F95D9789FDB /* ModernAlarmViewController+Refreshing.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA46388BC5019C0AD236BC40 /* ModernAlarmViewController+Refreshing.swift */; };
+		9D150EC0DEA9811BA094AF97 /* BGCheckStatsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F9531447988F2159C7B00D8 /* BGCheckStatsViewController.swift */; };
+		9D874F2DBDB1CB897FFFA253 /* BGCheckStatsViewController+CountChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75420F0CAC46884122288613 /* BGCheckStatsViewController+CountChart.swift */; };
 		A06F85C905C94CDA834CAE18 /* NightscoutDayReportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8572348D2DEABD2D843F9AD8 /* NightscoutDayReportView.swift */; };
+		A136284FA5CD7457BD846C80 /* BGCheckStatsViewController+Options.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40514E385D6BEA0A3F2393FD /* BGCheckStatsViewController+Options.swift */; };
+		A339ED582171BE8FADBDEE5C /* LowTreatmentsStatsViewController+ChartLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47F79C014DE68D6A9446948A /* LowTreatmentsStatsViewController+ChartLayout.swift */; };
+		A4F251EFD490D22E638A04AA /* AlarmViewModel+HardwareRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E15EC88CFF05A0E2F69D74 /* AlarmViewModel+HardwareRows.swift */; };
 		A5862E103B1D51F4630ACAAF /* MealAnalysisView+ChartSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F54F2637440D6C360C781AEB /* MealAnalysisView+ChartSetup.swift */; };
+		A91F6D19990411B0E7ECBB4F /* GlucoseView+NearestReading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34BEF7C7D009580BFAF7491D /* GlucoseView+NearestReading.swift */; };
 		A939E01C7C7E7EB387A0BD1A /* DailyStatsTableView+Cells.swift in Sources */ = {isa = PBXBuildFile; fileRef = A636B4349EA556E1E16C42AD /* DailyStatsTableView+Cells.swift */; };
 		AA952DAD9CA816987794E321 /* AddTrainingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FADC8680A433DC9986EB21D /* AddTrainingView.swift */; };
 		AADE0554B7A2D4B182DB56CF /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBDE0DD6C5CAB5933A4BC28 /* ActivityView.swift */; };
+		AB8CD6FFC7E7C937E35D7854 /* GlucoseView+SensorLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E40D16FEAF23FEB54B2DF9C /* GlucoseView+SensorLoading.swift */; };
 		AC467F7B2581883A7F8F1A61 /* Value1TableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0E6836F88802B9F5E37B15C /* Value1TableViewCell.swift */; };
+		AC62CAEC3E3EC4E7DE88549A /* AlarmUIRefreshing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8B135CD0EE0DDC335588355 /* AlarmUIRefreshing.swift */; };
+		AD231E0FC03907E5A7488135 /* ModernAlarmViewController+DataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C9221F72C7579237B1A76D /* ModernAlarmViewController+DataSource.swift */; };
 		ADEE81F1D53FCA8B0FDC0940 /* MealAnalysisView+TimeSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF09BF07EFBE145565A7B9D8 /* MealAnalysisView+TimeSelection.swift */; };
+		AEAD6668BA828A6876ABCA11 /* LowTreatmentsStatsViewController+TimeChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 429F05118721B967AB9648D4 /* LowTreatmentsStatsViewController+TimeChart.swift */; };
 		AF0FC90FAC2CAAAEABC76221 /* UserProfileImageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B170EDB204752212C8002F11 /* UserProfileImageManager.swift */; };
 		AF9AA6F440DD29E5A71AC79F /* DailyStatsAveragesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8D5B9FECE08781975F73ED /* DailyStatsAveragesView.swift */; };
 		B3C3A2B57C9B3A3184808D9B /* ProfileSchedulesView+ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63B9AB09DD8ADC1C18CC6C98 /* ProfileSchedulesView+ChartData.swift */; };
+		B3CC2E9DD89C56E451A81DCD /* GlucoseStatsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE1DA4A768C40370D634A338 /* GlucoseStatsViewController.swift */; };
 		B76AA373FE227A686A50CDB5 /* ProfileSchedulesView+CSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 578E8C767DCE43E3CF8439D0 /* ProfileSchedulesView+CSV.swift */; };
 		BBC9FF1E4E252193732D05B6 /* UserProfileEntry+Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 306CA1FAA339A5D79F0D2895 /* UserProfileEntry+Identity.swift */; };
+		BC7625BB7F5EC9C0D70B369E /* GlucoseView+Rows.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7823BEBED538CE06011989B /* GlucoseView+Rows.swift */; };
 		BC896253DB8B392672B04AF2 /* TreatmentsTableView+Editing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8671A9C09529A71103A1475 /* TreatmentsTableView+Editing.swift */; };
 		C14A7B39B987B3BF797606FD /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9523BA68258AE41CECB855AF /* Event.swift */; };
 		C2F8A8564083001BD09030D1 /* ProfileSchedulesLastChangedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26F7E68C3F42706CE073896C /* ProfileSchedulesLastChangedStore.swift */; };
 		C3446EA976E973B0869E85D4 /* ProfileSchedulesViewModel+Training.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C5D5477BB56173E654517CE /* ProfileSchedulesViewModel+Training.swift */; };
 		C4DE963965C1AB527EF740FA /* Treatment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79870C6C5B83AAAA5F6F2E7F /* Treatment.swift */; };
 		CC72E2006EABFEA684FD0DB4 /* DailyStatsViewModel+Filtering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9158A54AD8A211A407B78E20 /* DailyStatsViewModel+Filtering.swift */; };
+		CE3EA0DB90CBC49120346653 /* ActiveAlarmModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB7749BB0891A47A15A1272 /* ActiveAlarmModels.swift */; };
+		D1C1B3D6185A012C045B5832 /* AlarmViewModel+TrendRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B37DB78EAEEB7D4CCE5697 /* AlarmViewModel+TrendRows.swift */; };
 		D20C9793631B85D2DD2C75A3 /* MealAnalysisView+ChartRendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447D60B0C804B93B80162678 /* MealAnalysisView+ChartRendering.swift */; };
 		D2D3ADB40AC58E124956B525 /* ProfileScheduleContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC6F18C8E69B23C6EF662C5 /* ProfileScheduleContentView.swift */; };
 		D30BEECBD4D23818ED5673F8 /* MealAnalysisView+InitialWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7881C9DAE2231057EFA191B5 /* MealAnalysisView+InitialWindow.swift */; };
 		D40BD43A19D34E53DF6AB544 /* UIFont+Traits.swift in Sources */ = {isa = PBXBuildFile; fileRef = D750354954C1FBB0E84360F5 /* UIFont+Traits.swift */; };
+		D41F7180F9E1B5718F17F200 /* BGCheckStatsViewController+TimeChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 567145A0239C6E0CE6FAC1AD /* BGCheckStatsViewController+TimeChart.swift */; };
 		D9E08D571C0BEE4C0C3989AC /* DailyStatsViewModel+Export.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E4E00A82D94081FD442D44 /* DailyStatsViewModel+Export.swift */; };
 		DD07B5C929E2F9C400C6A635 /* NightscoutUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD07B5C829E2F9C400C6A635 /* NightscoutUtils.swift */; };
 		DD0C0C602C415B9D00DBADDF /* ProfileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0C0C5F2C415B9D00DBADDF /* ProfileManager.swift */; };
@@ -296,15 +359,24 @@
 		DDFF3D852D14279B00BF9D9E /* BackgroundRefreshSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDFF3D842D14279B00BF9D9E /* BackgroundRefreshSettingsView.swift */; };
 		DDFF3D872D14280500BF9D9E /* BackgroundRefreshSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDFF3D862D14280500BF9D9E /* BackgroundRefreshSettingsViewModel.swift */; };
 		DDFF3D892D1429AB00BF9D9E /* BackgroundRefreshType.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDFF3D882D1429AB00BF9D9E /* BackgroundRefreshType.swift */; };
+		DE9A0DFB14F92D894870C3BA /* LowTreatmentsStatsViewController+BarChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD9B49819FA073F734760F39 /* LowTreatmentsStatsViewController+BarChart.swift */; };
+		E0B6C36F322499CCC3F82472 /* ModernAlarmViewController+DatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BA83F2FF6C02126FBCE8560 /* ModernAlarmViewController+DatePicker.swift */; };
 		E3CB891CCA6B79B63F93E4DC /* TreatmentsTableView+DaySections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E8FC485BCB8810EF0CD051 /* TreatmentsTableView+DaySections.swift */; };
+		EA424D0D012F0F0CC8AD60C4 /* ModernAlarmViewController+Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A547C719DFD85E1A8E39A733 /* ModernAlarmViewController+Layout.swift */; };
 		EA7311E5C783B8AAED3CA825 /* MealAnalysisView+EnteredBy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CB466400F252F9D19F9E2A0 /* MealAnalysisView+EnteredBy.swift */; };
 		EA8E3079AFA16E75DF227207 /* TreatmentsTableView+Loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB4578E2BDF82EAFD9ACE25A /* TreatmentsTableView+Loading.swift */; };
+		EAE15D3ACB8C67747C9F9CC4 /* AlarmViewModel+TrioRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FF58500E0ED715BCD971C7 /* AlarmViewModel+TrioRows.swift */; };
+		ED0CA50B936080B6A7E9FE46 /* GlucoseStatsViewController+SensorChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D1CCDC02A8BF197DDB7523 /* GlucoseStatsViewController+SensorChart.swift */; };
+		EDFB6513A974B9A336F21504 /* GlucoseView+ReasonFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37149EC1FB494C736B7AE029 /* GlucoseView+ReasonFormatting.swift */; };
+		EE245B4FE5046CC20838F0FE /* BGCheckEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE75FB3C646BCCD0FE4F1F40 /* BGCheckEntry.swift */; };
 		EF75B98DF061E59F28E25372 /* SickDayListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A243DCBAE9C9B0142A10081 /* SickDayListView.swift */; };
 		F03491D6006B334FF7209D1A /* ProfileSchedulesView+Toolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A011875622AE433196686378 /* ProfileSchedulesView+Toolbar.swift */; };
+		F338E7D1F231CA664173CC16 /* BGCheckView+Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23A8B8D8DD2947B9E2E01944 /* BGCheckView+Layout.swift */; };
 		F43536035D81C1C6F0E0EE95 /* MealAnalysisView+Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ECBF7D9183BADB298881952 /* MealAnalysisView+Layout.swift */; };
 		F493BE352252D0BB6D0E359A /* TreatmentsTableView+Refresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = E693F1368395461C0F864304 /* TreatmentsTableView+Refresh.swift */; };
 		F608CCB277A869BDFBD77E52 /* MealAnalysisDelegates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FCC24C4779A49F50573AB8B /* MealAnalysisDelegates.swift */; };
 		F7DF4417AE6D3987A31823EB /* ProfileSchedulesViewModel+ChangeHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD579F9947821A4CC3AB2FCF /* ProfileSchedulesViewModel+ChangeHistory.swift */; };
+		FAB3E2BB0F7159AC25F4AAC2 /* AlarmViewModel+ValueUpdates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EB833B40F2F6BD651D6398 /* AlarmViewModel+ValueUpdates.swift */; };
 		FC16A97A24996673003D6245 /* NightScout.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC16A97924996673003D6245 /* NightScout.swift */; };
 		FC16A97B249966A3003D6245 /* AlarmSound.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC7CE589248ABEA3001F83B8 /* AlarmSound.swift */; };
 		FC16A97D24996747003D6245 /* Alarms.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC16A97C24996747003D6245 /* Alarms.swift */; };
@@ -506,32 +578,65 @@
 		059B0FA59AABFE72FE13DDDA /* Pods-LoopFollow.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LoopFollow.release.xcconfig"; path = "Target Support Files/Pods-LoopFollow/Pods-LoopFollow.release.xcconfig"; sourceTree = "<group>"; };
 		05EA1F29558DB2520538012A /* DailyStatsPresentationData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsPresentationData.swift; sourceTree = "<group>"; };
 		0979CA74249400FCAEF42CAE /* MealAnalysisView+Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+Navigation.swift"; sourceTree = "<group>"; };
+		0A350BF77CA74C774D6D841B /* GlucoseView+SensorAlerts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+SensorAlerts.swift"; sourceTree = "<group>"; };
 		0BF5EA6528D0372D595AF66A /* DailyStatsView+Toolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsView+Toolbar.swift"; sourceTree = "<group>"; };
 		0D206CCB9498343CAB7C51E7 /* SickDayMiniMonthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SickDayMiniMonthView.swift; sourceTree = "<group>"; };
 		0D24E656FB209A1B00C1F69C /* ClippyHistoryStatsViewController+Chart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ClippyHistoryStatsViewController+Chart.swift"; sourceTree = "<group>"; };
+		0E40D16FEAF23FEB54B2DF9C /* GlucoseView+SensorLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+SensorLoading.swift"; sourceTree = "<group>"; };
+		1105025B687E11CF93F3558D /* AlarmViewModel+TherapyRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AlarmViewModel+TherapyRows.swift"; sourceTree = "<group>"; };
 		1118C5CF74013EA3C338153C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		155F97988FBAC1CB4118D8F9 /* DextroBgMarker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DextroBgMarker.swift; sourceTree = "<group>"; };
 		16BD79F5DA898FCCB97E741D /* MealAnalysisView+RowBuilders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+RowBuilders.swift"; sourceTree = "<group>"; };
+		1784758FBCEFF40DEB83C00F /* BGCheckView+Table.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckView+Table.swift"; sourceTree = "<group>"; };
+		183DA90D3FB49FEB703F9596 /* GlucoseStatsViewController+Filtering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+Filtering.swift"; sourceTree = "<group>"; };
+		19E52680AEA54759BD14D271 /* BGCheckView+Statistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckView+Statistics.swift"; sourceTree = "<group>"; };
+		1E609DFB312762F7AFBC5527 /* BGCheckStatsViewController+Summary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckStatsViewController+Summary.swift"; sourceTree = "<group>"; };
+		218010D412154D34CB602F63 /* AlarmViewModel+OptionUpdates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AlarmViewModel+OptionUpdates.swift"; sourceTree = "<group>"; };
+		23A8B8D8DD2947B9E2E01944 /* BGCheckView+Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckView+Layout.swift"; sourceTree = "<group>"; };
+		23F8E97A43CB8603680B8E2C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		26F7E68C3F42706CE073896C /* ProfileSchedulesLastChangedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSchedulesLastChangedStore.swift; sourceTree = "<group>"; };
+		292A7796B993C38C8C3CE57E /* ActiveAlarmsViewController+Table.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ActiveAlarmsViewController+Table.swift"; sourceTree = "<group>"; };
 		2A243DCBAE9C9B0142A10081 /* SickDayListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SickDayListView.swift; sourceTree = "<group>"; };
 		2A500F4F6AB47DBE78413A79 /* TreatmentsTableView+Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Layout.swift"; sourceTree = "<group>"; };
+		2AC1270867D2427E25041C7E /* ModernAlarmViewController+Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModernAlarmViewController+Navigation.swift"; sourceTree = "<group>"; };
+		2B1529B49EF0288F5EDBE664 /* BGCheckView+Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckView+Navigation.swift"; sourceTree = "<group>"; };
 		2F164E844AA4B02DFCF99E32 /* MealAnalysisView+Totals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+Totals.swift"; sourceTree = "<group>"; };
 		306CA1FAA339A5D79F0D2895 /* UserProfileEntry+Identity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UserProfileEntry+Identity.swift"; sourceTree = "<group>"; };
 		31CA1EED9AFDE804B21EB8D5 /* ProfileSchedulesViewModel+Calculations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProfileSchedulesViewModel+Calculations.swift"; sourceTree = "<group>"; };
 		326BFB1F5404A62992FA30B2 /* DailyCarbsTDDBarChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyCarbsTDDBarChartView.swift; sourceTree = "<group>"; };
 		3422EB0E5976CBB0ED762CFA /* ProfileScheduleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileScheduleData.swift; sourceTree = "<group>"; };
+		34BEF7C7D009580BFAF7491D /* GlucoseView+NearestReading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+NearestReading.swift"; sourceTree = "<group>"; };
+		36EB833B40F2F6BD651D6398 /* AlarmViewModel+ValueUpdates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AlarmViewModel+ValueUpdates.swift"; sourceTree = "<group>"; };
+		37149EC1FB494C736B7AE029 /* GlucoseView+ReasonFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+ReasonFormatting.swift"; sourceTree = "<group>"; };
 		374047A591D5A328A405A3F1 /* ClippyHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippyHistoryView.swift; sourceTree = "<group>"; };
 		38B0C3FFBD122DA164B045FB /* UserProfileWalshView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileWalshView.swift; sourceTree = "<group>"; };
+		3A970A9CA561DF6AEB0CBFEE /* GlucoseStatsViewController+ChartLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+ChartLayout.swift"; sourceTree = "<group>"; };
 		3AA0BAA535BD80F2525C7972 /* BGCheckEditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BGCheckEditViewController.swift; sourceTree = "<group>"; };
+		3BA83F2FF6C02126FBCE8560 /* ModernAlarmViewController+DatePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModernAlarmViewController+DatePicker.swift"; sourceTree = "<group>"; };
 		3DA3C0F2C03066D50DE00EE9 /* MealAnalysisView+GlucoseLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+GlucoseLoading.swift"; sourceTree = "<group>"; };
+		40514E385D6BEA0A3F2393FD /* BGCheckStatsViewController+Options.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckStatsViewController+Options.swift"; sourceTree = "<group>"; };
+		41956711BFA6F24CAE5515F0 /* GlucoseView+Table.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+Table.swift"; sourceTree = "<group>"; };
+		41DA9523281851DC8117F6A9 /* AlarmViewModel+ToggleUpdates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AlarmViewModel+ToggleUpdates.swift"; sourceTree = "<group>"; };
+		429F05118721B967AB9648D4 /* LowTreatmentsStatsViewController+TimeChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LowTreatmentsStatsViewController+TimeChart.swift"; sourceTree = "<group>"; };
+		434FEE48D53D070EA40F6C5D /* GlucoseView+Refresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+Refresh.swift"; sourceTree = "<group>"; };
 		447D60B0C804B93B80162678 /* MealAnalysisView+ChartRendering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+ChartRendering.swift"; sourceTree = "<group>"; };
 		44E8FC485BCB8810EF0CD051 /* TreatmentsTableView+DaySections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+DaySections.swift"; sourceTree = "<group>"; };
+		468ED4132BD4410A9F9DC69C /* GlucoseView+SensorNotes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+SensorNotes.swift"; sourceTree = "<group>"; };
+		47F79C014DE68D6A9446948A /* LowTreatmentsStatsViewController+ChartLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LowTreatmentsStatsViewController+ChartLayout.swift"; sourceTree = "<group>"; };
+		484B289FFD35060232631B87 /* GlucoseStatsViewController+Summary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+Summary.swift"; sourceTree = "<group>"; };
+		498D804BE1C2548BA5FF3266 /* ModernAlarmViewController+Categories.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModernAlarmViewController+Categories.swift"; sourceTree = "<group>"; };
+		4CCB178428CCE2A6E7210686 /* LowTreatmentsStatsViewController+Filtering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LowTreatmentsStatsViewController+Filtering.swift"; sourceTree = "<group>"; };
 		519284AF82BF8CCF0C9EBF11 /* TreatmentsTableView+Glucose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Glucose.swift"; sourceTree = "<group>"; };
 		538075BE375D1C89B7D598AC /* TreatmentsTableView+SwipeActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+SwipeActions.swift"; sourceTree = "<group>"; };
+		567145A0239C6E0CE6FAC1AD /* BGCheckStatsViewController+TimeChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckStatsViewController+TimeChart.swift"; sourceTree = "<group>"; };
 		578E8C767DCE43E3CF8439D0 /* ProfileSchedulesView+CSV.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProfileSchedulesView+CSV.swift"; sourceTree = "<group>"; };
 		598F50DA0503E845241EB575 /* AddUserDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddUserDataView.swift; sourceTree = "<group>"; };
 		5A0A508C86BF096EE3DD804E /* WeekdayFilterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekdayFilterView.swift; sourceTree = "<group>"; };
 		5A69C6F310A480649892FC5C /* ClippyHistoryStatsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippyHistoryStatsViewController.swift; sourceTree = "<group>"; };
+		5C5E75C4C4226848FDEF7BC0 /* LowTreatmentsStatsViewController+Summary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LowTreatmentsStatsViewController+Summary.swift"; sourceTree = "<group>"; };
 		5CB466400F252F9D19F9E2A0 /* MealAnalysisView+EnteredBy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+EnteredBy.swift"; sourceTree = "<group>"; };
+		5E330F7D84C06075CCB702DB /* AlarmViewModel+GeneralRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AlarmViewModel+GeneralRows.swift"; sourceTree = "<group>"; };
+		5F0C166B3EFB92C6D936A349 /* AlarmViewModel+DateUpdates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AlarmViewModel+DateUpdates.swift"; sourceTree = "<group>"; };
 		62020FBDF710910C50CD6B27 /* DailyStatsDatabaseInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsDatabaseInfoView.swift; sourceTree = "<group>"; };
 		63B9AB09DD8ADC1C18CC6C98 /* ProfileSchedulesView+ChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProfileSchedulesView+ChartData.swift"; sourceTree = "<group>"; };
 		650543F52EE1B34F00C38C06 /* LowTreatmentsStatsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LowTreatmentsStatsViewController.swift; sourceTree = "<group>"; };
@@ -585,6 +690,7 @@
 		654454D02D6E8ABE0015BC5E /* ProfileSchedulesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSchedulesView.swift; sourceTree = "<group>"; };
 		654454D22D6E8AD90015BC5E /* ProfileSchedulesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSchedulesViewModel.swift; sourceTree = "<group>"; };
 		6545DD2A2D6F0396007B0D70 /* LineChartWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineChartWrapper.swift; sourceTree = "<group>"; };
+		6546871C070B15C2FFE4181F /* GlucoseView+TrioDecision.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+TrioDecision.swift"; sourceTree = "<group>"; };
 		654B9C802D6B55D500095D89 /* TrioPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrioPreferencesView.swift; sourceTree = "<group>"; };
 		654B9C822D6B588600095D89 /* TrioPreferencesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrioPreferencesViewModel.swift; sourceTree = "<group>"; };
 		654C042D305383FC00EA8C12 /* MemoryLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryLogView.swift; sourceTree = "<group>"; };
@@ -625,14 +731,22 @@
 		65FF0D4C2F8DA861000F1DC0 /* NightscoutSocketManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutSocketManager.swift; sourceTree = "<group>"; };
 		65FF0D512F8FD1CD000F1DC0 /* ComboView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComboView.swift; sourceTree = "<group>"; };
 		686043B1C0E14FAB4D2BF51F /* AddUserDataView+Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AddUserDataView+Persistence.swift"; sourceTree = "<group>"; };
+		68B1017F1EA7EE0DFDADC72E /* BGCheckView+Loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckView+Loading.swift"; sourceTree = "<group>"; };
 		69FA4374D6148044F1AC3EC8 /* LogSearchItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogSearchItem.swift; sourceTree = "<group>"; };
 		6A0C50D4CD6B6E0FE67F1B20 /* AddUserDataView+Autofill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AddUserDataView+Autofill.swift"; sourceTree = "<group>"; };
 		6A5F159A194585F3D229AC72 /* MealAnalysisView+GlucoseSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+GlucoseSummary.swift"; sourceTree = "<group>"; };
 		6C5D5477BB56173E654517CE /* ProfileSchedulesViewModel+Training.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProfileSchedulesViewModel+Training.swift"; sourceTree = "<group>"; };
+		6F9531447988F2159C7B00D8 /* BGCheckStatsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BGCheckStatsViewController.swift; sourceTree = "<group>"; };
+		72C9221F72C7579237B1A76D /* ModernAlarmViewController+DataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModernAlarmViewController+DataSource.swift"; sourceTree = "<group>"; };
+		7530D7E7B116C91A3003F7D4 /* ModernAlarmViewController+Table.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModernAlarmViewController+Table.swift"; sourceTree = "<group>"; };
+		75420F0CAC46884122288613 /* BGCheckStatsViewController+CountChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckStatsViewController+CountChart.swift"; sourceTree = "<group>"; };
 		767F4CE5195FE316D8C160F4 /* ProfileSchedulesViewModel+Loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProfileSchedulesViewModel+Loading.swift"; sourceTree = "<group>"; };
+		77B9913AFC4603704D9994A4 /* ActiveAlarmsViewController+Rows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ActiveAlarmsViewController+Rows.swift"; sourceTree = "<group>"; };
+		7828D106D8E6D96F20EB8FFC /* BGCheckView+FingerstickLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckView+FingerstickLoading.swift"; sourceTree = "<group>"; };
 		7881C9DAE2231057EFA191B5 /* MealAnalysisView+InitialWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+InitialWindow.swift"; sourceTree = "<group>"; };
 		79870C6C5B83AAAA5F6F2E7F /* Treatment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Treatment.swift; sourceTree = "<group>"; };
 		7A8D3DCEFC8D59F43C39BBC0 /* RealCRandTITRChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealCRandTITRChartView.swift; sourceTree = "<group>"; };
+		7C79009E7857F8F955585A06 /* AlarmViewModel+LowGlucoseRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AlarmViewModel+LowGlucoseRows.swift"; sourceTree = "<group>"; };
 		7D8D5B9FECE08781975F73ED /* DailyStatsAveragesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsAveragesView.swift; sourceTree = "<group>"; };
 		7DC6F18C8E69B23C6EF662C5 /* ProfileScheduleContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileScheduleContentView.swift; sourceTree = "<group>"; };
 		7E9C79B56F7A6D02C8766C6F /* TreatmentsTableView+Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Formatting.swift"; sourceTree = "<group>"; };
@@ -640,46 +754,73 @@
 		7F7E288C8CF94DB5C4BD25D4 /* SickDayCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SickDayCalendarView.swift; sourceTree = "<group>"; };
 		7FADC8680A433DC9986EB21D /* AddTrainingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddTrainingView.swift; sourceTree = "<group>"; };
 		80E71C7BD51702992E01A1B2 /* DailyStatRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatRow.swift; sourceTree = "<group>"; };
+		80FAB85DF7BFF01782312DCE /* GlucoseView+Filtering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+Filtering.swift"; sourceTree = "<group>"; };
 		83189DEEFB2BA3914724D157 /* UserProfileRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileRow.swift; sourceTree = "<group>"; };
 		8424685F1D4E24F59F404CE9 /* StatsDataService+Placeholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "StatsDataService+Placeholder.swift"; sourceTree = "<group>"; };
 		851A3EE1A969854E89F8D0CD /* ProfileSettingsLogModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSettingsLogModal.swift; sourceTree = "<group>"; };
 		8572348D2DEABD2D843F9AD8 /* NightscoutDayReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutDayReportView.swift; sourceTree = "<group>"; };
 		859A83737D5EFB7C95CBE225 /* MealAnalysisView+DateSyncOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+DateSyncOverlay.swift"; sourceTree = "<group>"; };
 		8712A6176084C7AD16AF7B6A /* UserDataStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataStatsView.swift; sourceTree = "<group>"; };
+		89BC7A52667ABD44DCC11897 /* BGCheckStatsViewController+Filtering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckStatsViewController+Filtering.swift"; sourceTree = "<group>"; };
+		8E340C066CA78D6CAB622C1B /* GlucoseStatsViewController+DailyCounts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+DailyCounts.swift"; sourceTree = "<group>"; };
+		8FB7749BB0891A47A15A1272 /* ActiveAlarmModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveAlarmModels.swift; sourceTree = "<group>"; };
+		903A479499E5A85A4E4AB481 /* GlucoseView+Summary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+Summary.swift"; sourceTree = "<group>"; };
 		90EBB3D85BE1E1F066360986 /* NoteEditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteEditViewController.swift; sourceTree = "<group>"; };
 		9158A54AD8A211A407B78E20 /* DailyStatsViewModel+Filtering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsViewModel+Filtering.swift"; sourceTree = "<group>"; };
 		9272B7681A075A7ECC6B4AD3 /* UserProfileCSVDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileCSVDocument.swift; sourceTree = "<group>"; };
 		9523BA68258AE41CECB855AF /* Event.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
 		9867D55F38192201B4867C95 /* DailyStatsChartsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsChartsView.swift; sourceTree = "<group>"; };
 		9A5CCEC1A2BE2737680E8C94 /* UserProfileFieldsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileFieldsView.swift; sourceTree = "<group>"; };
+		9FBF7944B69A12896740BFCD /* BGCheckStatsViewController+ChartLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckStatsViewController+ChartLayout.swift"; sourceTree = "<group>"; };
 		9FCC24C4779A49F50573AB8B /* MealAnalysisDelegates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealAnalysisDelegates.swift; sourceTree = "<group>"; };
 		A011875622AE433196686378 /* ProfileSchedulesView+Toolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProfileSchedulesView+Toolbar.swift"; sourceTree = "<group>"; };
 		A07E7CF92D381BE1A8133C49 /* TreatmentsTableView+Cache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Cache.swift"; sourceTree = "<group>"; };
+		A0FA0C74009427F193571174 /* BGCheckView+LowTreatmentLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckView+LowTreatmentLoading.swift"; sourceTree = "<group>"; };
+		A1E15EC88CFF05A0E2F69D74 /* AlarmViewModel+HardwareRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AlarmViewModel+HardwareRows.swift"; sourceTree = "<group>"; };
+		A1FF58500E0ED715BCD971C7 /* AlarmViewModel+TrioRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AlarmViewModel+TrioRows.swift"; sourceTree = "<group>"; };
 		A2A5E50B628C80D6F49F27AB /* DailyStatsViewModel+Loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsViewModel+Loading.swift"; sourceTree = "<group>"; };
+		A547C719DFD85E1A8E39A733 /* ModernAlarmViewController+Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModernAlarmViewController+Layout.swift"; sourceTree = "<group>"; };
+		A5C7E1731A85F55794895AF7 /* GlucoseStatsViewController+SensorOutages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+SensorOutages.swift"; sourceTree = "<group>"; };
 		A636B4349EA556E1E16C42AD /* DailyStatsTableView+Cells.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsTableView+Cells.swift"; sourceTree = "<group>"; };
 		A7D55B42A22051DAD69E89D0 /* Pods_LoopFollow.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LoopFollow.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A8671A9C09529A71103A1475 /* TreatmentsTableView+Editing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Editing.swift"; sourceTree = "<group>"; };
+		A8B135CD0EE0DDC335588355 /* AlarmUIRefreshing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmUIRefreshing.swift; sourceTree = "<group>"; };
 		AF4D38CBF029975219466728 /* UserDataStatsView+ChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UserDataStatsView+ChartData.swift"; sourceTree = "<group>"; };
 		B04F8CA9CB690D162D4A5666 /* TreatmentsTableView+Details.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Details.swift"; sourceTree = "<group>"; };
 		B0E6836F88802B9F5E37B15C /* Value1TableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Value1TableViewCell.swift; sourceTree = "<group>"; };
 		B170EDB204752212C8002F11 /* UserProfileImageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileImageManager.swift; sourceTree = "<group>"; };
 		B23722B1A51A4B5C642B2F3A /* DailyStatsSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsSummaryView.swift; sourceTree = "<group>"; };
+		B2AF1FC01FCEED797053B966 /* GlucoseView+Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+Layout.swift"; sourceTree = "<group>"; };
 		B3778447D31E2C5099161B45 /* TrainingSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingSessionsView.swift; sourceTree = "<group>"; };
+		B98226D49FBE1E83308FB4AB /* LowTreatmentsStatsViewController+ComparisonChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LowTreatmentsStatsViewController+ComparisonChart.swift"; sourceTree = "<group>"; };
 		BD61BE5DDD6729B583C9EC81 /* TreatmentsTableView+TableDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+TableDataSource.swift"; sourceTree = "<group>"; };
 		BF09BF07EFBE145565A7B9D8 /* MealAnalysisView+TimeSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+TimeSelection.swift"; sourceTree = "<group>"; };
+		BFCF778244ABD4355B5A53C7 /* LowTreatmentsStatsViewController+Options.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LowTreatmentsStatsViewController+Options.swift"; sourceTree = "<group>"; };
+		C1167C087E528BDF0C617C5E /* GlucoseView+Loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+Loading.swift"; sourceTree = "<group>"; };
+		C1D13CC9B604B2BF8FB2CE1B /* GlucoseStatsViewController+Loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+Loading.swift"; sourceTree = "<group>"; };
+		C2DCA1E77CF99769624DE2E2 /* GlucoseStatsViewController+GlucoseChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+GlucoseChart.swift"; sourceTree = "<group>"; };
 		C373A28404333B4FF524E2C8 /* TreatmentsTableView+RemoteDeletion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+RemoteDeletion.swift"; sourceTree = "<group>"; };
 		C4CF4D91A07599A3CF97DB85 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C6AE077AA29957C7CC65D069 /* ScheduleEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleEntry.swift; sourceTree = "<group>"; };
+		C7823BEBED538CE06011989B /* GlucoseView+Rows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+Rows.swift"; sourceTree = "<group>"; };
 		C7FFEE6838766C3AA48C3379 /* DailyStatsView+Reports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsView+Reports.swift"; sourceTree = "<group>"; };
 		C86546E0CECB983E69447BD1 /* TrainingStatsBarChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingStatsBarChartView.swift; sourceTree = "<group>"; };
+		C98670755CE745F00811C4F2 /* GlucoseView+Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+Models.swift"; sourceTree = "<group>"; };
 		CAC7625AE34A32C73CA44D6A /* UserDataViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDataViewController.swift; sourceTree = "<group>"; };
+		CBAC51820176967982BE848B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		CD579F9947821A4CC3AB2FCF /* ProfileSchedulesViewModel+ChangeHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProfileSchedulesViewModel+ChangeHistory.swift"; sourceTree = "<group>"; };
+		CE1DA4A768C40370D634A338 /* GlucoseStatsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseStatsViewController.swift; sourceTree = "<group>"; };
+		CF0EABA5A63EE77AF09AD73B /* AlarmViewModel+HighGlucoseRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AlarmViewModel+HighGlucoseRows.swift"; sourceTree = "<group>"; };
+		CFB965A370811A9AE86A6139 /* DateAxisFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateAxisFormatter.swift; sourceTree = "<group>"; };
 		D06F12E88A22C95288A77A73 /* AddUserDataView+Calculations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AddUserDataView+Calculations.swift"; sourceTree = "<group>"; };
 		D21AD0C74C94F09DD3253A73 /* ProfileSchedulesView+Analysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProfileSchedulesView+Analysis.swift"; sourceTree = "<group>"; };
+		D3B9D1EF3072F1E2884E158F /* BGCheckView+Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckView+Models.swift"; sourceTree = "<group>"; };
 		D6E4E00A82D94081FD442D44 /* DailyStatsViewModel+Export.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsViewModel+Export.swift"; sourceTree = "<group>"; };
 		D750354954C1FBB0E84360F5 /* UIFont+Traits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIFont+Traits.swift"; sourceTree = "<group>"; };
 		D8D042488D3AB4EA042FCE95 /* ClippyHistoryStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippyHistoryStatsView.swift; sourceTree = "<group>"; };
 		D8D58DE86B26743007B848FD /* DailyStatsViewModel+Summary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsViewModel+Summary.swift"; sourceTree = "<group>"; };
+		DBE3F0B076CF2D100A425D6D /* GlucoseStatsViewController+Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+Models.swift"; sourceTree = "<group>"; };
+		DCEEF91343FE053743A0590D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		DD07B5C829E2F9C400C6A635 /* NightscoutUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutUtils.swift; sourceTree = "<group>"; };
 		DD0C0C5F2C415B9D00DBADDF /* ProfileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileManager.swift; sourceTree = "<group>"; };
 		DD0C0C612C4175FD00DBADDF /* NSProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSProfile.swift; sourceTree = "<group>"; };
@@ -792,17 +933,21 @@
 		DDFF3D842D14279B00BF9D9E /* BackgroundRefreshSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshSettingsView.swift; sourceTree = "<group>"; };
 		DDFF3D862D14280500BF9D9E /* BackgroundRefreshSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshSettingsViewModel.swift; sourceTree = "<group>"; };
 		DDFF3D882D1429AB00BF9D9E /* BackgroundRefreshType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshType.swift; sourceTree = "<group>"; };
+		DF6084B05ED9B6B4CAC69936 /* GlucoseView+Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+Navigation.swift"; sourceTree = "<group>"; };
 		DFBDE0DD6C5CAB5933A4BC28 /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
 		E02D491EB21672CEFD2CCC87 /* TreatmentsTableView+MealAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+MealAnalysis.swift"; sourceTree = "<group>"; };
 		E693F1368395461C0F864304 /* TreatmentsTableView+Refresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Refresh.swift"; sourceTree = "<group>"; };
+		E8B37DB78EAEEB7D4CCE5697 /* AlarmViewModel+TrendRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AlarmViewModel+TrendRows.swift"; sourceTree = "<group>"; };
 		E93F939358FFBDE82D7E8003 /* ProfileSchedulesViewModel+SickDays.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProfileSchedulesViewModel+SickDays.swift"; sourceTree = "<group>"; };
 		EB4578E2BDF82EAFD9ACE25A /* TreatmentsTableView+Loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Loading.swift"; sourceTree = "<group>"; };
 		EB6B277E69991AA4E7DE840F /* DailyStatsTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsTableView.swift; sourceTree = "<group>"; };
 		ECA3EFB4037410B4973BB632 /* Pods-LoopFollow.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LoopFollow.debug.xcconfig"; path = "Target Support Files/Pods-LoopFollow/Pods-LoopFollow.debug.xcconfig"; sourceTree = "<group>"; };
 		ED0F1C806A928463A278C204 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		F3D1CCDC02A8BF197DDB7523 /* GlucoseStatsViewController+SensorChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+SensorChart.swift"; sourceTree = "<group>"; };
 		F4FAA44401F1EF0511909E49 /* BGEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BGEntry.swift; sourceTree = "<group>"; };
 		F54F2637440D6C360C781AEB /* MealAnalysisView+ChartSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+ChartSetup.swift"; sourceTree = "<group>"; };
 		F980238A9463DBF06E93E828 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		FA46388BC5019C0AD236BC40 /* ModernAlarmViewController+Refreshing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModernAlarmViewController+Refreshing.swift"; sourceTree = "<group>"; };
 		FC16A97924996673003D6245 /* NightScout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightScout.swift; sourceTree = "<group>"; };
 		FC16A97C24996747003D6245 /* Alarms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alarms.swift; sourceTree = "<group>"; };
 		FC16A97E249969E2003D6245 /* Graphs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Graphs.swift; sourceTree = "<group>"; };
@@ -958,6 +1103,8 @@
 		FCFEEC9D2486E68E00402A7F /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		FCFEEC9F2488157B00402A7F /* Chart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chart.swift; sourceTree = "<group>"; };
 		FCFEECA1248857A600402A7F /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		FD9B49819FA073F734760F39 /* LowTreatmentsStatsViewController+BarChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LowTreatmentsStatsViewController+BarChart.swift"; sourceTree = "<group>"; };
+		FE75FB3C646BCCD0FE4F1F40 /* BGCheckEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BGCheckEntry.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -1020,6 +1167,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		00587020C719479D65C5F1A8 /* Log */ = {
+			isa = PBXGroup;
+			children = (
+				80FAB85DF7BFF01782312DCE /* GlucoseView+Filtering.swift */,
+				B2AF1FC01FCEED797053B966 /* GlucoseView+Layout.swift */,
+				C1167C087E528BDF0C617C5E /* GlucoseView+Loading.swift */,
+				DF6084B05ED9B6B4CAC69936 /* GlucoseView+Navigation.swift */,
+				434FEE48D53D070EA40F6C5D /* GlucoseView+Refresh.swift */,
+				C7823BEBED538CE06011989B /* GlucoseView+Rows.swift */,
+				903A479499E5A85A4E4AB481 /* GlucoseView+Summary.swift */,
+				41956711BFA6F24CAE5515F0 /* GlucoseView+Table.swift */,
+				6546871C070B15C2FFE4181F /* GlucoseView+TrioDecision.swift */,
+				6582C4B62ED23B490047658C /* GlucoseView.swift */,
+			);
+			path = Log;
+			sourceTree = "<group>";
+		};
 		11047FF8E04079CF8220E513 /* Training */ = {
 			isa = PBXGroup;
 			children = (
@@ -1029,6 +1193,15 @@
 				0189EE44A57AD3835B0BB655 /* TrainingStatsView.swift */,
 			);
 			path = Training;
+			sourceTree = "<group>";
+		};
+		139EDD9CFB3E31D5EB4E91F6 /* Charts */ = {
+			isa = PBXGroup;
+			children = (
+				CFB965A370811A9AE86A6139 /* DateAxisFormatter.swift */,
+				155F97988FBAC1CB4118D8F9 /* DextroBgMarker.swift */,
+			);
+			path = Charts;
 			sourceTree = "<group>";
 		};
 		1B05F1982A630E63801A89EF /* Clippy */ = {
@@ -1061,6 +1234,30 @@
 				851A3EE1A969854E89F8D0CD /* ProfileSettingsLogModal.swift */,
 			);
 			path = Navigation;
+			sourceTree = "<group>";
+		};
+		2524CD92A13BF9364CF3A942 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				DBE3F0B076CF2D100A425D6D /* GlucoseStatsViewController+Models.swift */,
+				C98670755CE745F00811C4F2 /* GlucoseView+Models.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		33DA99BDE75E567D21E4CBAB /* Log */ = {
+			isa = PBXGroup;
+			children = (
+				7828D106D8E6D96F20EB8FFC /* BGCheckView+FingerstickLoading.swift */,
+				23A8B8D8DD2947B9E2E01944 /* BGCheckView+Layout.swift */,
+				68B1017F1EA7EE0DFDADC72E /* BGCheckView+Loading.swift */,
+				A0FA0C74009427F193571174 /* BGCheckView+LowTreatmentLoading.swift */,
+				2B1529B49EF0288F5EDBE664 /* BGCheckView+Navigation.swift */,
+				19E52680AEA54759BD14D271 /* BGCheckView+Statistics.swift */,
+				1784758FBCEFF40DEB83C00F /* BGCheckView+Table.swift */,
+				653096992EE1996100117528 /* BGCheckView.swift */,
+			);
+			path = Log;
 			sourceTree = "<group>";
 		};
 		4F4275CDAA5E680EB90F3D81 /* Models */ = {
@@ -1109,26 +1306,23 @@
 		650A60712EE0D17A00EF4C93 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				657BB13B2F3605D5009E2667 /* ActiveAlarmsViewController.swift */,
+				DC9C0AF1D15AB7E8016DFA4E /* Alarms */,
+				EE2087CB749436D62B42E10D /* BGChecks */,
+				D8AB471FDCF12FE81093AF3D /* Glucose */,
+				A34050A2CAB1FAC912566F3C /* MealAnalysis */,
+				F9B53BAE585E36C2816ACE52 /* ProfileSchedules */,
+				F30FFAAEBF33A04B4A22F512 /* Treatments */,
 				655B23042EDE2A3F0092DBDE /* AddManualPumpView.swift */,
 				6540EF952D7DD4C5008BC98D /* AddManualSensorNoteView.swift */,
 				655DF7972F41EFB00085EC78 /* AlarmStatsViewController.swift */,
 				6537566C2F10224E0061AF34 /* BatteryLogView.swift */,
-				653096992EE1996100117528 /* BGCheckView.swift */,
 				656EA4E22F27A5BF0075771C /* EnteredByView.swift */,
-				6582C4B62ED23B490047658C /* GlucoseView.swift */,
-				650543F52EE1B34F00C38C06 /* LowTreatmentsStatsViewController.swift */,
-				A34050A2CAB1FAC912566F3C /* MealAnalysis */,
 				654C042D305383FC00EA8C12 /* MemoryLogView.swift */,
-				653A8D972F33F23A0026A491 /* ModernAlarmViewController.swift */,
-				653A8D952F33F1FA0026A491 /* ModernAlarmViewModel.swift */,
-				F9B53BAE585E36C2816ACE52 /* ProfileSchedules */,
 				655B23062EDE2A610092DBDE /* PumpHistoryView.swift */,
 				6540EF932D7DCDD4008BC98D /* SensorHistoryView.swift */,
 				6578DBD22EB8DD3C00AF4942 /* SnoozeStatusView.swift */,
 				653A8D992F33F37B0026A491 /* SoundSelectionViewController.swift */,
 				65BFAF1D2DA6E8FB00947A66 /* SyncNewSensorView.swift */,
-				F30FFAAEBF33A04B4A22F512 /* Treatments */,
 				65EBBB522DA5526000212D5C /* TrioOrefView.swift */,
 				65EBBB502DA5520900212D5C /* TrioOrefViewModel.swift */,
 				654B9C802D6B55D500095D89 /* TrioPreferencesView.swift */,
@@ -1283,6 +1477,40 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		7507562D0983FFCF36B13A7B /* Modern */ = {
+			isa = PBXGroup;
+			children = (
+				498D804BE1C2548BA5FF3266 /* ModernAlarmViewController+Categories.swift */,
+				72C9221F72C7579237B1A76D /* ModernAlarmViewController+DataSource.swift */,
+				3BA83F2FF6C02126FBCE8560 /* ModernAlarmViewController+DatePicker.swift */,
+				A547C719DFD85E1A8E39A733 /* ModernAlarmViewController+Layout.swift */,
+				2AC1270867D2427E25041C7E /* ModernAlarmViewController+Navigation.swift */,
+				FA46388BC5019C0AD236BC40 /* ModernAlarmViewController+Refreshing.swift */,
+				7530D7E7B116C91A3003F7D4 /* ModernAlarmViewController+Table.swift */,
+				653A8D972F33F23A0026A491 /* ModernAlarmViewController.swift */,
+			);
+			path = Modern;
+			sourceTree = "<group>";
+		};
+		7CB8B895601E7818EBAAF179 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				8FB7749BB0891A47A15A1272 /* ActiveAlarmModels.swift */,
+				A8B135CD0EE0DDC335588355 /* AlarmUIRefreshing.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		7EB7AA123D7879CC7345CD9C /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				653A8D952F33F1FA0026A491 /* ModernAlarmViewModel.swift */,
+				E83CCE981DB5E4AFFFA27626 /* Rows */,
+				F8FACAED09C85E36FAF37E1D /* Updates */,
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
 		82BF54116BF2C2B11C6750A3 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -1302,6 +1530,20 @@
 			path = TimeWindow;
 			sourceTree = "<group>";
 		};
+		871119536E402552E379738B /* Statistics */ = {
+			isa = PBXGroup;
+			children = (
+				3A970A9CA561DF6AEB0CBFEE /* GlucoseStatsViewController+ChartLayout.swift */,
+				8E340C066CA78D6CAB622C1B /* GlucoseStatsViewController+DailyCounts.swift */,
+				183DA90D3FB49FEB703F9596 /* GlucoseStatsViewController+Filtering.swift */,
+				C2DCA1E77CF99769624DE2E2 /* GlucoseStatsViewController+GlucoseChart.swift */,
+				C1D13CC9B604B2BF8FB2CE1B /* GlucoseStatsViewController+Loading.swift */,
+				484B289FFD35060232631B87 /* GlucoseStatsViewController+Summary.swift */,
+				CE1DA4A768C40370D634A338 /* GlucoseStatsViewController.swift */,
+			);
+			path = Statistics;
+			sourceTree = "<group>";
+		};
 		8A7EF03A9905821ECCB5111A /* Editor */ = {
 			isa = PBXGroup;
 			children = (
@@ -1313,6 +1555,14 @@
 				38B0C3FFBD122DA164B045FB /* UserProfileWalshView.swift */,
 			);
 			path = Editor;
+			sourceTree = "<group>";
+		};
+		8AE6BB2930C0763EEC8D8CBE /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				37149EC1FB494C736B7AE029 /* GlucoseView+ReasonFormatting.swift */,
+			);
+			path = Helpers;
 			sourceTree = "<group>";
 		};
 		8E32230C453C93FDCE59C2B9 /* Pods */ = {
@@ -1386,6 +1636,16 @@
 			path = HealthData;
 			sourceTree = "<group>";
 		};
+		9822233456FD23761AC17F37 /* Active */ = {
+			isa = PBXGroup;
+			children = (
+				77B9913AFC4603704D9994A4 /* ActiveAlarmsViewController+Rows.swift */,
+				292A7796B993C38C8C3CE57E /* ActiveAlarmsViewController+Table.swift */,
+				657BB13B2F3605D5009E2667 /* ActiveAlarmsViewController.swift */,
+			);
+			path = Active;
+			sourceTree = "<group>";
+		};
 		9D9F49E6627DE09511BCFA9E /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
@@ -1393,6 +1653,15 @@
 				2F164E844AA4B02DFCF99E32 /* MealAnalysisView+Totals.swift */,
 			);
 			path = Analysis;
+			sourceTree = "<group>";
+		};
+		A19E1D8921BF6D79DD9D2501 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FE75FB3C646BCCD0FE4F1F40 /* BGCheckEntry.swift */,
+				D3B9D1EF3072F1E2884E158F /* BGCheckView+Models.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 		A2D179C1CB11E7811F80C588 /* Models */ = {
@@ -1453,6 +1722,20 @@
 			path = Charts;
 			sourceTree = "<group>";
 		};
+		D11DD9326C7072AE724C8251 /* FingerstickStats */ = {
+			isa = PBXGroup;
+			children = (
+				9FBF7944B69A12896740BFCD /* BGCheckStatsViewController+ChartLayout.swift */,
+				75420F0CAC46884122288613 /* BGCheckStatsViewController+CountChart.swift */,
+				89BC7A52667ABD44DCC11897 /* BGCheckStatsViewController+Filtering.swift */,
+				40514E385D6BEA0A3F2393FD /* BGCheckStatsViewController+Options.swift */,
+				1E609DFB312762F7AFBC5527 /* BGCheckStatsViewController+Summary.swift */,
+				567145A0239C6E0CE6FAC1AD /* BGCheckStatsViewController+TimeChart.swift */,
+				6F9531447988F2159C7B00D8 /* BGCheckStatsViewController.swift */,
+			);
+			path = FingerstickStats;
+			sourceTree = "<group>";
+		};
 		D4D76E2E804821F2552C17A4 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -1474,6 +1757,31 @@
 				654454D22D6E8AD90015BC5E /* ProfileSchedulesViewModel.swift */,
 			);
 			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		D8AB471FDCF12FE81093AF3D /* Glucose */ = {
+			isa = PBXGroup;
+			children = (
+				CBAC51820176967982BE848B /* README.md */,
+				8AE6BB2930C0763EEC8D8CBE /* Helpers */,
+				00587020C719479D65C5F1A8 /* Log */,
+				2524CD92A13BF9364CF3A942 /* Models */,
+				F7BF72A2E204635EEF67B15D /* SensorErrors */,
+				871119536E402552E379738B /* Statistics */,
+			);
+			path = Glucose;
+			sourceTree = "<group>";
+		};
+		DC9C0AF1D15AB7E8016DFA4E /* Alarms */ = {
+			isa = PBXGroup;
+			children = (
+				23F8E97A43CB8603680B8E2C /* README.md */,
+				9822233456FD23761AC17F37 /* Active */,
+				7CB8B895601E7818EBAAF179 /* Models */,
+				7507562D0983FFCF36B13A7B /* Modern */,
+				7EB7AA123D7879CC7345CD9C /* ViewModel */,
+			);
+			path = Alarms;
 			sourceTree = "<group>";
 		};
 		DD0C0C692C4852A100DBADDF /* Metric */ = {
@@ -1730,6 +2038,36 @@
 			path = BT;
 			sourceTree = "<group>";
 		};
+		E6C5790F2AA7E1A1C24E9752 /* LowTreatmentStats */ = {
+			isa = PBXGroup;
+			children = (
+				FD9B49819FA073F734760F39 /* LowTreatmentsStatsViewController+BarChart.swift */,
+				47F79C014DE68D6A9446948A /* LowTreatmentsStatsViewController+ChartLayout.swift */,
+				B98226D49FBE1E83308FB4AB /* LowTreatmentsStatsViewController+ComparisonChart.swift */,
+				4CCB178428CCE2A6E7210686 /* LowTreatmentsStatsViewController+Filtering.swift */,
+				BFCF778244ABD4355B5A53C7 /* LowTreatmentsStatsViewController+Options.swift */,
+				5C5E75C4C4226848FDEF7BC0 /* LowTreatmentsStatsViewController+Summary.swift */,
+				429F05118721B967AB9648D4 /* LowTreatmentsStatsViewController+TimeChart.swift */,
+				650543F52EE1B34F00C38C06 /* LowTreatmentsStatsViewController.swift */,
+				139EDD9CFB3E31D5EB4E91F6 /* Charts */,
+			);
+			path = LowTreatmentStats;
+			sourceTree = "<group>";
+		};
+		E83CCE981DB5E4AFFFA27626 /* Rows */ = {
+			isa = PBXGroup;
+			children = (
+				5E330F7D84C06075CCB702DB /* AlarmViewModel+GeneralRows.swift */,
+				A1E15EC88CFF05A0E2F69D74 /* AlarmViewModel+HardwareRows.swift */,
+				CF0EABA5A63EE77AF09AD73B /* AlarmViewModel+HighGlucoseRows.swift */,
+				7C79009E7857F8F955585A06 /* AlarmViewModel+LowGlucoseRows.swift */,
+				1105025B687E11CF93F3558D /* AlarmViewModel+TherapyRows.swift */,
+				E8B37DB78EAEEB7D4CCE5697 /* AlarmViewModel+TrendRows.swift */,
+				A1FF58500E0ED715BCD971C7 /* AlarmViewModel+TrioRows.swift */,
+			);
+			path = Rows;
+			sourceTree = "<group>";
+		};
 		E9168CEB050C6ED949066D64 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
@@ -1737,6 +2075,18 @@
 				7E9C79B56F7A6D02C8766C6F /* TreatmentsTableView+Formatting.swift */,
 			);
 			path = Helpers;
+			sourceTree = "<group>";
+		};
+		EE2087CB749436D62B42E10D /* BGChecks */ = {
+			isa = PBXGroup;
+			children = (
+				DCEEF91343FE053743A0590D /* README.md */,
+				D11DD9326C7072AE724C8251 /* FingerstickStats */,
+				33DA99BDE75E567D21E4CBAB /* Log */,
+				E6C5790F2AA7E1A1C24E9752 /* LowTreatmentStats */,
+				A19E1D8921BF6D79DD9D2501 /* Models */,
+			);
+			path = BGChecks;
 			sourceTree = "<group>";
 		};
 		F30FFAAEBF33A04B4A22F512 /* Treatments */ = {
@@ -1760,6 +2110,30 @@
 				E9168CEB050C6ED949066D64 /* Helpers */,
 			);
 			path = Treatments;
+			sourceTree = "<group>";
+		};
+		F7BF72A2E204635EEF67B15D /* SensorErrors */ = {
+			isa = PBXGroup;
+			children = (
+				F3D1CCDC02A8BF197DDB7523 /* GlucoseStatsViewController+SensorChart.swift */,
+				A5C7E1731A85F55794895AF7 /* GlucoseStatsViewController+SensorOutages.swift */,
+				34BEF7C7D009580BFAF7491D /* GlucoseView+NearestReading.swift */,
+				0A350BF77CA74C774D6D841B /* GlucoseView+SensorAlerts.swift */,
+				0E40D16FEAF23FEB54B2DF9C /* GlucoseView+SensorLoading.swift */,
+				468ED4132BD4410A9F9DC69C /* GlucoseView+SensorNotes.swift */,
+			);
+			path = SensorErrors;
+			sourceTree = "<group>";
+		};
+		F8FACAED09C85E36FAF37E1D /* Updates */ = {
+			isa = PBXGroup;
+			children = (
+				5F0C166B3EFB92C6D936A349 /* AlarmViewModel+DateUpdates.swift */,
+				218010D412154D34CB602F63 /* AlarmViewModel+OptionUpdates.swift */,
+				41DA9523281851DC8117F6A9 /* AlarmViewModel+ToggleUpdates.swift */,
+				36EB833B40F2F6BD651D6398 /* AlarmViewModel+ValueUpdates.swift */,
+			);
+			path = Updates;
 			sourceTree = "<group>";
 		};
 		F9B53BAE585E36C2816ACE52 /* ProfileSchedules */ = {
@@ -2578,12 +2952,59 @@
 				65AD37922F7022F300F942A8 /* Training.swift in Sources */,
 				DD493AD52ACF2109009A6922 /* ResumePump.swift in Sources */,
 				6530969A2EE1996300117528 /* BGCheckView.swift in Sources */,
+				1403A2D12BBC3B58EA0D0554 /* BGCheckStatsViewController+ChartLayout.swift in Sources */,
+				9D874F2DBDB1CB897FFFA253 /* BGCheckStatsViewController+CountChart.swift in Sources */,
+				88D33B2824FACA4B32B751DB /* BGCheckStatsViewController+Filtering.swift in Sources */,
+				A136284FA5CD7457BD846C80 /* BGCheckStatsViewController+Options.swift in Sources */,
+				54158A28376F8632F0E6143F /* BGCheckStatsViewController+Summary.swift in Sources */,
+				D41F7180F9E1B5718F17F200 /* BGCheckStatsViewController+TimeChart.swift in Sources */,
+				9D150EC0DEA9811BA094AF97 /* BGCheckStatsViewController.swift in Sources */,
+				824252493BCE440AF4BDB6C8 /* BGCheckView+FingerstickLoading.swift in Sources */,
+				F338E7D1F231CA664173CC16 /* BGCheckView+Layout.swift in Sources */,
+				2BDAD432473E6C5327DFB69C /* BGCheckView+Loading.swift in Sources */,
+				0AEB98B80D0584F621C5D0F0 /* BGCheckView+LowTreatmentLoading.swift in Sources */,
+				767AEB4C90617CE3941EEF83 /* BGCheckView+Navigation.swift in Sources */,
+				8C9F485120AEE965331A6977 /* BGCheckView+Statistics.swift in Sources */,
+				49B48BE6857F85FA6761A45E /* BGCheckView+Table.swift in Sources */,
+				733B82180C999CFF0A775B70 /* DateAxisFormatter.swift in Sources */,
+				0EBE184BF3CE4469901583BF /* DextroBgMarker.swift in Sources */,
+				DE9A0DFB14F92D894870C3BA /* LowTreatmentsStatsViewController+BarChart.swift in Sources */,
+				A339ED582171BE8FADBDEE5C /* LowTreatmentsStatsViewController+ChartLayout.swift in Sources */,
+				847B5658FD4396059270BA5E /* LowTreatmentsStatsViewController+ComparisonChart.swift in Sources */,
+				780F868D5FF1B2CE7C4E3CDF /* LowTreatmentsStatsViewController+Filtering.swift in Sources */,
+				80D524CCB8A77D21F9F6B3DB /* LowTreatmentsStatsViewController+Options.swift in Sources */,
+				8CC9F89D02B0B1267AB65966 /* LowTreatmentsStatsViewController+Summary.swift in Sources */,
+				AEAD6668BA828A6876ABCA11 /* LowTreatmentsStatsViewController+TimeChart.swift in Sources */,
+				EE245B4FE5046CC20838F0FE /* BGCheckEntry.swift in Sources */,
+				4F501D85EA1E5A3D7894483A /* BGCheckView+Models.swift in Sources */,
 				DDCF979624C1443C002C9752 /* GeneralSettingsViewController.swift in Sources */,
 				FCC0FAC224922A22003E610E /* DictionaryKeyPath.swift in Sources */,
 				DD493AD72ACF2139009A6922 /* SuspendPump.swift in Sources */,
 				FC9788182485969B00A7906C /* AppDelegate.swift in Sources */,
 				65304F7E2ED3A2F200B457AC /* SnoozeMuteIntentHelper.swift in Sources */,
 				657BB13C2F3605D9009E2667 /* ActiveAlarmsViewController.swift in Sources */,
+				2BC1EAF12012FF76723605A4 /* ActiveAlarmsViewController+Rows.swift in Sources */,
+				006AB2ABBCB70B0C9D3A41C4 /* ActiveAlarmsViewController+Table.swift in Sources */,
+				CE3EA0DB90CBC49120346653 /* ActiveAlarmModels.swift in Sources */,
+				AC62CAEC3E3EC4E7DE88549A /* AlarmUIRefreshing.swift in Sources */,
+				29B8F44EBA367D3E7FACEC36 /* ModernAlarmViewController+Categories.swift in Sources */,
+				AD231E0FC03907E5A7488135 /* ModernAlarmViewController+DataSource.swift in Sources */,
+				E0B6C36F322499CCC3F82472 /* ModernAlarmViewController+DatePicker.swift in Sources */,
+				EA424D0D012F0F0CC8AD60C4 /* ModernAlarmViewController+Layout.swift in Sources */,
+				5D9C16CE2C1A5173DFC69806 /* ModernAlarmViewController+Navigation.swift in Sources */,
+				9BD5F717A95C1F95D9789FDB /* ModernAlarmViewController+Refreshing.swift in Sources */,
+				09FC339E7A882789973B40D0 /* ModernAlarmViewController+Table.swift in Sources */,
+				8BD4A7E07C218429F9BD4F20 /* AlarmViewModel+GeneralRows.swift in Sources */,
+				A4F251EFD490D22E638A04AA /* AlarmViewModel+HardwareRows.swift in Sources */,
+				4006D98863FCB61AA5CD5DE0 /* AlarmViewModel+HighGlucoseRows.swift in Sources */,
+				13A20C49B74126B2E8A13ED7 /* AlarmViewModel+LowGlucoseRows.swift in Sources */,
+				80695AD842E7EE302BF5AF28 /* AlarmViewModel+TherapyRows.swift in Sources */,
+				D1C1B3D6185A012C045B5832 /* AlarmViewModel+TrendRows.swift in Sources */,
+				EAE15D3ACB8C67747C9F9CC4 /* AlarmViewModel+TrioRows.swift in Sources */,
+				63195C68D3FA59A53BC5C95A /* AlarmViewModel+DateUpdates.swift in Sources */,
+				1CF74215241CAD97CFAA6530 /* AlarmViewModel+OptionUpdates.swift in Sources */,
+				0778FB05331F6144194B7AB3 /* AlarmViewModel+ToggleUpdates.swift in Sources */,
+				FAB3E2BB0F7159AC25F4AAC2 /* AlarmViewModel+ValueUpdates.swift in Sources */,
 				DDD10F072C529DE800D76A8E /* Observable.swift in Sources */,
 				6540EF942D7DCDD6008BC98D /* SensorHistoryView.swift in Sources */,
 				DDFF3D852D14279B00BF9D9E /* BackgroundRefreshSettingsView.swift in Sources */,
@@ -2702,6 +3123,31 @@
 				DD493ADD2ACF21E0009A6922 /* Basals.swift in Sources */,
 				FC16A98124996C07003D6245 /* DateTime.swift in Sources */,
 				6582C4B72ED23B4F0047658C /* GlucoseView.swift in Sources */,
+				EDFB6513A974B9A336F21504 /* GlucoseView+ReasonFormatting.swift in Sources */,
+				03E291C4F6240335D0CF166B /* GlucoseView+Filtering.swift in Sources */,
+				25C1CD52F28A3970A551B0DA /* GlucoseView+Layout.swift in Sources */,
+				152C1152D5723F88F75DE80B /* GlucoseView+Loading.swift in Sources */,
+				2B4FB15801AB4640218793FA /* GlucoseView+Navigation.swift in Sources */,
+				7E450BE3D155A7D33370EC36 /* GlucoseView+Refresh.swift in Sources */,
+				BC7625BB7F5EC9C0D70B369E /* GlucoseView+Rows.swift in Sources */,
+				040B514BA92D2CE39ABE344E /* GlucoseView+Summary.swift in Sources */,
+				2461C45EE82EBFC03C2CF089 /* GlucoseView+Table.swift in Sources */,
+				3E929F889F034BB7450222AE /* GlucoseView+TrioDecision.swift in Sources */,
+				4F747F4AE97448433235E84C /* GlucoseStatsViewController+Models.swift in Sources */,
+				184FA7D1D529084D5ACB9FE1 /* GlucoseView+Models.swift in Sources */,
+				ED0CA50B936080B6A7E9FE46 /* GlucoseStatsViewController+SensorChart.swift in Sources */,
+				9B76B7032F82FCC1CD42566B /* GlucoseStatsViewController+SensorOutages.swift in Sources */,
+				A91F6D19990411B0E7ECBB4F /* GlucoseView+NearestReading.swift in Sources */,
+				703F0ABFED7B6937597C2CC6 /* GlucoseView+SensorAlerts.swift in Sources */,
+				AB8CD6FFC7E7C937E35D7854 /* GlucoseView+SensorLoading.swift in Sources */,
+				19A72B059C8F98D438C620B0 /* GlucoseView+SensorNotes.swift in Sources */,
+				21BE19BF466722C0ED28CEEF /* GlucoseStatsViewController+ChartLayout.swift in Sources */,
+				31D76C25411A9E0E10C85DCE /* GlucoseStatsViewController+DailyCounts.swift in Sources */,
+				960C22F1AA8F8476CA20761F /* GlucoseStatsViewController+Filtering.swift in Sources */,
+				27890869D7D357D7C7F67649 /* GlucoseStatsViewController+GlucoseChart.swift in Sources */,
+				85A5EA08151DB10A49BE05E8 /* GlucoseStatsViewController+Loading.swift in Sources */,
+				3A039822E51B4B725BE334BB /* GlucoseStatsViewController+Summary.swift in Sources */,
+				B3CC2E9DD89C56E451A81DCD /* GlucoseStatsViewController.swift in Sources */,
 				FC3CAB022493B6220068A152 /* BackgroundTaskAudio.swift in Sources */,
 				65CDBDD12DBD296800587289 /* NSCacheTask.swift in Sources */,
 				651C9D2E2ED5D2710077D40A /* StatsDataService.swift in Sources */,
