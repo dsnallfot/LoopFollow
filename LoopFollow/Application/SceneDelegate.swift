@@ -42,10 +42,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             if let vc = viewControllers[i] as? SettingsViewController {
                vc.appStateController = appStateController
             }
-             /*
-            if let vc = viewControllers[i] as? AlarmViewController {
-               vc.appStateController = appStateController
-            }*/
             if let vc = viewControllers[i] as? SnoozeViewController {
                vc.appStateController = appStateController
             }

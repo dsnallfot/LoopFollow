@@ -665,22 +665,6 @@
             </objects>
             <point key="canvasLocation" x="-1042" y="746"/>
         </scene>
-        <!--Alarm View Controller-->
-        <scene sceneID="a12-B3-C4d">
-            <objects>
-                <viewController storyboardIdentifier="AlarmViewController" id="b34-C5-D6e" customClass="AlarmViewController" customModule="Loop_Follow" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="c56-D7-E8f">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="d78-E9-F0g"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                    </view>
-                    <navigationItem key="navigationItem" id="e90-F1-G2h"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="f12-G3-H4i" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="2631.8840579710145" y="745.98214285714278"/>
-        </scene>
         <!--Settings View Controller-->
         <scene sceneID="ORV-wr-Fd3">
             <objects>

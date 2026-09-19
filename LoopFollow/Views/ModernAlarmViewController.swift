@@ -3,7 +3,7 @@ import Combine
 
 /// Protocol used by external callers (SnoozeViewController, SAge, Alarms, intents, etc.)
 /// to trigger a UI refresh of alarm-related state (snooze/mute) without knowing about
-/// the underlying implementation (Eureka vs ModernAlarmViewController).
+/// the underlying view implementation.
 protocol AlarmUIRefreshing: AnyObject {
     // Legacy API utan value-parameter (många call sites använder denna)
     func reloadSnoozeTime(key: String, setNil: Bool)
@@ -512,8 +512,7 @@ class ModernAlarmViewController: ThemedViewController, UITableViewDelegate {
 // MARK: - Legacy AlarmUIRefreshing API
 // Dessa metoder anropas från andra delar av appen (SnoozeViewController, SAge, Alarms,
 // SnoozeMuteIntentHelper, SnoozeStatusView) via ViewControllerManager.shared.alarmViewController.
-// I den gamla Eureka-baserade AlarmViewController uppdaterades specifika rader via taggar;
-// i ModernAlarmViewController bygger vi istället om snapshoten baserat på UserDefaults.
+// Bygg om snapshoten baserat på UserDefaults när larmstatus ändras.
 extension ModernAlarmViewController: AlarmUIRefreshing {
 
     // 2-param variant: används där datumet inte bryr sig, bara UI-refresh
