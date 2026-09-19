@@ -785,7 +785,7 @@ extension MainViewController {
         var audioDuringCall = true
         if !UserDefaultsRepository.alertAudioDuringPhone.value && isOnPhoneCall() { audioDuringCall = false }
         
-        guard let snoozer = self.tabBarController!.viewControllers?[2] as? SnoozeViewController else { return }
+        guard let snoozer = self.tabBarController?.viewControllers?.compactMap({ $0 as? SnoozeViewController }).first else { return }
         snoozer.updateDisplayWhenTriggered(
             bgVal: Localizer.toDisplayUnits(String(bgData[bgData.count - 1].sgv)),
             directionVal: latestDirectionString,
@@ -835,7 +835,7 @@ extension MainViewController {
                 audioDuringCall = false
             }
             
-            guard let snoozer = self.tabBarController?.viewControllers?[2] as? SnoozeViewController else {
+            guard let snoozer = self.tabBarController?.viewControllers?.compactMap({ $0 as? SnoozeViewController }).first else {
                 return
             }
             
@@ -901,7 +901,7 @@ extension MainViewController {
         alarmPlayingTimer?.invalidate()
         alarmPlayingTimer = nil
         AlarmSound.whichAlarm = "none"
-        guard let snoozer = self.tabBarController!.viewControllers?[2] as? SnoozeViewController else { return }
+        guard let snoozer = self.tabBarController?.viewControllers?.compactMap({ $0 as? SnoozeViewController }).first else { return }
         let iobString = latestIOB?.formattedValue() ?? "--"
         let cobString = latestCOB?.formattedValue() ?? "--"
         snoozer.updateDisplayWhenTriggered(
@@ -1087,7 +1087,8 @@ extension MainViewController {
     }
     
     func checkQuietHours() {
-        if UserDefaultsRepository.quietHourStart.value == nil || UserDefaultsRepository.quietHourEnd.value == nil { return }
+        guard let start = UserDefaultsRepository.quietHourStart.value,
+              let end = UserDefaultsRepository.quietHourEnd.value else { return }
         
         let today = Date()
         let todayCalendar = Calendar.current
@@ -1095,75 +1096,71 @@ extension MainViewController {
         let minute = todayCalendar.component(.minute, from: today)
         let todayMinutes = (60 * hour) + minute
         
-        let start = UserDefaultsRepository.quietHourStart.value
         let startCalendar = Calendar.current
-        let startHour = startCalendar.component(.hour, from: start!)
-        let startMinute = startCalendar.component(.minute, from: start!)
+        let startHour = startCalendar.component(.hour, from: start)
+        let startMinute = startCalendar.component(.minute, from: start)
         let startMinutes = (60 * startHour) + startMinute
         
-        let end = UserDefaultsRepository.quietHourEnd.value
         let endCalendar = Calendar.current
-        let endHour = endCalendar.component(.hour, from: end!)
-        let endMinute = endCalendar.component(.minute, from: end!)
+        let endHour = endCalendar.component(.hour, from: end)
+        let endMinute = endCalendar.component(.minute, from: end)
         let endMinutes = (60 * endHour) + endMinute
         
         if todayMinutes >= startMinutes {
             let tomorrow = Date().addingTimeInterval(86400)
             let tomorrowCalendar = Calendar.current
-            let end = UserDefaultsRepository.quietHourEnd.value
             let endCalendar = Calendar.current
             
             var components = DateComponents()
             components.month = tomorrowCalendar.component(.month, from: tomorrow)
             components.day = tomorrowCalendar.component(.day, from: tomorrow)
             components.year = tomorrowCalendar.component(.year, from: tomorrow)
-            components.hour = endCalendar.component(.hour, from: end!)
-            components.minute = endCalendar.component(.minute, from: end!)
-            components.second = endCalendar.component(.second, from: end!)
+            components.hour = endCalendar.component(.hour, from: end)
+            components.minute = endCalendar.component(.minute, from: end)
+            components.second = endCalendar.component(.second, from: end)
             let snoozeCalendar = Calendar.current
-            let snoozeTime = snoozeCalendar.date(from: components)
+            guard let snoozeTime = snoozeCalendar.date(from: components) else { return }
             
             UserDefaultsRepository.nightTime.value = true
-            guard let snoozer = self.tabBarController!.viewControllers?[2] as? SnoozeViewController else { return }
-            snoozer.setPresnoozeNight(snoozeTime: snoozeTime!)
+            guard let snoozer = self.tabBarController?.viewControllers?.compactMap({ $0 as? SnoozeViewController }).first else { return }
+            snoozer.setPresnoozeNight(snoozeTime: snoozeTime)
         } else if todayMinutes < endMinutes {
             let today = Date()
             let todayCalendar = Calendar.current
-            let end = UserDefaultsRepository.quietHourEnd.value
             let endCalendar = Calendar.current
             
             var components = DateComponents()
             components.month = todayCalendar.component(.month, from: today)
             components.day = todayCalendar.component(.day, from: today)
             components.year = todayCalendar.component(.year, from: today)
-            components.hour = endCalendar.component(.hour, from: end!)
-            components.minute = endCalendar.component(.minute, from: end!)
-            components.second = endCalendar.component(.second, from: end!)
+            components.hour = endCalendar.component(.hour, from: end)
+            components.minute = endCalendar.component(.minute, from: end)
+            components.second = endCalendar.component(.second, from: end)
             let snoozeCalendar = Calendar.current
-            let snoozeTime = snoozeCalendar.date(from: components)
+            guard let snoozeTime = snoozeCalendar.date(from: components) else { return }
             
             UserDefaultsRepository.nightTime.value = true
-            guard let snoozer = self.tabBarController!.viewControllers?[2] as? SnoozeViewController else { return }
-            snoozer.setPresnoozeNight(snoozeTime: snoozeTime!)
+            guard let snoozer = self.tabBarController?.viewControllers?.compactMap({ $0 as? SnoozeViewController }).first else { return }
+            snoozer.setPresnoozeNight(snoozeTime: snoozeTime)
         } else {
             let today = Date()
             let todayCalendar = Calendar.current
-            let end = UserDefaultsRepository.quietHourStart.value
+            let end = start
             let endCalendar = Calendar.current
             
             var components = DateComponents()
             components.month = todayCalendar.component(.month, from: today)
             components.day = todayCalendar.component(.day, from: today)
             components.year = todayCalendar.component(.year, from: today)
-            components.hour = endCalendar.component(.hour, from: end!)
-            components.minute = endCalendar.component(.minute, from: end!)
-            components.second = endCalendar.component(.second, from: end!)
+            components.hour = endCalendar.component(.hour, from: end)
+            components.minute = endCalendar.component(.minute, from: end)
+            components.second = endCalendar.component(.second, from: end)
             let snoozeCalendar = Calendar.current
-            let snoozeTime = snoozeCalendar.date(from: components)
+            guard let snoozeTime = snoozeCalendar.date(from: components) else { return }
             
             UserDefaultsRepository.nightTime.value = false
-            guard let snoozer = self.tabBarController!.viewControllers?[2] as? SnoozeViewController else { return }
-            snoozer.setPreSnoozeDay(snoozeTime: snoozeTime!)
+            guard let snoozer = self.tabBarController?.viewControllers?.compactMap({ $0 as? SnoozeViewController }).first else { return }
+            snoozer.setPreSnoozeDay(snoozeTime: snoozeTime)
         }
         
     }
