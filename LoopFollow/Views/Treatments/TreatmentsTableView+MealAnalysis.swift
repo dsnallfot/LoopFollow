@@ -1,6 +1,6 @@
 import UIKit
 
-// Event model is declared in MealAnalysisView.swift
+// Event model is declared in MealAnalysis/Models/Event.swift
 extension TreatmentsTableView {
     @objc func mealAnalysisButtonTapped() {
         let events = buildEventsArray()

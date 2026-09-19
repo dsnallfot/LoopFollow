@@ -2213,7 +2213,7 @@ extension MainViewController {
             let line2FPU = "Kolhydratersekvivalenter " + formatter.string(from: NSNumber(value: carbData[i].value))! + " g"
             let glucose = findNearestBGbyTime(needle: dateTimeStamp, haystack: bgData, startingIndex: 0).sgv
             let dot = CarbChartDataEntry(x: Double(dateTimeStamp), y: glucose - 20, data: formatPillTextExtraLine(line1: (foodType.isEmpty ? "Fett/Protein" : "\(foodType)"), line2: (foodType.isEmpty ? line2FPU : line2), time: dateTimeStamp))
-            dot.graphLabel = valueStringBase + "g " + (foodType.isEmpty ? "FPU" : foodType)
+            dot.graphLabel = (foodType.isEmpty ? "FPU" : foodType) + "\n" + valueStringBase + "g"
             BGChart.data?.dataSets[dataIndex].addEntry(dot)
             if UserDefaultsRepository.smallGraphTreatments.value {
                 BGChartFull.data?.dataSets[dataIndex].addEntry(dot)
