@@ -13,8 +13,6 @@ extension MainViewController {
         // Because it's a small array, we're going to destroy and reload every time.
         carbData.removeAll()
         var lastFoundIndex = 0
-        var lastFoundBolus = 0
-        var lastFoundSmb = 0
         
         entries.reversed().forEach { currentEntry in
             var carbDate: String
@@ -38,18 +36,8 @@ extension MainViewController {
             let dateTimeStamp = parsedDate.timeIntervalSince1970
             let sgv = findNearestBGbyTime(needle: dateTimeStamp, haystack: bgData, startingIndex: lastFoundIndex)
             lastFoundIndex = sgv.foundIndex
-            
-            var offset = -50
-            if sgv.sgv < Double(calculateMaxBgGraphValue() - 100) {
-                let bolusTime = findNearestBolusbyTime(timeWithin: 300, needle: dateTimeStamp, haystack: bolusData, startingIndex: lastFoundBolus)
-                lastFoundBolus = bolusTime.foundIndex
-                
-                //offset = bolusTime.offset ? 75 : 25
-                let smbTime = findNearestBolusbyTime(timeWithin: 300, needle: dateTimeStamp, haystack: smbData, startingIndex: lastFoundSmb)
-                lastFoundSmb = smbTime.foundIndex
-                
-                offset = (bolusTime.offset || smbTime.offset) ? 75 : 25
-            }
+            // Carbs sit below the glucose curve; their labels are drawn below the dot.
+            let offset = -20
             
             if dateTimeStamp < (dateTimeUtils.getNowTimeIntervalUTC() + (3600 * UserDefaultsRepository.predictionToLoad.value)) {
                 // Make the dot

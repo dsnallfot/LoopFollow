@@ -64,6 +64,11 @@ extension GraphDataIndex {
     }
 }
 
+// Keep the compact graph label separate from the detailed highlight popup.
+class CarbChartDataEntry: ChartDataEntry {
+    var graphLabel = ""
+}
+
 class CompositeRenderer: LineChartRenderer {
     let tempTargetRenderer: TempTargetRenderer
     let triangleRenderer: TriangleRenderer
@@ -124,6 +129,52 @@ class CompositeRenderer: LineChartRenderer {
             animator: animator,
             viewPortHandler: viewPortHandler
         )
+    }
+
+    override func drawValues(context: CGContext) {
+        guard let provider = dataProvider,
+              let data = provider.lineData,
+              data.dataSetCount > GraphDataIndex.carbs.rawValue,
+              let carbs = data.dataSets[GraphDataIndex.carbs.rawValue] as? LineChartDataSet else {
+            super.drawValues(context: context)
+            return
+        }
+
+        // Let Charts render the other labels in their normal position above the dots.
+        let drawCarbValues = carbs.drawValuesEnabled
+        carbs.drawValuesEnabled = false
+        super.drawValues(context: context)
+        carbs.drawValuesEnabled = drawCarbValues
+
+        guard drawCarbValues, carbs.isVisible,
+              isDrawingValuesAllowed(dataProvider: provider) else { return }
+        let transformer = provider.getTransformer(forAxis: carbs.axisDependency)
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        let gap = carbs.circleRadius + 3
+
+        UIGraphicsPushContext(context)
+        defer { UIGraphicsPopContext() }
+        for index in 0..<carbs.entryCount {
+            guard let entry = carbs.entryForIndex(index) as? CarbChartDataEntry else { continue }
+            let point = CGPoint(x: entry.x, y: entry.y * animator.phaseY)
+                .applying(transformer.valueToPixelMatrix)
+            guard viewPortHandler.isInBoundsLeft(point.x),
+                  viewPortHandler.isInBoundsRight(point.x),
+                  viewPortHandler.isInBoundsY(point.y) else { continue }
+            let label = NSAttributedString(string: entry.graphLabel, attributes: [
+                .font: carbs.valueFont,
+                .foregroundColor: carbs.valueTextColorAt(index),
+                .paragraphStyle: paragraph
+            ])
+            let size = label.boundingRect(
+                with: CGSize(width: viewPortHandler.contentRect.width, height: .greatestFiniteMagnitude),
+                options: [.usesLineFragmentOrigin, .usesFontLeading], context: nil
+            ).size
+            label.draw(in: CGRect(x: point.x - ceil(size.width) / 2,
+                                  y: point.y + gap,
+                                  width: ceil(size.width), height: ceil(size.height)))
+        }
     }
 
     override func drawExtras(context: CGContext) {
@@ -2007,7 +2058,8 @@ extension MainViewController {
             let graphHours = 24 * UserDefaultsRepository.downloadDays.value
             if dateTimeStamp < dateTimeUtils.getTimeIntervalNHoursAgo(N: graphHours) { continue }
   
-            let dot = ChartDataEntry(x: Double(dateTimeStamp), y: Double(bolusData[i].sgv), data: formatPillTextExtraLine(line1: "Bolus", line2: (formatter.string(from: NSNumber(value: bolusData[i].value))?.replacingOccurrences(of: ",", with: "."))! + " E", time: dateTimeStamp))
+            let glucose = findNearestBGbyTime(needle: dateTimeStamp, haystack: bgData, startingIndex: 0).sgv
+            let dot = ChartDataEntry(x: Double(dateTimeStamp), y: glucose + 20, data: formatPillTextExtraLine(line1: "Bolus", line2: (formatter.string(from: NSNumber(value: bolusData[i].value))?.replacingOccurrences(of: ",", with: "."))! + " E", time: dateTimeStamp))
             mainChart.addEntry(dot)
             if UserDefaultsRepository.smallGraphTreatments.value {
                 smallChart.addEntry(dot)
@@ -2079,7 +2131,8 @@ extension MainViewController {
             let graphHours = 24 * UserDefaultsRepository.downloadDays.value
             if dateTimeStamp < dateTimeUtils.getTimeIntervalNHoursAgo(N: graphHours) { continue }
             
-            let dot = ChartDataEntry(x: Double(dateTimeStamp), y: Double(smbData[i].sgv), data: formatPillText(line1: "SMB\n" + (formatter.string(from: NSNumber(value: smbData[i].value))?.replacingOccurrences(of: ",", with: "."))! + " E", time: dateTimeStamp))
+            let glucose = findNearestBGbyTime(needle: dateTimeStamp, haystack: bgData, startingIndex: 0).sgv
+            let dot = ChartDataEntry(x: Double(dateTimeStamp), y: glucose + 20, data: formatPillText(line1: "SMB\n" + (formatter.string(from: NSNumber(value: smbData[i].value))?.replacingOccurrences(of: ",", with: "."))! + " E", time: dateTimeStamp))
             mainChart.addEntry(dot)
             if UserDefaultsRepository.smallGraphTreatments.value {
                 smallChart.addEntry(dot)
@@ -2158,8 +2211,10 @@ extension MainViewController {
             
             let line2 = "Kolhydrater " + formatter.string(from: NSNumber(value: carbData[i].value))! + " g / Fett " + fatString + " g / Protein " + proteinString + " g"
             let line2FPU = "Kolhydratersekvivalenter " + formatter.string(from: NSNumber(value: carbData[i].value))! + " g"
-            let dot = ChartDataEntry(x: Double(dateTimeStamp), y: Double(carbData[i].sgv), data: formatPillTextExtraLine(line1: (foodType.isEmpty ? "Fett/Protein" : "\(foodType)"), line2: (foodType.isEmpty ? line2FPU : line2), time: dateTimeStamp))
-             BGChart.data?.dataSets[dataIndex].addEntry(dot)
+            let glucose = findNearestBGbyTime(needle: dateTimeStamp, haystack: bgData, startingIndex: 0).sgv
+            let dot = CarbChartDataEntry(x: Double(dateTimeStamp), y: glucose - 20, data: formatPillTextExtraLine(line1: (foodType.isEmpty ? "Fett/Protein" : "\(foodType)"), line2: (foodType.isEmpty ? line2FPU : line2), time: dateTimeStamp))
+            dot.graphLabel = valueStringBase + "g " + (foodType.isEmpty ? "FPU" : foodType)
+            BGChart.data?.dataSets[dataIndex].addEntry(dot)
             if UserDefaultsRepository.smallGraphTreatments.value {
                 BGChartFull.data?.dataSets[dataIndex].addEntry(dot)
             }
