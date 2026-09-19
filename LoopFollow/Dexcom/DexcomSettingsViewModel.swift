@@ -47,6 +47,14 @@ class DexcomSettingsViewModel: ObservableObject {
             }
         }
     }
+    
+    @Published var shareActive: Bool = UserDefaultsRepository.dexcomShareActive.value {
+        willSet {
+            if newValue != shareActive {
+                UserDefaultsRepository.dexcomShareActive.value = newValue
+            }
+        }
+    }
 
     init() {
     }

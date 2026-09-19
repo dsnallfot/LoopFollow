@@ -30,6 +30,7 @@ extension MainViewController {
         if UserDefaultsRepository.shareUserName.value == "",
            UserDefaultsRepository.sharePassword.value == "",
            UserDefaultsRepository.dexAdhocOnly.value,
+           !UserDefaultsRepository.dexcomShareActive.value,
            !IsNightscoutEnabled()
         {
             LogManager.shared.log(category: .temporaryDebug, message: "[BGTask] abort: no Dexcom and NS disabled", isDebug: true)
@@ -38,6 +39,7 @@ extension MainViewController {
 
         if UserDefaultsRepository.shareUserName.value != "" &&
             UserDefaultsRepository.sharePassword.value != "" &&
+            UserDefaultsRepository.dexcomShareActive.value &&
             !UserDefaultsRepository.dexAdhocOnly.value
         {
             LogManager.shared.log(category: .temporaryDebug, message: "[BGTask] calling webLoadDexShare()", isDebug: true)

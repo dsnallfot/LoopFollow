@@ -761,7 +761,7 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
 
         // Ensure we have a ShareClient to use
         guard let dexShare = dexShare else {
-            LogManager.shared.log(category: .temporaryDebug, message: "[DexAdhoc] No ShareClient configured", isDebug: true)
+            LogManager.shared.log(category: .temporaryDebug, message: "[DexAdhoc] No ShareClient configured")
             showDexcomAdhocErrorAlert(message: "Dexcom Share är inte konfigurerat.")
             return
         }
@@ -777,13 +777,13 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
                 guard let self = self else { return }
 
                 if let error = error {
-                    LogManager.shared.log(category: .temporaryDebug, message: "[DexAdhoc] Error fetching Dexcom data: \(error)", isDebug: true)
+                    LogManager.shared.log(category: .temporaryDebug, message: "[DexAdhoc] Error fetching Dexcom data: \(error)")
                     self.showDexcomAdhocErrorAlert(message: "Kunde inte hämta värde från Dexcom Share.")
                     return
                 }
 
                 guard let first = result?.first else {
-                    LogManager.shared.log(category: .temporaryDebug, message: "[DexAdhoc] No glucose values returned", isDebug: true)
+                    LogManager.shared.log(category: .temporaryDebug, message: "[DexAdhoc] No glucose values returned")
                     self.showDexcomAdhocErrorAlert(message: "Inga värden returnerades från Dexcom Share.")
                     return
                 }
