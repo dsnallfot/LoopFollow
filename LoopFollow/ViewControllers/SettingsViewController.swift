@@ -173,8 +173,8 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
             // Statistik, Behandlingar, Fingerstick & dextro, Glukos & sensorfel, Poddar, Sensorer
             return 6
         case .trioSettings:
-            // Algoritminställningar, Hälsodata & profil, Oref-status, Inställningslogg, Batterilogg, Minneslogg, Omstartslogg
-            return 7
+            // Algoritminställningar, Hälsodata & profil, Oref-status, Inställningslogg, Trio systemprestanda
+            return 5
         case .dataCapture:
             // Enhet, Nightscoutinställningar, Dexcominställningar
             return 3
@@ -239,9 +239,7 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
             case 1: cell.textLabel?.text = "Hälsodata & profilinställningar"
             case 2: cell.textLabel?.text = "Oref realtidsstatus"
             case 3: cell.textLabel?.text = "Inställningslogg"
-            case 4: cell.textLabel?.text = "Batterilogg"
-            case 5: cell.textLabel?.text = "Minneslogg"
-            case 6: cell.textLabel?.text = "Omstartslogg"
+            case 4: cell.textLabel?.text = "Trio systemprestanda"
             default: break
             }
             return cell
@@ -465,25 +463,9 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
                 navigationController?.pushViewController(settingsLogVC, animated: true)
 
             case 4:
-                // Batterilogg
-                let batteryVC = BatteryLogViewController()
-                batteryVC.title = "Batterilogg"
-                batteryVC.hidesBottomBarWhenPushed = false
-                navigationController?.pushViewController(batteryVC, animated: true)
-
-            case 5:
-                // Minneslogg
-                let memoryVC = MemoryLogViewController()
-                memoryVC.title = "Minneslogg"
-                memoryVC.hidesBottomBarWhenPushed = false
-                navigationController?.pushViewController(memoryVC, animated: true)
-
-            case 6:
-                // Omstartslogg
-                let restartsVC = TrioRestartsView()
-                restartsVC.title = "Omstartslogg"
-                restartsVC.hidesBottomBarWhenPushed = false
-                navigationController?.pushViewController(restartsVC, animated: true)
+                let performanceVC = TrioPerformanceViewController()
+                performanceVC.hidesBottomBarWhenPushed = false
+                navigationController?.pushViewController(performanceVC, animated: true)
 
             default:
                 break

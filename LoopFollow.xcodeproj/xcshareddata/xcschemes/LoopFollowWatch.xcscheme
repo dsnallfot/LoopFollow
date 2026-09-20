@@ -60,7 +60,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "6532661E2F9A102C00B5EABC"
             BuildableName = "LoopFollowWatch.app"
-            BlueprintName = "LoopFollowWatch"
             ReferencedContainer = "container:LoopFollow.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -77,7 +76,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "6532661E2F9A102C00B5EABC"
             BuildableName = "LoopFollowWatch.app"
-            BlueprintName = "LoopFollowWatch"
             ReferencedContainer = "container:LoopFollow.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
