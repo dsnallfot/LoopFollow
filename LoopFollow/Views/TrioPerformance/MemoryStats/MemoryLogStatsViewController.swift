@@ -43,9 +43,10 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         return s
     }()
 
-    private let dayChartView: BarChartView = {
-        let v = BarChartView()
+    private let dayChartView: CombinedChartView = {
+        let v = CombinedChartView()
         v.translatesAutoresizingMaskIntoConstraints = false
+        v.drawOrder = [CombinedChartView.DrawOrder.bar.rawValue, CombinedChartView.DrawOrder.scatter.rawValue]
         v.legend.enabled = false
         v.chartDescription.enabled = false
         v.doubleTapToZoomEnabled = false
@@ -60,9 +61,10 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
     private let weekChartView = makeCandleChartView()
     private let thirtyDaysChartView = makeCandleChartView()
 
-    private static func makeCandleChartView() -> CandleStickChartView {
-        let v = CandleStickChartView()
+    private static func makeCandleChartView() -> CombinedChartView {
+        let v = CombinedChartView()
         v.translatesAutoresizingMaskIntoConstraints = false
+        v.drawOrder = [CombinedChartView.DrawOrder.candle.rawValue, CombinedChartView.DrawOrder.scatter.rawValue]
         v.legend.enabled = false
         v.chartDescription.enabled = false
         v.doubleTapToZoomEnabled = false
@@ -265,7 +267,7 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         dayChartView.leftAxis.spaceBottom = 0
     }
 
-    private func configureCandleXAxis(for chart: CandleStickChartView, dayCount: Int, formatter: WeekMemoryXAxisFormatter) {
+    private func configureCandleXAxis(for chart: CombinedChartView, dayCount: Int, formatter: WeekMemoryXAxisFormatter) {
         let x = chart.xAxis
         x.labelPosition = .bottom
         x.drawGridLinesEnabled = false
@@ -391,14 +393,16 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
     }
 
     private func buildDayChart(for date: Date) async {
-        let samples = await MemoryCache.loadDay(date)
+        let cal = Calendar.current
+        let start = cal.startOfDay(for: date)
+        guard let end = cal.date(byAdding: .day, value: 1, to: start) else { return }
+        let history = await memoryHistory(through: end)
+        let samples = history.filter { $0.date >= start.timeIntervalSince1970 && $0.date < end.timeIntervalSince1970 }
+        let restartMarkers = await restartMarkers(from: start, to: end, memoryHistory: history)
 
         // One bar per saved reading, positioned by local time on the same 00–24 axis.
-        let cal = Calendar.current
         let entries = samples.sorted { $0.date < $1.date }.map { sample in
-            let components = cal.dateComponents([.hour, .minute, .second], from: Date(timeIntervalSince1970: sample.date))
-            let seconds = Double((components.hour ?? 0) * 3600 + (components.minute ?? 0) * 60 + (components.second ?? 0))
-            let x = min(95.85, max(0.15, seconds / 900))
+            let x = dayX(for: Date(timeIntervalSince1970: sample.date), calendar: cal)
             return BarChartDataEntry(x: x, y: sample.mib)
         }
 
@@ -407,13 +411,19 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         set.drawValuesEnabled = false
         set.highlightEnabled = true
 
-        let data = BarChartData(dataSet: set)
-        data.barWidth = 0.3
+        let barData = BarChartData(dataSet: set)
+        barData.barWidth = 0.3
+        let markerEntries = restartMarkers.map {
+            ChartDataEntry(x: dayX(for: $0.date, calendar: cal), y: $0.mib)
+        }
+        let data = CombinedChartData()
+        data.barData = barData
+        data.scatterData = makeRestartScatterData(entries: markerEntries)
 
         await MainActor.run {
             guard self.mode == .day, Calendar.current.isDate(self.selectedDate, inSameDayAs: date) else { return }
-            let maximumMiB = samples.map { $0.mib }.max() ?? 0
-            self.dayChartView.leftAxis.axisMaximum = maximumMiB > 0 ? maximumMiB : 1
+            let maximumMiB = max(samples.map { $0.mib }.max() ?? 0, restartMarkers.map { $0.mib }.max() ?? 0)
+            self.dayChartView.leftAxis.axisMaximum = maximumMiB > 0 ? maximumMiB * 1.08 : 1
             self.dayChartView.data = data
             self.dayChartView.notifyDataSetChanged()
         }
@@ -428,8 +438,9 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         guard let end = cal.date(byAdding: .day, value: dayCount, to: start) else { return }
 
         // Use calendar days and an exclusive end, including fractional-second samples at midnight.
-        let samples = await MemoryCache.loadWindow(from: start, to: end)
-            .filter { $0.date < end.timeIntervalSince1970 }
+        let history = await memoryHistory(through: end)
+        let samples = history.filter { $0.date >= start.timeIntervalSince1970 && $0.date < end.timeIntervalSince1970 }
+        let restartMarkers = await restartMarkers(from: start, to: end, memoryHistory: history)
 
         // Build min/max per day
         var perDay: [[MemorySampleJSON]] = Array(repeating: [], count: dayCount)
@@ -478,12 +489,20 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
         set.formLineWidth = 0
         set.barSpace = 0.2
 
-        let data = CandleChartData(dataSet: set)
+        let markerEntries = restartMarkers.compactMap { marker -> ChartDataEntry? in
+            let day = cal.startOfDay(for: marker.date)
+            let index = cal.dateComponents([.day], from: start, to: day).day ?? -1
+            guard index >= 0 && index < dayCount else { return nil }
+            return ChartDataEntry(x: Double(index), y: marker.mib)
+        }
+        let data = CombinedChartData()
+        data.candleData = CandleChartData(dataSet: set)
+        data.scatterData = makeRestartScatterData(entries: markerEntries)
 
         await MainActor.run {
             guard self.mode == chartMode, cal.startOfDay(for: self.selectedDate) == start else { return }
-            let maximumMiB = samples.map { $0.mib }.max() ?? 0
-            chart.leftAxis.axisMaximum = maximumMiB > 0 ? maximumMiB : 1
+            let maximumMiB = max(samples.map { $0.mib }.max() ?? 0, restartMarkers.map { $0.mib }.max() ?? 0)
+            chart.leftAxis.axisMaximum = maximumMiB > 0 ? maximumMiB * 1.08 : 1
             chart.data = data
             chart.notifyDataSetChanged()
         }
@@ -491,12 +510,67 @@ final class MemoryLogStatsViewController: ThemedViewController, ChartViewDelegat
 
     // MARK: - Helpers
 
+    private struct RestartMarker {
+        let date: Date
+        let mib: Double
+    }
+
+    private func memoryHistory(through end: Date) async -> [MemorySampleJSON] {
+        let calendar = Calendar.current
+        let oldest = calendar.date(byAdding: .day, value: -MemoryCache.retentionDays + 1,
+                                   to: calendar.startOfDay(for: Date())) ?? end
+        guard oldest < end else { return [] }
+        return await MemoryCache.loadWindow(from: oldest, to: end)
+            .filter { $0.date < end.timeIntervalSince1970 }
+            .sorted { $0.date < $1.date }
+    }
+
+    private func restartMarkers(from start: Date, to end: Date,
+                                memoryHistory: [MemorySampleJSON]) async -> [RestartMarker] {
+        guard !memoryHistory.isEmpty else { return [] }
+        let (_, treatments) = await NightscoutCache.loadWindow(from: start, to: end)
+        let restarts = treatments
+            .filter { $0.eventType == "Note" && ($0.notes?.contains("Trio startades om") ?? false)
+                     && $0.created_at >= start && $0.created_at < end }
+            .sorted { $0.created_at < $1.created_at }
+
+        var markers: [RestartMarker] = []
+        var sampleIndex = 0
+        for restart in restarts {
+            let timestamp = restart.created_at.timeIntervalSince1970
+            while sampleIndex < memoryHistory.count && memoryHistory[sampleIndex].date < timestamp {
+                sampleIndex += 1
+            }
+            guard sampleIndex > 0 else { continue }
+            markers.append(RestartMarker(date: restart.created_at, mib: memoryHistory[sampleIndex - 1].mib))
+        }
+        return markers
+    }
+
+    private func dayX(for date: Date, calendar: Calendar) -> Double {
+        let components = calendar.dateComponents([.hour, .minute, .second], from: date)
+        let seconds = Double((components.hour ?? 0) * 3600 + (components.minute ?? 0) * 60 + (components.second ?? 0))
+        return min(95.85, max(0.15, seconds / 900))
+    }
+
+    private func makeRestartScatterData(entries: [ChartDataEntry]) -> ScatterChartData {
+        let set = ScatterChartDataSet(entries: entries, label: "Trio omstart")
+        set.setScatterShape(.circle)
+        set.scatterShapeSize = 10
+        set.colors = [.systemPurple]
+        set.drawValuesEnabled = false
+        set.highlightEnabled = false
+        return ScatterChartData(dataSet: set)
+    }
+
     private func updateLegendText(for mode: Mode) {
         let text = mode == .day
-            ? "Minnesanvändning per mätning (MiB)"
-            : "Max/min minnesanvändning per dag (MiB)"
+            ? "Uppmätt minne (MiB)"
+            : "Max/min minne per dag (MiB)"
         let legend = NSMutableAttributedString(string: "■ ", attributes: [.foregroundColor: UIColor.white])
         legend.append(NSAttributedString(string: text, attributes: [.foregroundColor: UIColor.secondaryLabel]))
+        legend.append(NSAttributedString(string: "   ● ", attributes: [.foregroundColor: UIColor.systemPurple]))
+        legend.append(NSAttributedString(string: "Trio startades om", attributes: [.foregroundColor: UIColor.secondaryLabel]))
         dayLegendLabel.attributedText = legend
     }
 
