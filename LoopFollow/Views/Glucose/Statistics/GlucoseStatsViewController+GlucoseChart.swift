@@ -28,7 +28,7 @@ extension GlucoseStatsViewController {
             entriesNS.append(BarChartDataEntry(x: Double(i), y: pctNS))
         }
 
-        let dsAll = BarChartDataSet(entries: entriesAll, label: "Alla Dexcomvärden")
+        let dsAll = BarChartDataSet(entries: entriesAll, label: "Alla glukosvärden")
         dsAll.setColor(UIColor(
             red: 76.0/255.0,
             green: 179.0/255.0,
@@ -40,7 +40,7 @@ extension GlucoseStatsViewController {
         dsAll.barBorderColor = .black
         dsAll.barBorderWidth = 0.5
 
-        let dsNS = BarChartDataSet(entries: entriesNS, label: "Uppladdningar Trio ⇢ NS")
+        let dsNS = BarChartDataSet(entries: entriesNS, label: "Uppladdningar i realtid")
         dsNS.setColor(UIColor.systemPurple.withAlphaComponent(0.7))
         dsNS.drawValuesEnabled = false
         dsNS.barBorderColor = .black

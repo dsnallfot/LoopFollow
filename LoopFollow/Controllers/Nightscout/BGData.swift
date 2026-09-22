@@ -238,7 +238,6 @@ extension MainViewController {
                     for i in 0..<nsData.count {
                         // convert the NS timestamp to seconds instead of milliseconds
                         nsData[i].date /= 1000
-                        nsData[i].date.round(FloatingPointRoundingRule.toNearestOrEven)
                     }
                     var nsData2: [ShareGlucoseData] = []
                     var lastAddedTime = Double.infinity
@@ -414,10 +413,10 @@ extension MainViewController {
                     continue
                 }
 
-                let reading = ShareGlucoseData(sgv: sgvValue, date: readingTimestamp, direction: data[data.count - 1 - i].direction)
+                let reading = ShareGlucoseData(sgv: sgvValue, date: readingTimestamp, direction: data[data.count - 1 - i].direction, trioSentAt: data[data.count - 1 - i].trioSentAt)
                 bgData.append(reading)
                 // Collect SGVs for NightscoutCache (seconds since 1970 already)
-                let sgvEntry = SGVJSON(date: reading.date, sgv: reading.sgv)
+                let sgvEntry = SGVJSON(date: reading.date, sgv: reading.sgv, trioSentAt: reading.trioSentAt)
                 sgvBatchForCache.append(sgvEntry)
             }
         }
@@ -931,7 +930,6 @@ final class BGProvider {
                 var lastAdded = Double.infinity
                 for var e in raw {           // NS is newest‑first
                     e.date /= 1000          // ms → s
-                    e.date.round()
                     if lastAdded - e.date >= 240 {   // keep ≥4 min apart
                         cleaned.append(e)
                         lastAdded = e.date

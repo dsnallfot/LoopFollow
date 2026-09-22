@@ -38,7 +38,8 @@ extension GlucoseStatsViewController {
 
             // Count unique readings per day using bucket dedupe
             let countsAllValuesByDay = self.countsByDayFromSGVJSON(allSGV, bucketSeconds: 240.0)
-            let countsNSOnlyByDay = self.countsByDayFromSGVJSON(nsOnlySGV, bucketSeconds: 300.0)
+            let realtimeSGV = SGVJSON.includingUploadTimes(allSGV, from: nsOnlySGV)
+            let countsNSOnlyByDay = self.countsByDayFromSGVJSON(realtimeSGV, bucketSeconds: 240.0, realtimeOnly: true)
 
             var countsAll: [Int] = []
             var countsNS: [Int] = []

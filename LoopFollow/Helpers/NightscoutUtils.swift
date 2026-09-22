@@ -284,7 +284,6 @@ class NightscoutUtils {
                         if ts > 10_000_000_000 {    // enkel ms-guard
                             ts /= 1000
                         }
-                        ts.round()
 
                         // Håll oss inom fönstret
                         if ts < startSec || ts > endSec {
@@ -296,7 +295,7 @@ class NightscoutUtils {
                         }
                         seen.insert(ts)
 
-                        batch.append(SGVJSON(date: ts, sgv: e.sgv))
+                        batch.append(SGVJSON(date: ts, sgv: e.sgv, trioSentAt: e.trioSentAt))
                     }
 
                     continuation.resume(returning: batch)

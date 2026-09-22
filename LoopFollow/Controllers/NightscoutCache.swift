@@ -14,7 +14,40 @@ import ZIPFoundation
 
 struct SGVJSON: Codable, Equatable {
     let date: TimeInterval       // epoch ms or sec – feed what you store
-    let sgv:  Int
+    let sgv: Int
+    let trioSentAt: Date?
+
+    init(date: TimeInterval, sgv: Int, trioSentAt: Date? = nil) {
+        self.date = date
+        self.sgv = sgv
+        self.trioSentAt = trioSentAt
+    }
+
+    var readingDate: Date {
+        Date(timeIntervalSince1970: date > 4_000_000_000 ? date / 1000 : date)
+    }
+
+    /// Missing upload timestamps are treated as real-time for legacy readings.
+    var delayedReading: Bool {
+        guard let trioSentAt else { return false }
+        return trioSentAt.timeIntervalSince(readingDate) > 60
+    }
+
+    /// Enrich the all-values dataset without adding or removing readings.
+    /// Older cache paths rounded timestamps to seconds, so match on rounded seconds.
+    static func includingUploadTimes(_ readings: [SGVJSON], from uploads: [SGVJSON]) -> [SGVJSON] {
+        var bySecond: [TimeInterval: SGVJSON] = [:]
+        for entry in uploads {
+            if entry.trioSentAt != nil {
+                bySecond[entry.readingDate.timeIntervalSince1970.rounded()] = entry
+            }
+        }
+        return readings.map { entry in
+            let upload = bySecond[entry.readingDate.timeIntervalSince1970.rounded()]
+            return SGVJSON(date: upload?.readingDate.timeIntervalSince1970 ?? entry.date, sgv: entry.sgv,
+                           trioSentAt: upload?.trioSentAt ?? entry.trioSentAt)
+        }
+    }
 }
 
 struct TreatmentJSON: Codable, Equatable {
@@ -204,14 +237,14 @@ final class NightscoutCache {
     }
 
     /// Normalize SGV timestamps so they are always stored/handled in **seconds** since 1970
-    /// and deduplicate entries with the same timestamp (last one wins).
+    /// and deduplicate entries within the same rounded second (last value wins, metadata is retained).
     /// Some older cache files may have `date` in milliseconds; this helper converts those
     /// on-the-fly when reading so that mixed second/ms data does not cause partial days
     /// or dropped entries in statistics.
     static func normalizeAndDedupeSGV(_ sgv: [SGVJSON]) -> [SGVJSON] {
         guard !sgv.isEmpty else { return [] }
 
-        var byTimestamp: [TimeInterval: Int] = [:]
+        var byTimestamp: [TimeInterval: SGVJSON] = [:]
 
         for entry in sgv {
             let raw = entry.date
@@ -223,14 +256,17 @@ final class NightscoutCache {
             } else {
                 seconds = raw
             }
-            byTimestamp[seconds] = entry.sgv
+            let key = seconds.rounded()
+            let previous = byTimestamp[key]
+            // Dexcom can refresh the value without upload metadata. Retain the precise
+            // Nightscout reading time as well as its upload time in that case.
+            let readingSeconds = entry.trioSentAt == nil && previous?.trioSentAt != nil
+                ? previous!.date : seconds
+            byTimestamp[key] = SGVJSON(date: readingSeconds, sgv: entry.sgv,
+                                      trioSentAt: entry.trioSentAt ?? previous?.trioSentAt)
         }
 
-        let normalized = byTimestamp.map { (ts, value) in
-            SGVJSON(date: ts, sgv: value)
-        }
-
-        return normalized.sorted { $0.date < $1.date }
+        return byTimestamp.values.sorted { $0.date < $1.date }
     }
     
     /// Returns the sick-day override note if this treatment represents
@@ -314,9 +350,7 @@ final class NightscoutCache {
         for (day, newItems) in perDay {
             do {
                 var payload = try readDayOrEmpty(day)
-                let newTimestamps = Set(newItems.map { $0.date })
-                payload.sgv.removeAll { newTimestamps.contains($0.date) }
-                payload.sgv.append(contentsOf: newItems)
+                payload.sgv = normalizeAndDedupeSGV(payload.sgv + newItems)
 
                 // Keep SGVs sorted by time, oldest first
                 payload.sgv.sort { $0.date < $1.date }
@@ -704,7 +738,7 @@ private struct GlucoseNSDayPayload: Codable {
     var sgv: [SGVJSON]
 }
 
-/// Separate Nightscout SGV cache used exclusively by GlucoseView for NS-only gap analysis.
+/// Separate Nightscout SGV cache supplying upload times and sensor-note bounds.
 /// This cache is intentionally not touched by BGTask/BGData or Dexcom logic.
 final class GlucoseNSOnlyCache {
 
@@ -770,9 +804,7 @@ final class GlucoseNSOnlyCache {
                 if let existing = try? readDay(day) {
                     payload = existing
                     // Remove any existing SGV with the same timestamp as in the new items
-                    let newTimestamps = Set(newItems.map { $0.date })
-                    payload.sgv.removeAll { newTimestamps.contains($0.date) }
-                    payload.sgv.append(contentsOf: newItems)
+                    payload.sgv = NightscoutCache.normalizeAndDedupeSGV(payload.sgv + newItems)
                 } else {
                     payload = GlucoseNSDayPayload(sgv: newItems)
                 }

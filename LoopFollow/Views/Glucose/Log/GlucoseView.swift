@@ -14,13 +14,13 @@ final class GlucoseView: ThemedViewController, UITableViewDataSource, UITableVie
 
     // MARK: - Glucose data (same source as MealAnalysisView)
     /// Aktiva värden för valt läge (driver tabell + stats).
-    var bgEntries: [BGEntry] = []
-    /// NS-only Trio → Nightscout-värden för vald dag.
-    var nsOnlyDayEntries: [BGEntry] = []
+    var bgEntries: [Reading] = []
+    /// Retained for sensor-note outage bounds; no separate table mode.
+    var nsOnlyDayEntries: [Reading] = []
     /// Dexcom+Nightscout-mergade värden för vald dag.
-    var allValuesDayEntries: [BGEntry] = []
+    var allValuesDayEntries: [Reading] = []
 
-    var dataMode: GlucoseDataMode = .nsOnly
+    var dataMode: GlucoseDataMode = .allValues
 
     // How many days back the manual backfill refresh should fetch (used by reload button)
     let backfillDays = 14
@@ -48,8 +48,8 @@ final class GlucoseView: ThemedViewController, UITableViewDataSource, UITableVie
     }()
 
     let modeSegmentedControl: UISegmentedControl = {
-        let sc = UISegmentedControl(items: ["Dexcomvärden", "Trio ⇢ NS", "Sensorfel"])
-        sc.selectedSegmentIndex = 1
+        let sc = UISegmentedControl(items: ["Glukosvärden", "Sensorfel"])
+        sc.selectedSegmentIndex = 0
         sc.translatesAutoresizingMaskIntoConstraints = false
         return sc
     }()
@@ -91,9 +91,9 @@ final class GlucoseView: ThemedViewController, UITableViewDataSource, UITableVie
         //view.backgroundColor = .systemBackground
         updateBackgroundForCurrentMode()
 
-        // Default to Trio → Nightscout uploads when opening this modal
-        dataMode = .nsOnly
-        modeSegmentedControl.selectedSegmentIndex = 1
+        // Open the combined glucose log by default
+        dataMode = .allValues
+        modeSegmentedControl.selectedSegmentIndex = 0
 
         setupNavigationBar()
         setupTableView()

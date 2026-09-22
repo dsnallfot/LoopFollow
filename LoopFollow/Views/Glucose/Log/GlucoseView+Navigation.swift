@@ -63,9 +63,6 @@ extension GlucoseView {
         case 0:
             title = "Glukos"
             dataMode = .allValues
-        case 1:
-            title = "Glukos"
-            dataMode = .nsOnly
         default:
             title = "Sensorfel"
             dataMode = .sensorErrors
@@ -83,7 +80,7 @@ extension GlucoseView {
                 filterButton.image = UIImage(systemName: "line.3.horizontal.decrease.circle")
                 filterButton.tintColor = .secondaryLabel
             } else {
-                // I de två andra lägena (Dexcomvärden / Trio ⇢ NS):
+                // I glukosläget:
                 // behåll showOnlyMissingGlucose-state och återspegla den i ikonen.
                 filterButton.isEnabled = true
                 let name = showOnlyMissingGlucose

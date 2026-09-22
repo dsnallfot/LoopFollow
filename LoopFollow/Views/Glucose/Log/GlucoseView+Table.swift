@@ -52,17 +52,23 @@ extension GlucoseView {
                 cell.textLabel?.text = valueString
             }
 
+            if entry.delayedReading, let sentAt = entry.trioSentAt {
+                cell.textLabel?.text = (cell.textLabel?.text ?? valueString)
+                    + " ⏱️(\(timeFormatter.string(from: sentAt)))"
+            }
+
             cell.textLabel?.font = UIFont.monospacedDigitSystemFont(ofSize: 17, weight: .regular)//.systemFont(ofSize: 17)
             cell.detailTextLabel?.text = timeFormatter.string(from: entry.date)
             cell.detailTextLabel?.font = UIFont.monospacedDigitSystemFont(ofSize: 17, weight: .regular)
-            cell.backgroundColor = .clear
-            cell.contentView.backgroundColor = .clear
+            let tint = entry.delayedReading ? UIColor.systemBlue.withAlphaComponent(0.15) : .clear
+            cell.backgroundColor = tint
+            cell.contentView.backgroundColor = tint
 
         case .missing(let date, let reason):
             // Detect placeholder: no actual missing rows and showOnlyMissingGlucose = true
             let isPlaceholder = showOnlyMissingGlucose && dayRowsIncludingMissing.filter { $0.isMissing }.isEmpty
             if isPlaceholder {
-                cell.textLabel?.text = "Inga saknade värden denna dag ✅"
+                cell.textLabel?.text = "Inga filtrerade värden denna dag ✅"
                 cell.detailTextLabel?.text = ""
                 cell.textLabel?.font = UIFont.monospacedDigitSystemFont(ofSize: 17, weight: .regular)//.systemFont(ofSize: 17)
                 let tint = UIColor.systemGreen.withAlphaComponent(0.12)
@@ -74,10 +80,6 @@ extension GlucoseView {
                     cell.textLabel?.text = "[Sensoravläsning saknas]"
                     cell.backgroundColor = UIColor.systemRed.withAlphaComponent(0.15)
                     cell.contentView.backgroundColor = UIColor.systemRed.withAlphaComponent(0.15)
-                case .trioUpload:
-                    cell.textLabel?.text = "[Trio uppladdning saknas]"
-                    cell.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.15)
-                    cell.contentView.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.15)
                 }
                 cell.textLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
                 cell.detailTextLabel?.text = timeFormatter.string(from: date)

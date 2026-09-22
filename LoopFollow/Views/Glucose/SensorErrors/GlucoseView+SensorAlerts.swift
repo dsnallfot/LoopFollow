@@ -5,7 +5,6 @@ extension GlucoseView {
     /// Visar sensorstatus / Dexcom-noteringar som förklaring till saknade värden.
     /// Letar efter en Nightscout-treatment av typen "Note".
     /// För sensor-miss: senaste Dexcom-Note efter senaste lyckade BG gäller tills nästa BG kommer in.
-    /// För Trio-upload-miss: snäv lookup kring saknad timestamp (± toleranceSeconds).
     func showSensorStatusAlert(forMissingDate missingDate: Date,
                                        reason: MissingReason,
                                        onDismiss: @escaping () -> Void) {
@@ -13,14 +12,8 @@ extension GlucoseView {
             // A Dexcom sensor "Note" can describe an outage spanning multiple missing 5‑min slots.
             // Therefore, for sensor-missing rows we treat the latest Dexcom Note *after the last successful BG*
             // as valid until the next BG arrives.
-            let note: Treatment?
-            if reason == .sensor {
-                let bounds = self.sensorOutageBounds(around: missingDate)
-                note = await self.fetchLatestDexcomNote(after: bounds.start, before: bounds.end)
-            } else {
-                // For Trio-upload misses, keep the narrow lookup around the missing timestamp.
-                note = await self.fetchDexcomNoteTreatment(around: missingDate, toleranceSeconds: 60)
-            }
+            let bounds = self.sensorOutageBounds(around: missingDate)
+            let note = await self.fetchLatestDexcomNote(after: bounds.start, before: bounds.end)
 
             await MainActor.run {
                 let timeFormatter = DateFormatter()
@@ -53,13 +46,6 @@ extension GlucoseView {
                         Ingen Dexcom-notering hittades i anslutning till det saknade glukosvärdet.
 
                         Detta beror oftast på tappad bluetoothsignal mellan sensorn och den mottagande telefonen, eller att värdet inte kunde laddas upp till varesig Dexcom Share eller Nightscout (t.ex. server-/nätverksproblem).
-                        """
-                    case .trioUpload:
-                        message =
-                        """
-                        Ingen Dexcom-notering hittades i anslutning till det saknade glukosvärdet.
-
-                        Detta beror på att Trio → Nightscout-uppladdningen misslyckadades (t.ex. bluetooth-/nätverksproblem eller andra problem med Trio-appen).
                         """
                     }
                 }

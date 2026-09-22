@@ -139,7 +139,7 @@ extension MainViewController {
                 var cleaned: [ShareGlucoseData] = []
                 var lastTs = Double.infinity
                 for var e in raw {
-                    e.date /= 1000; e.date.round()
+                    e.date /= 1000
                     if lastTs - e.date >= 240 {
                         cleaned.append(e)
                         lastTs = e.date
@@ -147,7 +147,7 @@ extension MainViewController {
                     if cleaned.count >= hours * 12 { break }
                 }
 
-                let sgvJSON = cleaned.map { SGVJSON(date: $0.date, sgv: $0.sgv) }
+                let sgvJSON = cleaned.map { SGVJSON(date: $0.date, sgv: $0.sgv, trioSentAt: $0.trioSentAt) }
                 NightscoutCache.mergeSGVBatch(sgvJSON)
             case .failure(let error):
                 LogManager.shared.log(

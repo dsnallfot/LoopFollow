@@ -2,19 +2,17 @@ import UIKit
 import Charts
 
 extension GlucoseView {
-    func isSuspectedCompressionLow(entry: BGEntry) -> Bool {
+    func isSuspectedCompressionLow(entry: Reading) -> Bool {
         let compressionLowDropMultiplier: Double = 2.0
 
         // Only show compression-drops if they are below target
         let targetMmol = Double(UserDefaultsRepository.targetLine.value) * GlucoseConversion.mgDlToMmolL
         guard entry.mmol <= targetMmol else { return false }
 
-        let sourceEntries: [BGEntry]
+        let sourceEntries: [Reading]
         switch dataMode {
         case .allValues:
             sourceEntries = allValuesDayEntries
-        case .nsOnly:
-            sourceEntries = nsOnlyDayEntries
         case .sensorErrors:
             return false
         }
@@ -47,7 +45,7 @@ extension GlucoseView {
 
     /// Determines which rows are shown when the filter button (line.3.horizontal.decrease.circle) is enabled.
     /// Includes:
-    /// - all missing rows
+    /// - all missing rows and delayed readings
     /// - glucose rows that are "special" (🦄, 👐, 🎯, 🆘, ⚠️)
     private func shouldIncludeWhenFiltered(_ row: GlucoseRow) -> Bool {
         switch row {
@@ -56,6 +54,7 @@ extension GlucoseView {
             return true
 
         case .glucose(let entry):
+            if entry.delayedReading { return true }
             let targetMgdl = Double(UserDefaultsRepository.targetLine.value)
             let targetMmolRaw = targetMgdl * GlucoseConversion.mgDlToMmolL
 
@@ -89,7 +88,7 @@ extension GlucoseView {
 
         let rows = dayRowsIncludingMissing
         if showOnlyMissingGlucose {
-            // Visa alla saknade rader + "intressanta" värden (🦄, 👐, 🎯, 🆘, ⚠️)
+            // Visa saknade och försenade rader + "intressanta" värden (🦄, 👐, 🎯, 🆘, ⚠️)
             let hits = rows.filter { shouldIncludeWhenFiltered($0) }
 
             if hits.isEmpty {

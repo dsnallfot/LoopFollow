@@ -1,6 +1,10 @@
 # Glucose
 
-Glukoslogg och statistik för Dexcomvärden, Trio → Nightscout-uppladdningar och sensorfel.
+Glukoslogg och statistik för alla glukosvärden, uppladdningar i realtid och sensorfel.
+
+`trioSentAt` följer med från Nightscout till cachen. Mer än 60 sekunder mellan avläsning och uppladdning räknas som försenat; exakt 60 sekunder och äldre värden utan tidsstämpel räknas som realtid. Försenade värden visas med blå bakgrund och uppladdningstiden inom parentes och inkluderas i loggens filter. Ingen separat förseningsflagga sparas på disk.
+
+Båda statistikserierna utgår från alla glukosvärden med befintlig deduplicering. Realtidsserien utesluter försenade värden. Nightscout-cachen används även för att komplettera uppladdningstider på Dexcom-värden. Sensorfelsgrafen och dess beräkningar behålls.
 
 ## Struktur
 
@@ -10,7 +14,7 @@ Glukoslogg och statistik för Dexcomvärden, Trio → Nightscout-uppladdningar o
 - `Models/`: respektive vys nästlade radmodeller, visningslägen och periodval.
 - `Helpers/`: formatering av Trio-beslutstext.
 
-Uppdelningen behåller klassnamn, beräkningar, datakällor, cache-nycklar, asynkrona anrop och UI-beteenden. Skillnaderna mellan Dexcom- och Trio-data, exempelvis tidsintervall för deduplicering, är bevarade. Befintliga hjälpare och kommentarer finns kvar.
+Cache-nycklar och historiska cachefiler behålls; `trioSentAt` är optional för bakåtkompatibilitet.
 
 Medlemmar som används av samma klass i flera filer har intern åtkomst. Övriga privata medlemmar behåller sin åtkomstnivå. Lagrat tillstånd och UIKit-overrides finns i huvudklasserna.
 

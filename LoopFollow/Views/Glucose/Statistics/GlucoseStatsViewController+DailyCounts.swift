@@ -35,11 +35,21 @@ extension GlucoseStatsViewController {
         return counts
     }
     /// Counts unique readings per day by bucketing timestamps.
-    func countsByDayFromSGVJSON(_ sgvs: [SGVJSON], bucketSeconds: TimeInterval) -> [Date: Int] {
+    func countsByDayFromSGVJSON(_ sgvs: [SGVJSON], bucketSeconds: TimeInterval, realtimeOnly: Bool = false) -> [Date: Int] {
         let cal = Calendar.current
         var bucketsByDay: [Date: Set<Int>] = [:]
 
-        for e in sgvs {
+        // Choose the same newest reading per bucket as the glucose log before
+        // classifying delays, so an older on-time duplicate cannot hide a late one.
+        var newestByBucket: [Int: SGVJSON] = [:]
+        for entry in sgvs {
+            let bucket = Int(floor(entry.date / bucketSeconds))
+            if newestByBucket[bucket].map({ entry.date > $0.date }) ?? true {
+                newestByBucket[bucket] = entry
+            }
+        }
+        for e in newestByBucket.values {
+            if realtimeOnly && e.delayedReading { continue }
             let date = Date(timeIntervalSince1970: e.date)
             let dayStart = cal.startOfDay(for: date)
             let bucket = Int(floor(date.timeIntervalSince1970 / bucketSeconds))

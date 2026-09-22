@@ -169,12 +169,17 @@ final class GlucoseStatsViewController: ThemedTableViewController {
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         switch section {
         case 0:
-            return "Dexcom glukosvärden (inkl backfill)"
+            return "Alla glukosvärden (inkl backfill)"
         case 1:
-            return "Trio uppladdningar (realtid)"
+            return "Uppladdningar i realtid"
         default:
             return nil
         }
+    }
+
+    override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        guard section == 1 else { return nil }
+        return "Mer än 1 minuts fördröjning räknas som försenat. Värden utan uppladdningstid räknas som realtid."
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

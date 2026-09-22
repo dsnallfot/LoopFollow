@@ -12,6 +12,7 @@ import ShareClient
 public struct ShareGlucoseData: Decodable {
     var sgv: Int
     var date: TimeInterval
+    var trioSentAt: Date?
     var direction: String?
 
     enum CodingKeys: String, CodingKey {
@@ -20,6 +21,7 @@ public struct ShareGlucoseData: Decodable {
         case glucose  // Other type of entry
         case date
         case direction
+        case trioSentAt
     }
 
     // Decoder initializer for handling JSON data
@@ -39,12 +41,25 @@ public struct ShareGlucoseData: Decodable {
         // Decode the date and optional direction
         date = try container.decode(TimeInterval.self, forKey: .date)
         direction = try container.decodeIfPresent(String.self, forKey: .direction)
+        // Parse independently of the request decoder's strategy; retain fractional seconds.
+        if let raw = try? container.decode(String.self, forKey: .trioSentAt) {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            trioSentAt = formatter.date(from: raw)
+            if trioSentAt == nil {
+                formatter.formatOptions = [.withInternetDateTime]
+                trioSentAt = formatter.date(from: raw)
+            }
+        } else {
+            trioSentAt = nil
+        }
     }
 
-    public init(sgv: Int, date: TimeInterval, direction: String?) {
+    public init(sgv: Int, date: TimeInterval, direction: String?, trioSentAt: Date? = nil) {
         self.sgv = sgv
         self.date = date
         self.direction = direction
+        self.trioSentAt = trioSentAt
     }
 }
 

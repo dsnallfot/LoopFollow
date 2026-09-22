@@ -9,12 +9,10 @@ extension GlucoseView {
         let start = cal.startOfDay(for: selectedDate)
         guard let end = cal.date(byAdding: .day, value: 1, to: start) else { return [] }
 
-        let baseEntries: [BGEntry]
+        let baseEntries: [Reading]
         switch dataMode {
         case .allValues:
             baseEntries = allValuesDayEntries
-        case .nsOnly:
-            baseEntries = nsOnlyDayEntries
         case .sensorErrors:
             return []
         }
@@ -92,32 +90,6 @@ extension GlucoseView {
     }
 
 
-    /// Bestäm varför ett 5‑minuters-slot saknas.
-    ///
-    /// - Om varken NS-only eller Alla värden har en avläsning i samma 5-minutersbucket
-    ///   → behandla som sensor-miss.
-    /// - Om Alla värden har en avläsning men NS-only inte har det
-    ///   → behandla som Trio-upload-miss.
-    private func missingReason(for date: Date) -> MissingReason {
-        let bucket = Int(floor(date.timeIntervalSince1970 / 300.0))
-
-        func hasEntry(in entries: [BGEntry]) -> Bool {
-            entries.contains { entry in
-                let b = Int(floor(entry.date.timeIntervalSince1970 / 300.0))
-                return b == bucket
-            }
-        }
-
-        let hasAllValues = hasEntry(in: allValuesDayEntries)
-        let hasNSOnly    = hasEntry(in: nsOnlyDayEntries)
-
-        if !hasAllValues && !hasNSOnly {
-            return .sensor
-        }
-        if hasAllValues && !hasNSOnly {
-            return .trioUpload
-        }
-        // Fallback
-        return .sensor
-    }
+    /// A gap in the combined dataset is a missing sensor reading.
+    private func missingReason(for date: Date) -> MissingReason { .sensor }
 }
