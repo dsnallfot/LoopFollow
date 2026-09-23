@@ -64,9 +64,27 @@ extension GraphDataIndex {
     }
 }
 
+// Preserve the treatment time when a point is shifted or spans an interval.
+class TreatmentChartDataEntry: ChartDataEntry {
+    var treatmentTimestamp: TimeInterval?
+
+    override func copy(with zone: NSZone? = nil) -> Any {
+        let copy = TreatmentChartDataEntry(x: x, y: y, data: data)
+        copy.treatmentTimestamp = treatmentTimestamp
+        return copy
+    }
+}
+
 // Keep the compact graph label separate from the detailed highlight popup.
-class CarbChartDataEntry: ChartDataEntry {
+class CarbChartDataEntry: TreatmentChartDataEntry {
     var graphLabel = ""
+
+    override func copy(with zone: NSZone? = nil) -> Any {
+        let copy = CarbChartDataEntry(x: x, y: y, data: data)
+        copy.treatmentTimestamp = treatmentTimestamp
+        copy.graphLabel = graphLabel
+        return copy
+    }
 }
 
 class CompositeRenderer: LineChartRenderer {
@@ -738,60 +756,110 @@ extension MainViewController {
             return
         }
 
-        // 4. För övriga punkter (bolus/kolhydrater/fingerstick/pumpbyte) vill vi öppna MealAnalysisView.
-        guard chartView == BGChart || chartView == BGChartFull else { return }
-        guard let dataString = entry.data as? String else { return }
+        guard chartView == BGChart || chartView == BGChartFull,
+              let kind = GraphDataIndex(rawValue: highlight.dataSetIndex) else { return }
 
-        let analysisStart = Date(timeIntervalSince1970: entry.x)
-        let analysisStartOffset = Date(timeIntervalSince1970: entry.x) - 60 * 20 //visa vad som hände 20 min före sticket och tiden framåt
-
-        // Fingerstick / BG Check (updateBGCheckGraph använder "Fingerstick\n...")
-        if dataString.contains("Fingerstick") {
-            presentMealAnalysis(for: analysisStartOffset, source: .bgCheck)
+        let source: MealAnalysisSource?
+        let title: String
+        let actionTitle: String
+        switch kind {
+        case .smb:
+            clearTreatmentHighlight()
+            showTrioDecisionAlert(for: entry.x)
+            return
+        case .bolus:
+            source = nil
+            title = "Bolus"
+            actionTitle = ""
+        case .carbs:
+            let isDextro = (entry.data as? String)?.contains("🍬") == true
+            source = isDextro ? .lowTreatment : .meal
+            let isFPU = (entry.data as? String)?.hasPrefix("Fett/Protein") == true
+            title = isDextro ? "Dextro" : (isFPU ? "Fett & Protein" : "Måltid")
+            actionTitle = isDextro ? "Analys dextro" : "Analys måltid"
+        case .override:
+            source = .override
+            title = "Override"
+            actionTitle = "Analys override"
+        case .bgCheck:
+            source = .bgCheck
+            title = "Fingerstick"
+            actionTitle = "Analys stick"
+        case .pump:
+            source = .pumpChange
+            title = "Poddbyte"
+            actionTitle = "Analysera Poddbyte"
+        case .sensorStart:
+            source = .sensorChange
+            title = "Sensorbyte"
+            actionTitle = "Analysera Sensorbyte"
+        default:
             return
         }
 
-        // Pumpbyte (updatePumpChange använder line1: "Pumpbyte")
-        if dataString.contains("Pumpbyte") {
-            // Ta bort highlight/marker direkt så att standard-pill-popup inte visas.
-            BGChart.highlightValue(nil, callDelegate: false)
-            BGChartFull.highlightValue(nil, callDelegate: false)
-            presentMealAnalysis(for: analysisStart, source: .pumpChange)
-            return
+        clearTreatmentHighlight()
+        let timestamp = (entry as? TreatmentChartDataEntry)?.treatmentTimestamp ?? entry.x
+        let start = Date(timeIntervalSince1970: timestamp)
+        // The marker's last line only contains the time; the alert has a full timestamp.
+        var detailLines = (entry.data as? String ?? "").components(separatedBy: "\r\n")
+        if detailLines.count > 1 { detailLines.removeLast() }
+        if kind == .bolus {
+            detailLines.removeAll { $0 == "Bolus" }
+            detailLines = ["Insulin: " + detailLines.joined(separator: "\n")]
         }
-        
-        // Sensorbyte (updatePumpChange använder line1: "Pumpbyte")
-        if dataString.contains("Sensorbyte") {
-            // Ta bort highlight/marker direkt så att standard-pill-popup inte visas.
-            BGChart.highlightValue(nil, callDelegate: false)
-            BGChartFull.highlightValue(nil, callDelegate: false)
-            presentMealAnalysis(for: analysisStart, source: .sensorChange)
-            return
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "sv_SE")
+        formatter.dateFormat = "dd MMM HH:mm:ss"
+        if kind == .override,
+           let override = overrideGraphData.first(where: { $0.date == timestamp }) {
+            detailLines = [override.notes ?? "--"]
+            detailLines.append(override.duration > 1439 * 60
+                ? "Varaktighet: Tillsvidare"
+                : "Varaktighet: \(Int(override.duration / 60)) min")
+            detailLines.append("Aktiv till kl: \(formatter.string(from: start.addingTimeInterval(override.duration)))")
+            if !override.enteredBy.isEmpty {
+                detailLines.append("Inlagt av: \(override.enteredBy)")
+            }
         }
+        let alert = UIAlertController(
+            title: "\(formatter.string(from: start))\n\n\(title)",
+            message: detailLines.joined(separator: "\n"),
+            preferredStyle: .alert
+        )
+        if let source = source {
+            alert.addAction(UIAlertAction(title: actionTitle, style: .default) { [weak self] _ in
+                self?.presentMealAnalysis(for: start, source: source)
+            })
+            for (days, label) in [(1, "Samma tid dagen innan"), (7, "Samma tid veckan innan")] {
+                alert.addAction(UIAlertAction(title: label, style: .default) { [weak self] _ in
+                    self?.presentTreatmentComparison(for: start, daysBack: days)
+                })
+            }
+        }
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
 
-        // Dextro / lågbehandling – identifieras via 🍬 i måltidstexten.
-        if dataString.contains("🍬") {
-            BGChart.highlightValue(nil, callDelegate: false)
-            BGChartFull.highlightValue(nil, callDelegate: false)
-            presentMealAnalysis(for: analysisStart, source: .lowTreatment)
-            return
-        }
+    private func clearTreatmentHighlight() {
+        BGChart.highlightValue(nil, callDelegate: false)
+        BGChartFull.highlightValue(nil, callDelegate: false)
+    }
 
-        // Måltid / kolhydrater – uppfångas via texten vi satte i updateCarbGraph
-        // ("Kolhydrater ...", eller "Fett/Protein ...").
-        if dataString.contains("Kolhydrater") || dataString.contains("Fett/Protein") {
-            // Ta bort highlight/marker direkt så att standard-pill-popup inte visas.
-            BGChart.highlightValue(nil, callDelegate: false)
-            BGChartFull.highlightValue(nil, callDelegate: false)
-            presentMealAnalysis(for: analysisStart, source: .meal)
-            return
-        }
-
-        // Override
-        if dataString.contains("Varaktighet") {
-            presentMealAnalysis(for: analysisStart, source: .override)
-            return
-        }
+    private func presentTreatmentComparison(for timestamp: Date, daysBack: Int) {
+        // Match the treatment table: start one hour before the comparison time,
+        // with the six-hour segment selected and no fixed end.
+        let start = timestamp.addingTimeInterval(-Double(daysBack * 24 * 60 * 60 + 60 * 60))
+        let analysisVC = MealAnalysisView(
+            events: buildEventsForMealAnalysis(),
+            initialStart: start,
+            initialEnd: nil,
+            modalWithTimestamp: true,
+            modalTitleString: "Analys tid",
+            preSelectedSegment: 3
+        )
+        let nav = UINavigationController(rootViewController: analysisVC)
+        nav.modalPresentationStyle = .formSheet
+        present(nav, animated: true)
     }
     
     func chartScaled(_ chartView: ChartViewBase, scaleX: CGFloat, scaleY: CGFloat) {
@@ -2059,7 +2127,8 @@ extension MainViewController {
             if dateTimeStamp < dateTimeUtils.getTimeIntervalNHoursAgo(N: graphHours) { continue }
   
             let glucose = findNearestBGbyTime(needle: dateTimeStamp, haystack: bgData, startingIndex: 0).sgv
-            let dot = ChartDataEntry(x: Double(dateTimeStamp), y: glucose + 20, data: formatPillTextExtraLine(line1: "Bolus", line2: (formatter.string(from: NSNumber(value: bolusData[i].value))?.replacingOccurrences(of: ",", with: "."))! + " E", time: dateTimeStamp))
+            let dot = TreatmentChartDataEntry(x: Double(dateTimeStamp), y: glucose + 20, data: formatPillTextExtraLine(line1: "Bolus", line2: (formatter.string(from: NSNumber(value: bolusData[i].value))?.replacingOccurrences(of: ",", with: "."))! + " E", time: dateTimeStamp))
+            dot.treatmentTimestamp = bolusData[i].date
             mainChart.addEntry(dot)
             if UserDefaultsRepository.smallGraphTreatments.value {
                 smallChart.addEntry(dot)
@@ -2213,6 +2282,7 @@ extension MainViewController {
             let line2FPU = "Kolhydratersekvivalenter " + formatter.string(from: NSNumber(value: carbData[i].value))! + " g"
             let glucose = findNearestBGbyTime(needle: dateTimeStamp, haystack: bgData, startingIndex: 0).sgv
             let dot = CarbChartDataEntry(x: Double(dateTimeStamp), y: glucose - 20, data: formatPillTextExtraLine(line1: (foodType.isEmpty ? "Fett/Protein" : "\(foodType)"), line2: (foodType.isEmpty ? line2FPU : line2), time: dateTimeStamp))
+            dot.treatmentTimestamp = carbData[i].date
             dot.graphLabel = (foodType.isEmpty ? "FPU" : foodType) + "\n" + valueStringBase + "g"
             BGChart.data?.dataSets[dataIndex].addEntry(dot)
             if UserDefaultsRepository.smallGraphTreatments.value {
@@ -2952,28 +3022,32 @@ extension MainViewController {
             
             // Create entries for the override rectangle.
             // Pre-start: lower point at yBottom.
-            let preStartDot = ChartDataEntry(x: Double(thisItem.date), y: yBottom, data: labelText)
+            let preStartDot = TreatmentChartDataEntry(x: Double(thisItem.date), y: yBottom, data: labelText)
+            preStartDot.treatmentTimestamp = thisItem.date
             chart.addEntry(preStartDot)
             if UserDefaultsRepository.smallGraphTreatments.value {
                 BGChartFull.data?.dataSets[dataIndex].addEntry(preStartDot)
             }
             
             // Start dot: at yTop.
-            let startDot = ChartDataEntry(x: Double(thisItem.date + 1), y: yTop, data: labelText)
+            let startDot = TreatmentChartDataEntry(x: Double(thisItem.date + 1), y: yTop, data: labelText)
+            startDot.treatmentTimestamp = thisItem.date
             chart.addEntry(startDot)
             if UserDefaultsRepository.smallGraphTreatments.value {
                 BGChartFull.data?.dataSets[dataIndex].addEntry(startDot)
             }
             
             // End dot: at yTop.
-            let endDot = ChartDataEntry(x: Double(thisItem.endDate - 2), y: yTop, data: labelText)
+            let endDot = TreatmentChartDataEntry(x: Double(thisItem.endDate - 2), y: yTop, data: labelText)
+            endDot.treatmentTimestamp = thisItem.date
             chart.addEntry(endDot)
             if UserDefaultsRepository.smallGraphTreatments.value {
                 BGChartFull.data?.dataSets[dataIndex].addEntry(endDot)
             }
             
             // Post end dot: lower point at yBottom.
-            let postEndDot = ChartDataEntry(x: Double(thisItem.endDate - 1), y: yBottom, data: labelText)
+            let postEndDot = TreatmentChartDataEntry(x: Double(thisItem.endDate - 1), y: yBottom, data: labelText)
+            postEndDot.treatmentTimestamp = thisItem.date
             chart.addEntry(postEndDot)
             if UserDefaultsRepository.smallGraphTreatments.value {
                 BGChartFull.data?.dataSets[dataIndex].addEntry(postEndDot)
