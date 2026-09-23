@@ -1,0 +1,528 @@
+import UIKit
+import Charts
+
+final class TrioLoopStatsViewController: ThemedTableViewController {
+
+    // Full data set (upp till t.ex. 90 dagar)
+    private let snapshotDate: Date
+    private let allDays: [Date]
+    private let allCounts: [Int]
+    private let allLoopErrorDates: [Date]
+
+    // Aktuell vy (styrd av segmented control)
+    private var selectedDays: [Date] = []
+    private var selectedCounts: [Int] = []
+
+    // LoopError dates filtered to the selected period (used for longest streak calc)
+    private var selectedLoopErrorDates: [Date] = []
+
+    private enum PeriodOption: CaseIterable {
+        case d7, d14, d30, d90
+
+        var days: Int {
+            switch self {
+            case .d7:  return 7
+            case .d14: return 14
+            case .d30: return 30
+            case .d90: return 90
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .d7:  return "7 d"
+            case .d14: return "14 d"
+            case .d30: return "30 d"
+            case .d90: return "90 d"
+            }
+        }
+    }
+
+    private enum ChartMode: CaseIterable {
+        case count, time
+
+        var title: String {
+            switch self {
+            case .count: return "Antal"
+            case .time:  return "Tid"
+            }
+        }
+    }
+
+    private var selectedPeriod: PeriodOption = .d90
+
+    private var selectedMode: ChartMode = .count
+
+    private lazy var modeControl: UISegmentedControl = {
+        let items = ChartMode.allCases.map { $0.title }
+        let sc = UISegmentedControl(items: items)
+        sc.selectedSegmentIndex = ChartMode.allCases.firstIndex(of: selectedMode) ?? 0
+        sc.addTarget(self, action: #selector(modeChanged(_:)), for: .valueChanged)
+        return sc
+    }()
+
+    private lazy var periodControl: UISegmentedControl = {
+        let items = PeriodOption.allCases.map { $0.title }
+        let sc = UISegmentedControl(items: items)
+        sc.selectedSegmentIndex = PeriodOption.allCases.firstIndex(of: selectedPeriod) ?? (items.count - 1)
+        sc.addTarget(self, action: #selector(periodChanged(_:)), for: .valueChanged)
+        return sc
+    }()
+
+    private let chartView: BarChartView = {
+        let v = BarChartView()
+        v.legend.enabled = false
+        v.chartDescription.enabled = false
+        v.rightAxis.enabled = false
+        v.minOffset = 8
+        v.pinchZoomEnabled = false
+        v.doubleTapToZoomEnabled = true
+        v.scaleXEnabled = true
+        v.scaleYEnabled = false
+        v.dragEnabled = true
+        v.highlightPerTapEnabled = false
+        v.highlightPerDragEnabled = false
+        v.drawMarkers = false
+        v.maxVisibleCount = 1000000
+        return v
+    }()
+
+    private let timeChartView: ScatterChartView = {
+        let v = ScatterChartView()
+        v.legend.enabled = false
+        v.chartDescription.enabled = false
+        v.rightAxis.enabled = false
+        v.minOffset = 8
+        v.pinchZoomEnabled = false
+        v.doubleTapToZoomEnabled = true
+        v.scaleXEnabled = true
+        v.scaleYEnabled = false
+        v.dragEnabled = true
+        v.highlightPerTapEnabled = false
+        v.highlightPerDragEnabled = false
+        v.drawMarkers = false
+        v.maxVisibleCount = 1000000
+        return v
+    }()
+
+    init(days: [Date], counts: [Int], loopDates: [Date], now: Date = Date()) {
+        self.snapshotDate = now
+        self.allDays = days
+        self.allCounts = counts
+        self.allLoopErrorDates = loopDates
+        super.init(style: .insetGrouped)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func defaultPeriod() -> PeriodOption {
+        let count = allDays.count
+        // Defaulta till 14 dagar om möjligt,
+        // annars falla tillbaka till kortare perioder vid behov.
+        if count >= 14 { return .d14 }
+        if count >= 7  { return .d7 }
+        return .d7
+    }
+
+    private func applyPeriod(_ period: PeriodOption) {
+        selectedPeriod = period
+        let total = allDays.count
+        guard total > 0 else {
+            selectedDays = []
+            selectedCounts = []
+            selectedLoopErrorDates = []
+            chartView.data = nil
+            timeChartView.data = nil
+            tableView.reloadData()
+            return
+        }
+
+        let n = min(period.days, total)
+        let startIndex = max(0, total - n)
+        selectedDays = Array(allDays[startIndex..<total])
+        selectedCounts = Array(allCounts[startIndex..<total])
+
+        // Compute date range for the selected days and filter loopError timestamps into it.
+        if let firstDay = selectedDays.first, let lastDay = selectedDays.last {
+            let cal = Calendar.current
+            let start = cal.startOfDay(for: firstDay)
+            let end = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: lastDay)) ?? Date.distantFuture
+            selectedLoopErrorDates = allLoopErrorDates
+                .filter { $0 >= start && $0 < end && $0 <= snapshotDate }
+                .sorted()
+        } else {
+            selectedLoopErrorDates = []
+        }
+
+        loadChartData()
+        tableView.reloadData()
+    }
+
+    @objc private func periodChanged(_ sender: UISegmentedControl) {
+        let index = sender.selectedSegmentIndex
+        guard index >= 0 && index < PeriodOption.allCases.count else { return }
+        let period = PeriodOption.allCases[index]
+        applyPeriod(period)
+    }
+
+    @objc private func modeChanged(_ sender: UISegmentedControl) {
+        let index = sender.selectedSegmentIndex
+        guard index >= 0 && index < ChartMode.allCases.count else { return }
+        selectedMode = ChartMode.allCases[index]
+
+        // Visa rätt graf och ladda om data
+        let showCount = (selectedMode == .count)
+        chartView.isHidden = !showCount
+        timeChartView.isHidden = showCount
+
+        loadChartData()
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        updateBackgroundForCurrentMode()
+        title = "Loopstatistik"
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            title: "Klar",
+            style: .plain,
+            target: self,
+            action: #selector(dismissSelf)
+        )
+
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "BGStatsCell")
+
+        // Välj en rimlig defaultperiod baserat på hur många dagar vi har
+        let initialPeriod = defaultPeriod()
+        selectedPeriod = initialPeriod
+        if let idx = PeriodOption.allCases.firstIndex(of: initialPeriod) {
+            periodControl.selectedSegmentIndex = idx
+        }
+
+        // Default: Antal
+        selectedMode = .count
+        if let idx2 = ChartMode.allCases.firstIndex(of: selectedMode) {
+            modeControl.selectedSegmentIndex = idx2
+        }
+
+        setupChartHeader()
+        applyPeriod(initialPeriod)
+    }
+
+    // MARK: - Chart header
+
+    private func setupChartHeader() {
+        let container = UIView()
+        container.frame = CGRect(x: 0, y: 0, width: tableView.bounds.width, height: 340)
+        container.backgroundColor = .clear
+        container.isOpaque = false
+
+        // Let the chart + segmented controls show the underlying gradient
+        chartView.backgroundColor = .clear
+        timeChartView.backgroundColor = .clear
+        periodControl.backgroundColor = .clear
+        modeControl.backgroundColor = .clear
+
+        container.addSubview(periodControl)
+        container.addSubview(modeControl)
+        container.addSubview(chartView)
+        container.addSubview(timeChartView)
+
+        periodControl.translatesAutoresizingMaskIntoConstraints = false
+        modeControl.translatesAutoresizingMaskIntoConstraints = false
+        chartView.translatesAutoresizingMaskIntoConstraints = false
+        timeChartView.translatesAutoresizingMaskIntoConstraints = false
+
+        // Default visibility
+        chartView.isHidden = false
+        timeChartView.isHidden = true
+
+        NSLayoutConstraint.activate([
+            periodControl.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+            periodControl.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            periodControl.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+
+            modeControl.topAnchor.constraint(equalTo: periodControl.bottomAnchor, constant: 8),
+            modeControl.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            modeControl.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+
+            chartView.topAnchor.constraint(equalTo: modeControl.bottomAnchor, constant: 12),
+            chartView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 12),
+            chartView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -12),
+            chartView.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -24),
+
+            timeChartView.topAnchor.constraint(equalTo: modeControl.bottomAnchor, constant: 12),
+            timeChartView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 12),
+            timeChartView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -12),
+            timeChartView.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -24)
+        ])
+
+        tableView.tableHeaderView = container
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        if let header = tableView.tableHeaderView {
+            let targetSize = CGSize(width: tableView.bounds.width, height: 340)
+            if header.frame.size != targetSize {
+                header.frame.size = targetSize
+                tableView.tableHeaderView = header
+            }
+        }
+    }
+
+    private func loadChartData() {
+        guard selectedDays.count == selectedCounts.count, !selectedDays.isEmpty else {
+            chartView.data = nil
+            timeChartView.data = nil
+            chartView.setNeedsDisplay()
+            timeChartView.setNeedsDisplay()
+            return
+        }
+
+        switch selectedMode {
+        case .count:
+            loadCountChartData()
+        case .time:
+            loadTimeChartData()
+        }
+    }
+
+    private func loadCountChartData() {
+        var entries: [BarChartDataEntry] = []
+        entries.reserveCapacity(selectedDays.count)
+
+        var maxCount = 0
+        for (idx, count) in selectedCounts.enumerated() {
+            entries.append(BarChartDataEntry(x: Double(idx), y: Double(count)))
+            if count > maxCount { maxCount = count }
+        }
+
+        let dataSet = BarChartDataSet(entries: entries, label: "")
+        dataSet.setColor(.systemYellow.withAlphaComponent(0.7))
+        dataSet.drawValuesEnabled = false
+        dataSet.barBorderColor = .black
+        dataSet.barBorderWidth = 0.5
+
+        let data = BarChartData(dataSet: dataSet)
+        chartView.data = data
+        chartView.autoScaleMinMaxEnabled = false
+        chartView.notifyDataSetChanged()
+        
+        chartView.drawGridBackgroundEnabled = true
+        chartView.gridBackgroundColor = NSUIColor.systemBackground.withAlphaComponent(0.5)
+
+        // X-axis labels = datum (kompakt format) för varje index
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "sv_SE")
+        df.dateFormat = "dd/MM"
+
+        let labels = selectedDays.map { df.string(from: $0) }
+        let xAxis = chartView.xAxis
+        xAxis.labelPosition = .bottom
+        xAxis.granularity = 1
+        xAxis.granularityEnabled = true
+        xAxis.valueFormatter = IndexAxisValueFormatter(values: labels)
+        xAxis.setLabelCount(min(6, labels.count), force: false)
+
+        // Y-axel – dynamiskt max utifrån högsta antal loopErrors på en dag
+        let yAxis = chartView.leftAxis
+        yAxis.axisMinimum = 0
+        let maxY = max(1, maxCount)
+        yAxis.axisMaximum = Double(maxY) * 1.2
+        yAxis.granularity = 1
+        yAxis.granularityEnabled = true
+        yAxis.valueFormatter = DefaultAxisValueFormatter { value, _ in
+            String(format: "%.0f st", value)
+        }
+
+        let gridLineColor = UIColor.lightGray.withAlphaComponent(0.5)
+        xAxis.gridColor = gridLineColor
+        xAxis.gridLineWidth = 0.5
+        xAxis.gridLineDashLengths = [2, 2]
+
+        yAxis.gridColor = gridLineColor
+        yAxis.gridLineWidth = 0.5
+        yAxis.gridLineDashLengths = [2, 2]
+
+        chartView.rightAxis.enabled = false
+        chartView.setNeedsDisplay()
+    }
+
+    private func loadTimeChartData() {
+        // Bygg upp index per dag för snabb lookup
+        let cal = Calendar.current
+        var indexByDay: [Date: Int] = [:]
+        for (idx, d) in selectedDays.enumerated() {
+            indexByDay[cal.startOfDay(for: d)] = idx
+        }
+
+        // Skapa scatterpunkter: x = dag-index, y = timmar på dygnet (0–24)
+        var points: [ChartDataEntry] = []
+        points.reserveCapacity(selectedLoopErrorDates.count)
+
+        for d in selectedLoopErrorDates {
+            let dayStart = cal.startOfDay(for: d)
+            guard let dayIndex = indexByDay[dayStart] else { continue }
+
+            let comps = cal.dateComponents([.hour, .minute, .second], from: d)
+            let h = Double(comps.hour ?? 0)
+            let m = Double(comps.minute ?? 0)
+            let s = Double(comps.second ?? 0)
+            let hourOfDay = h + (m / 60.0) + (s / 3600.0)
+
+            points.append(ChartDataEntry(x: Double(dayIndex), y: hourOfDay))
+        }
+
+        let ds = ScatterChartDataSet(entries: points, label: "")
+        ds.setColor(.systemYellow.withAlphaComponent(0.8))
+        ds.setScatterShape(.circle)
+        ds.scatterShapeSize = 7
+        ds.drawValuesEnabled = false
+
+        let data = ScatterChartData(dataSet: ds)
+        timeChartView.data = data
+        timeChartView.autoScaleMinMaxEnabled = false
+        timeChartView.notifyDataSetChanged()
+        
+        timeChartView.drawGridBackgroundEnabled = true
+        timeChartView.gridBackgroundColor = NSUIColor.systemBackground.withAlphaComponent(0.5)
+
+        // X-axis labels = datum (kompakt format) för varje index
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "sv_SE")
+        df.dateFormat = "dd/MM"
+        let labels = selectedDays.map { df.string(from: $0) }
+
+        let xAxis = timeChartView.xAxis
+        xAxis.labelPosition = .bottom
+        xAxis.granularity = 1
+        xAxis.granularityEnabled = true
+        xAxis.valueFormatter = IndexAxisValueFormatter(values: labels)
+        xAxis.setLabelCount(min(6, labels.count), force: false)
+
+        // Y-axel = timmar på dygnet 0–24
+        let yAxis = timeChartView.leftAxis
+        yAxis.axisMinimum = 0
+        yAxis.axisMaximum = 24
+
+        // Vi vill kunna visa "mindre" (dashed) grid för timmarna, men endast etikettera 00/06/12/18/24.
+        // Därför använder vi 1h-granularitet för grid, men tomma labels för allt utom 6-timmarssteg.
+        yAxis.granularity = 1
+        yAxis.granularityEnabled = true
+        yAxis.setLabelCount(25, force: false)
+        yAxis.valueFormatter = DefaultAxisValueFormatter { value, _ in
+            let v = Int(value.rounded())
+            guard [0, 6, 12, 18, 24].contains(v) else { return "" }
+            return String(format: "%02d:00", v)
+        }
+
+        // Rensa tidigare limit-lines (om vi byter period/mode och laddar om)
+        yAxis.removeAllLimitLines()
+
+        // Solida "huvudlinjer" vid 00/06/12/18/24
+        let majorLineColor = UIColor.lightGray.withAlphaComponent(0.65)
+        for hour in [0.0, 6.0, 12.0, 18.0, 24.0] {
+            let ll = ChartLimitLine(limit: hour)
+            ll.lineWidth = 0.8
+            ll.lineColor = majorLineColor
+            ll.lineDashLengths = []
+            ll.label = ""
+            yAxis.addLimitLine(ll)
+        }
+
+        let gridLineColor = UIColor.lightGray.withAlphaComponent(0.5)
+        xAxis.gridColor = gridLineColor
+        xAxis.gridLineWidth = 0.5
+        xAxis.gridLineDashLengths = [2, 2]
+
+        yAxis.gridColor = gridLineColor
+        yAxis.gridLineWidth = 0.5
+        yAxis.gridLineDashLengths = [2, 2]
+
+        timeChartView.rightAxis.enabled = false
+        timeChartView.setNeedsDisplay()
+    }
+
+    @objc private func dismissSelf() {
+        dismiss(animated: true)
+    }
+
+    // MARK: - Stats helpers
+
+    private var statistics: LoopStatistics {
+        let calendar = Calendar.current
+        let start = selectedDays.first.map { calendar.startOfDay(for: $0) } ?? snapshotDate
+        let endOfLastDay = selectedDays.last.flatMap {
+            calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: $0))
+        } ?? snapshotDate
+        return LoopStatistics(counts: selectedCounts, dates: selectedLoopErrorDates,
+                              start: start, end: min(snapshotDate, endOfLastDay))
+    }
+
+    // MARK: - Table view
+
+    private enum Row: Int, CaseIterable {
+        case successfulLoops
+        case totalLoopErrors
+        case avgPerDay
+        case daysWithLoopErrors
+        case avgPerLoopErrorDay
+        case maxPerDay
+        case longestNoLoopErrorStreak
+    }
+
+    override func numberOfSections(in tableView: UITableView) -> Int {
+        return 1
+    }
+
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return Row.allCases.count
+    }
+
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = UITableViewCell(style: .value1, reuseIdentifier: "BGStatsCell")
+        cell.selectionStyle = .none
+        // Transparent cell so the themed gradient shows
+        cell.backgroundColor = .clear
+        cell.contentView.backgroundColor = .clear
+        cell.backgroundView = nil
+        if #available(iOS 14.0, *) {
+            var bg = UIBackgroundConfiguration.clear()
+            bg.backgroundColor = .systemGray.withAlphaComponent(0.15)
+            cell.backgroundConfiguration = bg
+        }
+        cell.textLabel?.backgroundColor = .clear
+        cell.detailTextLabel?.backgroundColor = .clear
+
+        cell.textLabel?.numberOfLines = 0
+        let stats = statistics
+        let row = Row(rawValue: indexPath.row)!
+        switch row {
+        case .successfulLoops:
+            cell.textLabel?.text = "Andel lyckade loopar"
+            cell.detailTextLabel?.text = stats.successfulLoopPercentage.map { String(format: "%.1f %%", $0) } ?? "–"
+        case .totalLoopErrors:
+            cell.textLabel?.text = "Totalt antal loopfel"
+            cell.detailTextLabel?.text = "\(stats.total) st"
+        case .avgPerDay:
+            cell.textLabel?.text = "Medel loopfel per dag"
+            cell.detailTextLabel?.text = String(format: "%.1f st", stats.averagePerDay)
+        case .daysWithLoopErrors:
+            cell.textLabel?.text = "Antal dagar med loopfel"
+            cell.detailTextLabel?.text = String(format: "%.0f %%", stats.percentageOfDaysWithErrors)
+        case .avgPerLoopErrorDay:
+            cell.textLabel?.text = "Medel loopfel per dag med fel"
+            cell.detailTextLabel?.text = stats.averagePerErrorDay.map { String(format: "%.1f st", $0) } ?? "–"
+        case .maxPerDay:
+            cell.textLabel?.text = "Högsta antal loopfel per dag"
+            cell.detailTextLabel?.text = "\(stats.maximumPerDay) st"
+        case .longestNoLoopErrorStreak:
+            cell.textLabel?.text = "Längsta streak utan loopfel"
+            cell.detailTextLabel?.text = "\(stats.longestErrorFreeHours) h"
+        }
+
+        return cell
+    }
+}

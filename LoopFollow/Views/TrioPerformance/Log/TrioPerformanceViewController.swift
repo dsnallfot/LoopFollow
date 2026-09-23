@@ -3,7 +3,7 @@ import UIKit
 /// Shared navigation and date selection for the Trio performance logs.
 final class TrioPerformanceViewController: ThemedViewController {
     private enum Mode: Int {
-        case battery, memory, restarts
+        case battery, memory, restarts, loop
     }
 
     private var mode: Mode = .battery
@@ -11,6 +11,7 @@ final class TrioPerformanceViewController: ThemedViewController {
     private let batteryLog = BatteryLogViewController()
     private let memoryLog = MemoryLogViewController()
     private let restartLog = TrioRestartsView()
+    private let loopLog = TrioLoopView()
     private var activeLog: UIViewController?
     private let contentView = UIView()
 
@@ -25,7 +26,7 @@ final class TrioPerformanceViewController: ThemedViewController {
     }()
 
     private let modeControl: UISegmentedControl = {
-        let control = UISegmentedControl(items: ["Batteri", "Minne", "Omstarter"])
+        let control = UISegmentedControl(items: ["Ström", "RAM", "Boot", "Loop"])
         control.selectedSegmentIndex = Mode.battery.rawValue
         control.translatesAutoresizingMaskIntoConstraints = false
         control.accessibilityLabel = "Loggtyp"
@@ -86,6 +87,9 @@ final class TrioPerformanceViewController: ThemedViewController {
         case .restarts:
             title = "Trio omstartslogg"
             child = restartLog
+        case .loop:
+            title = "Trio looplogg"
+            child = loopLog
         }
         if activeLog !== child {
             activeLog?.willMove(toParent: nil)
@@ -113,10 +117,10 @@ final class TrioPerformanceViewController: ThemedViewController {
         switch mode {
         case .battery: retention = BatteryCache.retentionDays
         case .memory: retention = MemoryCache.retentionDays
-        case .restarts: retention = NightscoutCache.retentionDays
+        case .restarts, .loop: retention = NightscoutCache.retentionDays
         }
-        // Restart history includes the entire oldest day retained by NightscoutCache.
-        let oldestOffset = mode == .restarts ? -retention : -retention + 1
+        // Note history includes the entire oldest day retained by NightscoutCache.
+        let oldestOffset = (mode == .restarts || mode == .loop) ? -retention : -retention + 1
         let oldest = calendar.date(byAdding: .day, value: oldestOffset, to: calendar.startOfDay(for: now)) ?? now
         selectedDate = min(max(selectedDate, oldest), now)
         datePicker.minimumDate = oldest
@@ -139,6 +143,8 @@ final class TrioPerformanceViewController: ThemedViewController {
             buttons.append(memoryLog.filterButton)
         case .restarts:
             stats.accessibilityLabel = "Omstartsstatistik"
+        case .loop:
+            stats.accessibilityLabel = "Loopstatistik"
         }
         if navigationController?.viewControllers.first === self {
             buttons.insert(UIBarButtonItem(title: "Klar", style: .plain, target: self,
@@ -159,11 +165,13 @@ final class TrioPerformanceViewController: ThemedViewController {
     }
 
     private func selectDateInActiveLog() {
-        datePicker.accessibilityLabel = mode == .restarts ? "Hoppa till datum i omstartsloggen" : "Datum för loggen"
+        datePicker.accessibilityLabel = mode == .loop ? "Hoppa till datum i looploggen"
+            : mode == .restarts ? "Hoppa till datum i omstartsloggen" : "Datum för loggen"
         switch mode {
         case .battery: batteryLog.selectDate(selectedDate)
         case .memory: memoryLog.selectDate(selectedDate)
         case .restarts: restartLog.selectDate(selectedDate)
+        case .loop: loopLog.selectDate(selectedDate)
         }
     }
 
@@ -172,6 +180,7 @@ final class TrioPerformanceViewController: ThemedViewController {
         case .battery: batteryLog.showStats()
         case .memory: memoryLog.showStats()
         case .restarts: restartLog.showRestartStats()
+        case .loop: loopLog.showLoopStats()
         }
     }
 

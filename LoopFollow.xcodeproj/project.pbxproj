@@ -180,12 +180,14 @@
 		6D00C69A70FE96C976063327 /* ProfileSchedulesViewModel+Loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 767F4CE5195FE316D8C160F4 /* ProfileSchedulesViewModel+Loading.swift */; };
 		6E3A0F1EBA01AFC84AEABCA8 /* UserDataStatsView+ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF4D38CBF029975219466728 /* UserDataStatsView+ChartData.swift */; };
 		6EF443CC1C96D135B03F057F /* TreatmentsTableView+Details.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04F8CA9CB690D162D4A5666 /* TreatmentsTableView+Details.swift */; };
+		6F27597242D449EBA01CEAA5 /* TrioLoopStatsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7B3CE6EB09B416FA816F1D2 /* TrioLoopStatsViewController.swift */; };
 		703F0ABFED7B6937597C2CC6 /* GlucoseView+SensorAlerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A350BF77CA74C774D6D841B /* GlucoseView+SensorAlerts.swift */; };
 		7178C97BD2A9ADAC47318993 /* DailyStatsSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23722B1A51A4B5C642B2F3A /* DailyStatsSummaryView.swift */; };
 		7272ED0766F80B5A36119771 /* ProfileSchedulesView+Sections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65343509F048D52933BAE23B /* ProfileSchedulesView+Sections.swift */; };
 		727CEC53530F57CAD310B623 /* SickDayCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7E288C8CF94DB5C4BD25D4 /* SickDayCalendarView.swift */; };
 		733B82180C999CFF0A775B70 /* DateAxisFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFB965A370811A9AE86A6139 /* DateAxisFormatter.swift */; };
 		736FF94B6D2EDD611C007006 /* WeekdayFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0A508C86BF096EE3DD804E /* WeekdayFilterView.swift */; };
+		74CAAFD9988C4769AC26A776 /* LoopEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAC42CDFD3E4176A7626841 /* LoopEntry.swift */; };
 		7624780AA2F74F3B9FFA0B7B /* MemoryEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = B530D0BBEA1C490794983901 /* MemoryEntry.swift */; };
 		767AEB4C90617CE3941EEF83 /* BGCheckView+Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1529B49EF0288F5EDBE664 /* BGCheckView+Navigation.swift */; };
 		780F868D5FF1B2CE7C4E3CDF /* LowTreatmentsStatsViewController+Filtering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CCB178428CCE2A6E7210686 /* LowTreatmentsStatsViewController+Filtering.swift */; };
@@ -244,6 +246,7 @@
 		C2F8A8564083001BD09030D1 /* ProfileSchedulesLastChangedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26F7E68C3F42706CE073896C /* ProfileSchedulesLastChangedStore.swift */; };
 		C3446EA976E973B0869E85D4 /* ProfileSchedulesViewModel+Training.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C5D5477BB56173E654517CE /* ProfileSchedulesViewModel+Training.swift */; };
 		C4DE963965C1AB527EF740FA /* Treatment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79870C6C5B83AAAA5F6F2E7F /* Treatment.swift */; };
+		CB7E6FBF3B9947CE93E239A0 /* TrioLoopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99C3CEF016BA462C8B8EC578 /* TrioLoopView.swift */; };
 		CC72E2006EABFEA684FD0DB4 /* DailyStatsViewModel+Filtering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9158A54AD8A211A407B78E20 /* DailyStatsViewModel+Filtering.swift */; };
 		CE3EA0DB90CBC49120346653 /* ActiveAlarmModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB7749BB0891A47A15A1272 /* ActiveAlarmModels.swift */; };
 		D1C1B3D6185A012C045B5832 /* AlarmViewModel+TrendRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B37DB78EAEEB7D4CCE5697 /* AlarmViewModel+TrendRows.swift */; };
@@ -609,6 +612,7 @@
 		2A500F4F6AB47DBE78413A79 /* TreatmentsTableView+Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Layout.swift"; sourceTree = "<group>"; };
 		2AC1270867D2427E25041C7E /* ModernAlarmViewController+Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModernAlarmViewController+Navigation.swift"; sourceTree = "<group>"; };
 		2B1529B49EF0288F5EDBE664 /* BGCheckView+Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckView+Navigation.swift"; sourceTree = "<group>"; };
+		2BAC42CDFD3E4176A7626841 /* LoopEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopEntry.swift; sourceTree = "<group>"; };
 		2F164E844AA4B02DFCF99E32 /* MealAnalysisView+Totals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+Totals.swift"; sourceTree = "<group>"; };
 		306CA1FAA339A5D79F0D2895 /* UserProfileEntry+Identity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UserProfileEntry+Identity.swift"; sourceTree = "<group>"; };
 		31CA1EED9AFDE804B21EB8D5 /* ProfileSchedulesViewModel+Calculations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProfileSchedulesViewModel+Calculations.swift"; sourceTree = "<group>"; };
@@ -782,6 +786,7 @@
 		9523BA68258AE41CECB855AF /* Event.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Event.swift; sourceTree = "<group>"; };
 		968DAC630BAE445588BCA569 /* MemoryLogStatsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryLogStatsViewController.swift; sourceTree = "<group>"; };
 		9867D55F38192201B4867C95 /* DailyStatsChartsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyStatsChartsView.swift; sourceTree = "<group>"; };
+		99C3CEF016BA462C8B8EC578 /* TrioLoopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrioLoopView.swift; sourceTree = "<group>"; };
 		9A5CCEC1A2BE2737680E8C94 /* UserProfileFieldsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileFieldsView.swift; sourceTree = "<group>"; };
 		9FBF7944B69A12896740BFCD /* BGCheckStatsViewController+ChartLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckStatsViewController+ChartLayout.swift"; sourceTree = "<group>"; };
 		9FCC24C4779A49F50573AB8B /* MealAnalysisDelegates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealAnalysisDelegates.swift; sourceTree = "<group>"; };
@@ -816,6 +821,7 @@
 		C4CF4D91A07599A3CF97DB85 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C6AE077AA29957C7CC65D069 /* ScheduleEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleEntry.swift; sourceTree = "<group>"; };
 		C7823BEBED538CE06011989B /* GlucoseView+Rows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+Rows.swift"; sourceTree = "<group>"; };
+		C7B3CE6EB09B416FA816F1D2 /* TrioLoopStatsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrioLoopStatsViewController.swift; sourceTree = "<group>"; };
 		C7FFEE6838766C3AA48C3379 /* DailyStatsView+Reports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsView+Reports.swift"; sourceTree = "<group>"; };
 		C86546E0CECB983E69447BD1 /* TrainingStatsBarChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingStatsBarChartView.swift; sourceTree = "<group>"; };
 		C98670755CE745F00811C4F2 /* GlucoseView+Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+Models.swift"; sourceTree = "<group>"; };
@@ -1306,6 +1312,7 @@
 				6D20A7C57AD04E17B1EF603F /* Models */,
 				0F090F66A67F438DA810607A /* MemoryStats */,
 				B45E54EC4C5442699B835F69 /* RestartStats */,
+				817E54C5B52C4F3FBA681011 /* LoopStats */,
 			);
 			path = TrioPerformance;
 			sourceTree = "<group>";
@@ -1349,12 +1356,12 @@
 			isa = PBXGroup;
 			children = (
 				DC9C0AF1D15AB7E8016DFA4E /* Alarms */,
-				53ED2F2A91984BDAAF490ADF /* TrioPerformance */,
 				EE2087CB749436D62B42E10D /* BGChecks */,
 				D8AB471FDCF12FE81093AF3D /* Glucose */,
 				A34050A2CAB1FAC912566F3C /* MealAnalysis */,
 				F9B53BAE585E36C2816ACE52 /* ProfileSchedules */,
 				F30FFAAEBF33A04B4A22F512 /* Treatments */,
+				53ED2F2A91984BDAAF490ADF /* TrioPerformance */,
 				655B23042EDE2A3F0092DBDE /* AddManualPumpView.swift */,
 				6540EF952D7DD4C5008BC98D /* AddManualSensorNoteView.swift */,
 				655DF7972F41EFB00085EC78 /* AlarmStatsViewController.swift */,
@@ -1523,6 +1530,7 @@
 				8DDE95FDD7DF4FB3856B1736 /* BatteryEntry.swift */,
 				B530D0BBEA1C490794983901 /* MemoryEntry.swift */,
 				05D27C5F25D94BCEAD23622E /* RestartEntry.swift */,
+				2BAC42CDFD3E4176A7626841 /* LoopEntry.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -1559,6 +1567,14 @@
 				F8FACAED09C85E36FAF37E1D /* Updates */,
 			);
 			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		817E54C5B52C4F3FBA681011 /* LoopStats */ = {
+			isa = PBXGroup;
+			children = (
+				C7B3CE6EB09B416FA816F1D2 /* TrioLoopStatsViewController.swift */,
+			);
+			path = LoopStats;
 			sourceTree = "<group>";
 		};
 		82BF54116BF2C2B11C6750A3 /* Models */ = {
@@ -1777,6 +1793,7 @@
 				654C042D305383FC00EA8C12 /* MemoryLogView.swift */,
 				196EFCA64AD54E948A01F853 /* TrioPerformanceViewController.swift */,
 				6539A4E62EF1BBE400913601 /* TrioRestartsView.swift */,
+				99C3CEF016BA462C8B8EC578 /* TrioLoopView.swift */,
 			);
 			path = Log;
 			sourceTree = "<group>";
@@ -3017,13 +3034,16 @@
 				DD50C7502D0828800057AE6F /* ContactSettingsViewModel.swift in Sources */,
 				DDAD162F2D2EF9830084BE10 /* RileyLinkHeartbeatBluetoothDevice.swift in Sources */,
 				6539A4E72EF1BBF200913601 /* TrioRestartsView.swift in Sources */,
+				CB7E6FBF3B9947CE93E239A0 /* TrioLoopView.swift in Sources */,
 				FC97881C2485969B00A7906C /* MainViewController.swift in Sources */,
 				654C042E3053840300EA8C12 /* MemoryLogView.swift in Sources */,
 				1DEE89C6CC2443DA834A321F /* TrioPerformanceViewController.swift in Sources */,
 				A11E6744A81B485696D65DB0 /* MemoryLogStatsViewController.swift in Sources */,
 				7624780AA2F74F3B9FFA0B7B /* MemoryEntry.swift in Sources */,
 				379DE0165307448D86F43EFF /* RestartEntry.swift in Sources */,
+				74CAAFD9988C4769AC26A776 /* LoopEntry.swift in Sources */,
 				09EB46CE306F4D0F9FB7C3BD /* TrioRestartsStatsViewController.swift in Sources */,
+				6F27597242D449EBA01CEAA5 /* TrioLoopStatsViewController.swift in Sources */,
 				DD6A935E2BFA6FA2003FFB8E /* DeviceStatusOpenAPS.swift in Sources */,
 				65AD37922F7022F300F942A8 /* Training.swift in Sources */,
 				DD493AD52ACF2109009A6922 /* ResumePump.swift in Sources */,
