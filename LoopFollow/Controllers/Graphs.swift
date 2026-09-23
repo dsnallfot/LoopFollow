@@ -771,6 +771,10 @@ extension MainViewController {
             source = nil
             title = "Bolus"
             actionTitle = ""
+        case .basal:
+            source = nil
+            title = "Temp basal"
+            actionTitle = ""
         case .carbs:
             let isDextro = (entry.data as? String)?.contains("🍬") == true
             source = isDextro ? .lowTreatment : .meal
@@ -806,6 +810,9 @@ extension MainViewController {
         if kind == .bolus {
             detailLines.removeAll { $0 == "Bolus" }
             detailLines = ["Insulin: " + detailLines.joined(separator: "\n")]
+        } else if kind == .basal {
+            detailLines.removeAll { $0 == "Basal" }
+            detailLines = ["Basalhastighet: " + detailLines.joined(separator: "\n")]
         }
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "sv_SE")
