@@ -24,7 +24,7 @@ extension ModernAlarmViewController {
 
             case .valueStepper(let title, let value, let min, let max, let step, let unit, let id):
                 let cell = tableView.dequeueReusableCell(withIdentifier: SettingStepperCell.reuseIdentifier, for: indexPath) as! SettingStepperCell
-                cell.configure(title: title, value: value, min: min, max: max, step: step, unit: unit) { [weak self] newValue in
+                cell.configure(title: title, value: value, min: min, max: max, step: step, unit: unit, id: id) { [weak self] newValue in
                     self?.viewModel.updateAlarmValue(id: id, value: newValue)
                 }
                 var background = UIBackgroundConfiguration.listGroupedCell()

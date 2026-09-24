@@ -65,6 +65,48 @@ class SettingSwitchCell: UITableViewCell {
     }
 }
 
+// Glucose settings are persisted in mg/dL; controls operate in the selected unit.
+struct AlarmStepperScale {
+    let isGlucose: Bool
+    let usesMmol: Bool
+    let minimumValue: Double
+    let maximumValue: Double
+    let stepValue: Double
+    private let storageFactor: Double
+
+    init(id: String, units: String?, minimum: Double, maximum: Double, step: Double) {
+        switch id {
+        case "low_bg", "urgent_low_bg", "high_bg", "urgent_high_bg",
+             "low_persistence_max", "fast_drop_delta", "fast_rise_delta",
+             "fast_drop_below_bg", "fast_rise_above_bg", "temporary_bg",
+             "not_looping_lower_limit", "not_looping_upper_limit",
+             "missed_bolus_low_grams_bg":
+            isGlucose = true
+        default:
+            isGlucose = false
+        }
+        usesMmol = isGlucose && units == "mmol/L"
+        storageFactor = usesMmol ? 18.0182 : 1
+        stepValue = isGlucose ? (usesMmol ? 0.1 : 1) : step
+        // Keep selectable tenths inside the original mg/dL limits.
+        minimumValue = usesMmol ? (minimum / storageFactor * 10).rounded(.up) / 10 : minimum
+        maximumValue = usesMmol ? (maximum / storageFactor * 10).rounded(.down) / 10 : maximum
+    }
+
+    func normalizedDisplayValue(_ value: Double) -> Double {
+        let rounded = isGlucose ? (usesMmol ? (value * 10).rounded() / 10 : value.rounded()) : value
+        return Swift.min(maximumValue, Swift.max(minimumValue, rounded))
+    }
+
+    func displayValue(forStoredValue value: Double) -> Double {
+        normalizedDisplayValue(value / storageFactor)
+    }
+
+    func storedValue(forDisplayValue value: Double) -> Double {
+        normalizedDisplayValue(value) * storageFactor
+    }
+}
+
 // 2. Stepper Cell (Moderniserad)
 class SettingStepperCell: UITableViewCell {
     static let reuseIdentifier = "SettingStepperCell"
@@ -75,6 +117,7 @@ class SettingStepperCell: UITableViewCell {
     
     private var currentUnit: String?
     private var currentTitle: String = ""
+    private var valueScale: AlarmStepperScale?
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: .default, reuseIdentifier: reuseIdentifier)
@@ -110,44 +153,49 @@ class SettingStepperCell: UITableViewCell {
         stepper.addTarget(self, action: #selector(stepperDidChange), for: .valueChanged)
     }
 
-    func configure(title: String, value: Double, min: Double, max: Double, step: Double, unit: String?, onValueChanged: @escaping (Double) -> Void) {
-            textLabel?.text = title
-            self.currentTitle = title
-            self.currentUnit = unit
-            self.currentStep = step
-            
-            stepper.minimumValue = min
-            stepper.maximumValue = max
-            stepper.stepValue = step
-            stepper.value = value
-            
-            updateLabelText(for: value)
-            self.onValueChanged = onValueChanged
-        }
+    func configure(title: String, value: Double, min: Double, max: Double, step: Double, unit: String?, id: String, onValueChanged: @escaping (Double) -> Void) {
+        textLabel?.text = title
+        currentTitle = title
+        currentUnit = unit
+        let scale = AlarmStepperScale(
+            id: id, units: UserDefaultsRepository.units.value,
+            minimum: min, maximum: max, step: step
+        )
+        valueScale = scale
+        currentStep = scale.stepValue
+
+        // Reset the range first because cells can be reused for unrelated settings.
+        stepper.minimumValue = 0
+        stepper.maximumValue = scale.maximumValue
+        stepper.minimumValue = scale.minimumValue
+        stepper.stepValue = scale.stepValue
+        stepper.value = scale.displayValue(forStoredValue: value)
+
+        updateLabelText(for: stepper.value)
+        self.onValueChanged = onValueChanged
+    }
 
     @objc private func stepperDidChange() {
-            updateLabelText(for: stepper.value)
-            onValueChanged?(stepper.value)
+        guard let scale = valueScale else { return }
+        stepper.value = scale.normalizedDisplayValue(stepper.value)
+        updateLabelText(for: stepper.value)
+        onValueChanged?(scale.storedValue(forDisplayValue: stepper.value))
+    }
+
+    private func updateLabelText(for value: Double) {
+        let unit = currentUnit ?? ""
+        if valueScale?.isGlucose == true {
+            let format = valueScale?.usesMmol == true ? "%.1f%@" : "%.0f%@"
+            valueLabel.text = String(format: format, value, unit)
+        } else if unit == "%" || currentTitle.contains("Volume") {
+            valueLabel.text = "\(Int(value.rounded()))%"
+        } else if currentStep < 1 {
+            valueLabel.text = String(format: "%.1f%@", value, unit)
+        } else {
+            valueLabel.text = "\(Int(value.rounded()))\(unit)"
         }
-    
-    // Ny hjälpfunktion som sköter all visning
-        private func updateLabelText(for value: Double) {
-            let unit = currentUnit ?? ""
-            
-            if currentTitle.contains("Glukos") || currentTitle.contains("glukos") || currentTitle.contains("delta") || currentTitle.contains("Delta") || currentTitle.contains("BG") {
-                // Omräkning för mmol/L
-                let mmolValue = value / 18.0182
-                valueLabel.text = String(format: "%.1f%@", mmolValue, unit)
-            } else if unit == "%" || currentTitle.contains("Volume") {
-                // Fix för decimalfelet (0.8999...) och visning av %
-                let percentage = Int((value).rounded())
-                valueLabel.text = "\(percentage)%"
-            } else if currentStep < 1 {
-                valueLabel.text = String(format: "%.1f%@", value, unit)
-            } else {
-                valueLabel.text = "\(Int(value.rounded()))\(unit)"
-            }
-        }
+    }
+
 }
 
 // 3. Segment Cell (För toppmenyn)
