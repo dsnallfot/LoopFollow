@@ -2,19 +2,8 @@ import UIKit
 
 extension TreatmentsTableView {
     func updateDuplicateIndicator() {
-        // Check if any duplicate exists in the filtered treatments, excluding "Note" eventType
-        let duplicatesExist = filteredTreatments.contains { treatment in
-            guard treatment.eventType != "Note" else { return false }
-            
-            let count = filteredTreatments.filter {
-                $0.timestamp == treatment.timestamp &&
-                $0.eventType == treatment.eventType &&
-                $0.eventType != "Note"
-            }.count
-            
-            return count > 1
-        }
-        
+        let duplicatesExist = firstDuplicateIndexPath() != nil
+
         // Determine which refresh button to show: if a refresh is in progress, use the activity indicator.
         let refreshButton: UIBarButtonItem
         if let indicator = activityIndicator {
@@ -37,23 +26,42 @@ extension TreatmentsTableView {
         }
     }
     
-    @objc private func duplicateIndicatorTapped() {
-        // Find the first non-Note treatment that has a duplicate (same timestamp and event type)
-        if let duplicateIndex = filteredTreatments.firstIndex(where: { treatment in
-            guard treatment.eventType != "Note" else { return false }
-            
-            let duplicateCount = filteredTreatments.filter {
-                $0.timestamp == treatment.timestamp &&
-                $0.eventType == treatment.eventType &&
-                $0.eventType != "Note"
-            }.count
-            return duplicateCount > 1
-        }) {
-            let indexPath = IndexPath(row: duplicateIndex, section: 0)
-            tableView.scrollToRow(at: indexPath, at: .middle, animated: true)
+    /// Use the same filtered sections as the table, including days whose section
+    /// index changes when the selected filter hides newer days.
+    private func firstDuplicateIndexPath() -> IndexPath? {
+        struct DuplicateKey: Hashable {
+            let timestamp: Date
+            let eventType: String
         }
+
+        let sections = filteredDaySections
+        var counts: [DuplicateKey: Int] = [:]
+        for section in sections {
+            for treatment in section.treatments where treatment.eventType != "Note" {
+                let key = DuplicateKey(timestamp: treatment.timestamp, eventType: treatment.eventType)
+                counts[key, default: 0] += 1
+            }
+        }
+
+        for (sectionIndex, section) in sections.enumerated() {
+            for (rowIndex, treatment) in section.treatments.enumerated() {
+                let key = DuplicateKey(timestamp: treatment.timestamp, eventType: treatment.eventType)
+                if counts[key, default: 0] > 1 {
+                    return IndexPath(row: rowIndex, section: sectionIndex)
+                }
+            }
+        }
+        return nil
     }
-    
+
+    @objc private func duplicateIndicatorTapped() {
+        guard let indexPath = firstDuplicateIndexPath(),
+              indexPath.section < tableView.numberOfSections,
+              indexPath.row < tableView.numberOfRows(inSection: indexPath.section) else { return }
+
+        tableView.scrollToRow(at: indexPath, at: .middle, animated: true)
+    }
+
     // MARK: - Refresh Button Action
     
     @objc func refreshButtonTapped() {
