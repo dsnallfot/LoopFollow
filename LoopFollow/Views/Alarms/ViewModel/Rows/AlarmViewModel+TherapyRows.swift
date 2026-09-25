@@ -43,7 +43,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Spela larm",
             currentOption: UserDefaultsRepository.alertCOBAudible.value,
-            options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+            options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
             id: "cob_audible"
         ))
 
@@ -51,7 +51,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Repetera larm",
             currentOption: UserDefaultsRepository.alertCOBRepeat.value,
-            options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
             id: "cob_repeat"
         ))
 
@@ -59,7 +59,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "För-Snooza",
             currentOption: UserDefaultsRepository.alertCOBAutosnooze.value,
-            options: ["Aldrig", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Nattid", "Dagtid"],
             id: "cob_autosnooze"
         ))
 
@@ -160,7 +160,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Spela larm",
             currentOption: UserDefaultsRepository.alertIOBAudible.value,
-            options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+            options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
             id: "iob_audible"
         ))
 
@@ -168,7 +168,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Repetera larm",
             currentOption: UserDefaultsRepository.alertIOBRepeat.value,
-            options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
             id: "iob_repeat"
         ))
 
@@ -176,7 +176,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "För-Snooza",
             currentOption: UserDefaultsRepository.alertIOBAutosnooze.value,
-            options: ["Aldrig", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Nattid", "Dagtid"],
             id: "iob_autosnooze"
         ))
 
@@ -289,7 +289,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Spela larm",
             currentOption: UserDefaultsRepository.alertMissedBolusAudible.value,
-            options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+            options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
             id: "missed_bolus_audible"
         ))
 
@@ -297,7 +297,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Repetera larm",
             currentOption: UserDefaultsRepository.alertMissedBolusRepeat.value,
-            options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
             id: "missed_bolus_repeat"
         ))
 
@@ -305,7 +305,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "För-Snooza",
             currentOption: UserDefaultsRepository.alertMissedBolusAutosnooze.value,
-            options: ["Aldrig", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Nattid", "Dagtid"],
             id: "missed_bolus_autosnooze"
         ))
 

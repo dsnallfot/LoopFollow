@@ -810,86 +810,101 @@ extension MainViewController {
         pendingAlarmLabel = alarmLabel
         // Keep the data-settling delay, but make the queued start cancellable.
         let work = DispatchWorkItem { [weak self] in
-            guard let self = self, self.pendingAlarmID == id else { return }
-            defer {
-                self.pendingAlarmStart = nil
-                self.pendingAlarmLabel = nil
-                self.pendingAlarmID = nil
+            Task { @MainActor in
+                guard let self = self, self.pendingAlarmID == id else { return }
+                defer {
+                    if self.pendingAlarmID == id {
+                        self.pendingAlarmStart = nil
+                        self.pendingAlarmLabel = nil
+                        self.pendingAlarmID = nil
+                    }
+                }
+                guard !self.isAlarmSnoozed(label: alarmLabel) else {
+                    LogManager.shared.log(category: .alarm, message: "Skipped snoozed alarm: \(alarmLabel)")
+                    return
+                }
+                if #available(iOS 26.0, *) {
+                    let delivery = await LoopFollowAlarmKit.shared.deliver(label: alarmLabel, sound: sound)
+                    guard self.pendingAlarmID == id else { return }
+                    if delivery == .delivered {
+                        // The system owns this alarm until acknowledgement; stop the preceding local player/UI.
+                        if !self.bgData.isEmpty { self.stopAlarmAtNextReading() }
+                        else { AlarmSound.stop() }
+                    }
+                    if delivery != .fallback { return }
+                    guard !self.isAlarmSnoozed(label: alarmLabel) else { return }
+                }
+                AlarmSound.whichAlarm = alarmLabel
+                LogManager.shared.log(category: .alarm, message: "Alarm triggered: \(alarmLabel)")
+
+                // Persist alarm trigger so we can visualize frequency and types later
+                Storage.shared.appendAlarmHistory(
+                    alarmLabel: alarmLabel,
+                    message: "Alarm triggered: \(alarmLabel)",
+                    date: Date().timeIntervalSince1970
+                )
+
+                var audioDuringCall = true
+                if !UserDefaultsRepository.alertAudioDuringPhone.value && self.isOnPhoneCall() {
+                    audioDuringCall = false
+                }
+
+                guard let snoozer = self.tabBarController?.viewControllers?.compactMap({ $0 as? SnoozeViewController }).first else {
+                    return
+                }
+
+                snoozer.updateDisplayWhenTriggered(
+                    bgVal: self.bgData.last.map { Localizer.toDisplayUnits(String($0.sgv)) } ?? "--",
+                    directionVal: self.latestDirectionString,
+                    deltaVal: self.latestDeltaString,
+                    minAgoVal: self.latestMinAgoString,
+                    alertLabelVal: alarmLabel,
+                    latestIOB: latestIOB,
+                    latestCOB: latestCOB,
+                    snoozeValue: Double(snoozeTime)
+                )
+
+                snoozer.SnoozeButton.isHidden = false
+                snoozer.AlertLabel.isHidden = false
+                snoozer.clockLabel.isHidden = true
+                snoozer.debugTextView.isHidden = true
+                snoozer.snoozeForMinuteLabel.text = String(snoozeTime)
+                snoozer.snoozeForMinuteUnit.text = unit
+                snoozer.snoozeForMinuteStepper.value = Double(snoozeTime)
+                snoozer.snoozeForMinuteStepper.stepValue = Double(snoozeIncrement)
+
+                if snoozeTime != 0 {
+                    snoozer.snoozeForMinuteStepper.isHidden = false
+                    snoozer.snoozeForMinuteLabel.isHidden = false
+                    snoozer.snoozeForMinuteUnit.isHidden = false
+                }
+                // Auto-växla bara till snooze-vyn om appen inte redan används aktivt i förgrunden.
+                // Då stör vi inte användaren om hen redan klickar runt i appen, men appen kan ändå
+                // öppnas på snooze-vyn om ett larm triggas medan appen ligger i bakgrund/inaktivt läge.
+                let appIsActiveInForeground = UIApplication.shared.applicationState == .active
+                if UserDefaultsRepository.autoSwitchToSnoozeView.value,
+                   !appIsActiveInForeground,
+                   self.tabBarController?.selectedIndex != 2 {
+                    self.tabBarController?.selectedIndex = 2
+                }
+
+                if snooozedBGReadingTime != nil {
+                    UserDefaultsRepository.snoozedBGReadingTime.value = snooozedBGReadingTime
+                }
+
+                if audio && !UserDefaultsRepository.alertMuteAllIsMuted.value && audioDuringCall {
+                    AlarmSound.setSoundFile(str: sound)
+                    AlarmSound.play(overrideVolume: overrideVolume, numLoops: numLoops)
+                }
+
+                let now = Date().timeIntervalSince1970
+                let bgSeconds = self.bgData.last?.date ?? now
+                let secondsAgo = now - bgSeconds
+                var timerLength = 290 - secondsAgo
+                if timerLength < 10 { timerLength = 290 }
+
+                self.startAlarmPlayingTimer(time: timerLength)
             }
-            guard !self.isAlarmSnoozed(label: alarmLabel) else {
-                LogManager.shared.log(category: .alarm, message: "Skipped snoozed alarm: \(alarmLabel)")
-                return
-            }
-            AlarmSound.whichAlarm = alarmLabel
-            LogManager.shared.log(category: .alarm, message: "Alarm triggered: \(alarmLabel)")
-            
-            // Persist alarm trigger so we can visualize frequency and types later
-            Storage.shared.appendAlarmHistory(
-                alarmLabel: alarmLabel,
-                message: "Alarm triggered: \(alarmLabel)",
-                date: Date().timeIntervalSince1970
-            )
-            
-            var audioDuringCall = true
-            if !UserDefaultsRepository.alertAudioDuringPhone.value && self.isOnPhoneCall() {
-                audioDuringCall = false
-            }
-            
-            guard let snoozer = self.tabBarController?.viewControllers?.compactMap({ $0 as? SnoozeViewController }).first else {
-                return
-            }
-            
-            snoozer.updateDisplayWhenTriggered(
-                bgVal: Localizer.toDisplayUnits(String(self.bgData[self.bgData.count - 1].sgv)),
-                directionVal: self.latestDirectionString,
-                deltaVal: self.latestDeltaString,
-                minAgoVal: self.latestMinAgoString,
-                alertLabelVal: alarmLabel,
-                latestIOB: latestIOB,
-                latestCOB: latestCOB,
-                snoozeValue: Double(snoozeTime)
-            )
-            
-            snoozer.SnoozeButton.isHidden = false
-            snoozer.AlertLabel.isHidden = false
-            snoozer.clockLabel.isHidden = true
-            snoozer.debugTextView.isHidden = true
-            snoozer.snoozeForMinuteLabel.text = String(snoozeTime)
-            snoozer.snoozeForMinuteUnit.text = unit
-            snoozer.snoozeForMinuteStepper.value = Double(snoozeTime)
-            snoozer.snoozeForMinuteStepper.stepValue = Double(snoozeIncrement)
-            
-            if snoozeTime != 0 {
-                snoozer.snoozeForMinuteStepper.isHidden = false
-                snoozer.snoozeForMinuteLabel.isHidden = false
-                snoozer.snoozeForMinuteUnit.isHidden = false
-            }
-            // Auto-växla bara till snooze-vyn om appen inte redan används aktivt i förgrunden.
-            // Då stör vi inte användaren om hen redan klickar runt i appen, men appen kan ändå
-            // öppnas på snooze-vyn om ett larm triggas medan appen ligger i bakgrund/inaktivt läge.
-            let appIsActiveInForeground = UIApplication.shared.applicationState == .active
-            if UserDefaultsRepository.autoSwitchToSnoozeView.value,
-               !appIsActiveInForeground,
-               self.tabBarController?.selectedIndex != 2 {
-                self.tabBarController?.selectedIndex = 2
-            }
-            
-            if snooozedBGReadingTime != nil {
-                UserDefaultsRepository.snoozedBGReadingTime.value = snooozedBGReadingTime
-            }
-            
-            if audio && !UserDefaultsRepository.alertMuteAllIsMuted.value && audioDuringCall {
-                AlarmSound.setSoundFile(str: sound)
-                AlarmSound.play(overrideVolume: overrideVolume, numLoops: numLoops)
-            }
-            
-            let bgSeconds = self.bgData.last!.date
-            let now = Date().timeIntervalSince1970
-            let secondsAgo = now - bgSeconds
-            var timerLength = 290 - secondsAgo
-            if timerLength < 10 { timerLength = 290 }
-            
-            self.startAlarmPlayingTimer(time: timerLength)
         }
         pendingAlarmStart = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: work)

@@ -3,6 +3,7 @@ import UIKit
 // MARK: - Enums för strukturen
 enum AlarmSection: Hashable {
     case categorySelection
+    case alarmKitSettings
     case globalSettings // Snooze all, mute all
     case specificAlarm(String) // T.ex. "Low Alert", "High Alert"
     case nightSettings
@@ -10,6 +11,8 @@ enum AlarmSection: Hashable {
 
 enum AlarmRow: Hashable {
     // Navigation/Kategorier
+    case action(title: String, id: String)
+    case segmentedPicker(title: String, selected: Int, options: [String], id: String)
     case segmentControl
     
     // Generella inställningar
@@ -224,4 +227,44 @@ class SegmentSelectionCell: UITableViewCell {
     @objc func changed() {
         onSegmentChanged?(segmentedControl.selectedSegmentIndex)
     }
+}
+
+/// A vertical layout keeps all four period choices readable with large text sizes.
+final class AlarmPeriodCell: UITableViewCell {
+    static let reuseIdentifier = "AlarmPeriodCell"
+    private let titleLabel = UILabel()
+    private let picker = UISegmentedControl()
+    private var onChange: ((Int) -> Void)?
+
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        selectionStyle = .none
+        titleLabel.font = .preferredFont(forTextStyle: .body)
+        titleLabel.adjustsFontForContentSizeCategory = true
+        let stack = UIStackView(arrangedSubviews: [titleLabel, picker])
+        stack.axis = .vertical
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
+            stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+            stack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10)
+        ])
+        picker.addTarget(self, action: #selector(changed), for: .valueChanged)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func configure(title: String, selected: Int, options: [String], onChange: @escaping (Int) -> Void) {
+        titleLabel.text = title
+        picker.accessibilityLabel = title
+        picker.removeAllSegments()
+        for (index, option) in options.enumerated() { picker.insertSegment(withTitle: option, at: index, animated: false) }
+        picker.selectedSegmentIndex = selected
+        self.onChange = onChange
+    }
+
+    @objc private func changed() { onChange?(picker.selectedSegmentIndex) }
 }

@@ -43,7 +43,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Spela larm",
             currentOption: UserDefaultsRepository.alertSAGEAudible.value,
-            options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+            options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
             id: "sage_audible"
         ))
 
@@ -51,7 +51,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Repetera larm",
             currentOption: UserDefaultsRepository.alertSAGERepeat.value,
-            options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
             id: "sage_repeat"
         ))
 
@@ -59,7 +59,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "För-Snooza",
             currentOption: UserDefaultsRepository.alertSAGEAutosnooze.value,
-            options: ["Aldrig", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Nattid", "Dagtid"],
             id: "sage_autosnooze"
         ))
 
@@ -127,7 +127,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Spela larm",
             currentOption: UserDefaultsRepository.alertCAGEAudible.value,
-            options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+            options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
             id: "cage_audible"
         ))
 
@@ -135,7 +135,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Repetera larm",
             currentOption: UserDefaultsRepository.alertCAGERepeat.value,
-            options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
             id: "cage_repeat"
         ))
 
@@ -143,7 +143,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "För-Snooza",
             currentOption: UserDefaultsRepository.alertCAGEAutosnooze.value,
-            options: ["Aldrig", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Nattid", "Dagtid"],
             id: "cage_autosnooze"
         ))
 
@@ -211,7 +211,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Spela larm",
             currentOption: UserDefaultsRepository.alertPumpAudible.value,
-            options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+            options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
             id: "reservoir_audible"
         ))
 
@@ -219,7 +219,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Repetera larm",
             currentOption: UserDefaultsRepository.alertPumpRepeat.value,
-            options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
             id: "reservoir_repeat"
         ))
 
@@ -227,7 +227,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "För-Snooza",
             currentOption: UserDefaultsRepository.alertPumpAutosnooze.value,
-            options: ["Aldrig", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Nattid", "Dagtid"],
             id: "reservoir_autosnooze"
         ))
 

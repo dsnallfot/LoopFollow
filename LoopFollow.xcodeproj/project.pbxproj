@@ -191,6 +191,7 @@
 		7624780AA2F74F3B9FFA0B7B /* MemoryEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = B530D0BBEA1C490794983901 /* MemoryEntry.swift */; };
 		767AEB4C90617CE3941EEF83 /* BGCheckView+Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1529B49EF0288F5EDBE664 /* BGCheckView+Navigation.swift */; };
 		780F868D5FF1B2CE7C4E3CDF /* LowTreatmentsStatsViewController+Filtering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CCB178428CCE2A6E7210686 /* LowTreatmentsStatsViewController+Filtering.swift */; };
+		7C3A08FF386D4066A4A2FFD3 /* AlarmKit/AlarmKitSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D96C0B7F105742ABA046EB57 /* AlarmKit/AlarmKitSettings.swift */; };
 		7DE6500F8AB023CB72E42B14 /* ProfileSchedulesViewModel+SickDays.swift in Sources */ = {isa = PBXBuildFile; fileRef = E93F939358FFBDE82D7E8003 /* ProfileSchedulesViewModel+SickDays.swift */; };
 		7E450BE3D155A7D33370EC36 /* GlucoseView+Refresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434FEE48D53D070EA40F6C5D /* GlucoseView+Refresh.swift */; };
 		80695AD842E7EE302BF5AF28 /* AlarmViewModel+TherapyRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1105025B687E11CF93F3558D /* AlarmViewModel+TherapyRows.swift */; };
@@ -385,6 +386,7 @@
 		F43536035D81C1C6F0E0EE95 /* MealAnalysisView+Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ECBF7D9183BADB298881952 /* MealAnalysisView+Layout.swift */; };
 		F493BE352252D0BB6D0E359A /* TreatmentsTableView+Refresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = E693F1368395461C0F864304 /* TreatmentsTableView+Refresh.swift */; };
 		F608CCB277A869BDFBD77E52 /* MealAnalysisDelegates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FCC24C4779A49F50573AB8B /* MealAnalysisDelegates.swift */; };
+		F79546CD774347D5B8953378 /* AlarmKit/LoopFollowAlarmKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D048BDD829414B9686D470 /* AlarmKit/LoopFollowAlarmKit.swift */; };
 		F7DF4417AE6D3987A31823EB /* ProfileSchedulesViewModel+ChangeHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD579F9947821A4CC3AB2FCF /* ProfileSchedulesViewModel+ChangeHistory.swift */; };
 		FAB3E2BB0F7159AC25F4AAC2 /* AlarmViewModel+ValueUpdates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36EB833B40F2F6BD651D6398 /* AlarmViewModel+ValueUpdates.swift */; };
 		FC16A97A24996673003D6245 /* NightScout.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC16A97924996673003D6245 /* NightScout.swift */; };
@@ -597,6 +599,7 @@
 		1105025B687E11CF93F3558D /* AlarmViewModel+TherapyRows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AlarmViewModel+TherapyRows.swift"; sourceTree = "<group>"; };
 		1118C5CF74013EA3C338153C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		155F97988FBAC1CB4118D8F9 /* DextroBgMarker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DextroBgMarker.swift; sourceTree = "<group>"; };
+		15D048BDD829414B9686D470 /* AlarmKit/LoopFollowAlarmKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmKit/LoopFollowAlarmKit.swift; sourceTree = "<group>"; };
 		16BD79F5DA898FCCB97E741D /* MealAnalysisView+RowBuilders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+RowBuilders.swift"; sourceTree = "<group>"; };
 		1784758FBCEFF40DEB83C00F /* BGCheckView+Table.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BGCheckView+Table.swift"; sourceTree = "<group>"; };
 		183DA90D3FB49FEB703F9596 /* GlucoseStatsViewController+Filtering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+Filtering.swift"; sourceTree = "<group>"; };
@@ -839,6 +842,7 @@
 		D7E5DC580772427D86CF0C39 /* TrioRestartsStatsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrioRestartsStatsViewController.swift; sourceTree = "<group>"; };
 		D8D042488D3AB4EA042FCE95 /* ClippyHistoryStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippyHistoryStatsView.swift; sourceTree = "<group>"; };
 		D8D58DE86B26743007B848FD /* DailyStatsViewModel+Summary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DailyStatsViewModel+Summary.swift"; sourceTree = "<group>"; };
+		D96C0B7F105742ABA046EB57 /* AlarmKit/AlarmKitSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmKit/AlarmKitSettings.swift; sourceTree = "<group>"; };
 		DBE3F0B076CF2D100A425D6D /* GlucoseStatsViewController+Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+Models.swift"; sourceTree = "<group>"; };
 		DCEEF91343FE053743A0590D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		DD07B5C829E2F9C400C6A635 /* NightscoutUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutUtils.swift; sourceTree = "<group>"; };
@@ -2256,6 +2260,8 @@
 			children = (
 				DD7E19802ACDA0EA00DBD158 /* Nightscout */,
 				FC16A97C24996747003D6245 /* Alarms.swift */,
+				15D048BDD829414B9686D470 /* AlarmKit/LoopFollowAlarmKit.swift */,
+				D96C0B7F105742ABA046EB57 /* AlarmKit/AlarmKitSettings.swift */,
 				FC7CE589248ABEA3001F83B8 /* AlarmSound.swift */,
 				DDCF979D24C2382A002C9752 /* AppStateController.swift */,
 				DD608A0B2C27415C00F91132 /* BackgroundAlertManager.swift */,
@@ -2946,6 +2952,8 @@
 				C3446EA976E973B0869E85D4 /* ProfileSchedulesViewModel+Training.swift in Sources */,
 				DD9ACA042D32821400415D8A /* DeviceStatusTask.swift in Sources */,
 				FC16A97D24996747003D6245 /* Alarms.swift in Sources */,
+				F79546CD774347D5B8953378 /* AlarmKit/LoopFollowAlarmKit.swift in Sources */,
+				7C3A08FF386D4066A4A2FFD3 /* AlarmKit/AlarmKitSettings.swift in Sources */,
 				6508DEBE2EDF1419009F84FE /* NightscoutDayReportViewController.swift in Sources */,
 				DDFD5C532CB167DA00D3FD68 /* TRCCommandType.swift in Sources */,
 				DD16AF112C997B4600FB655A /* LoadingButtonView.swift in Sources */,

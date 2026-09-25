@@ -322,7 +322,7 @@ extension BLEManager: BluetoothDeviceDelegate {
                 isDebug: true,
                 isTempDebug: true
             )
-            BackgroundAlertManager.shared.startBackgroundAlert()
+            Task { @MainActor in BackgroundAlertManager.shared.startBackgroundAlert() }
         }
         
         if let rlDevice = device as? RileyLinkHeartbeatBluetoothDevice {

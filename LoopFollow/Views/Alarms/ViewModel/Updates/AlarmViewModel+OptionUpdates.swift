@@ -15,7 +15,7 @@ extension AlarmViewModel {
                 dayTime = false
                 nightTime = false
             } else {
-                if pickerValue.contains("Nattetid") { nightTime = true }
+                if pickerValue.contains("Nattid") { nightTime = true }
                 if pickerValue.contains("Dagtid") { dayTime = true }
             }
             return (dayTime, nightTime)

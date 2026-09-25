@@ -25,6 +25,7 @@ class AlarmViewModel {
         sections = []
 
         // 1. Globala inställningar visas ofta alltid
+        sections.append(.alarmKitSettings)
         sections.append(.globalSettings)
 
         // 2. Hämta namnet på det valda larmet baserat på huvudkategori och underkategori
@@ -58,6 +59,14 @@ class AlarmViewModel {
         case .categorySelection:
             return [.segmentControl]
 
+        case .alarmKitSettings:
+            return [
+                .toggle(title: "Tillåt AlarmKit", isOn: AlarmKitSettings.enabled.value, id: "alarmKitEnabled"),
+                .action(title: "Behörighet i iOS inställningar", id: "alarmKitPermission"),
+                .dateValue(title: "AlarmKit dagtid", date: AlarmKitSettings.date(for: AlarmKitSettings.dayStart.value), id: "alarmKitDayStart"),
+                .dateValue(title: "AlarmKit nattid", date: AlarmKitSettings.date(for: AlarmKitSettings.nightStart.value), id: "alarmKitNightStart")
+            ]
+
         case .globalSettings:
             // Hämtar värden från UserDefaultsRepository för de globala sektionerna
             let storedSnoozeTime = UserDefaultsRepository.alertSnoozeAllTime.value
@@ -88,38 +97,38 @@ class AlarmViewModel {
         case .specificAlarm(let name):
             switch name {
             case "Akut låg":
-                return getUrgentLowAlertRows()
+                return withAlarmKitRows(getUrgentLowAlertRows(), name: name)
             case "Låg":
-                return getLowAlertRows()
+                return withAlarmKitRows(getLowAlertRows(), name: name)
             case "Hög":
-                return getHighAlertRows()
+                return withAlarmKitRows(getHighAlertRows(), name: name)
             case "Akut hög":
-                return getUrgentHighAlertRows()
+                return withAlarmKitRows(getUrgentHighAlertRows(), name: name)
             case "Sjunker snabbt":
-                return getFastDropAlertRows()
+                return withAlarmKitRows(getFastDropAlertRows(), name: name)
             case "Stiger snabbt":
-                return getFastRiseAlertRows()
+                return withAlarmKitRows(getFastRiseAlertRows(), name: name)
             case "Tillfälligt":
-                return getTemporaryAlertRows()
+                return withAlarmKitRows(getTemporaryAlertRows(), name: name)
             // Trio-segment alarms
             case "Saknar värden":
-                return getMissingReadingsAlertRows()
+                return withAlarmKitRows(getMissingReadingsAlertRows(), name: name)
             case "Loopar inte":
-                return getNotLoopingAlertRows()
+                return withAlarmKitRows(getNotLoopingAlertRows(), name: name)
             case "Lågt batteri":
-                return getLowBatteryAlertRows()
+                return withAlarmKitRows(getLowBatteryAlertRows(), name: name)
             case "Sensorbyte":
-                return getSAgeAlertRows()
+                return withAlarmKitRows(getSAgeAlertRows(), name: name)
             case "Pumpbyte":
-                return getCAgeAlertRows()
+                return withAlarmKitRows(getCAgeAlertRows(), name: name)
             case "Reservoar":
-                return getReservoirAlertRows()
+                return withAlarmKitRows(getReservoirAlertRows(), name: name)
             case "COB":
-                return getCOBAlertRows()
+                return withAlarmKitRows(getCOBAlertRows(), name: name)
             case "IOB":
-                return getIOBAlertRows()
+                return withAlarmKitRows(getIOBAlertRows(), name: name)
             case "Missad bolus":
-                return getMissedBolusAlertRows()
+                return withAlarmKitRows(getMissedBolusAlertRows(), name: name)
             default:
                 return []
             }
@@ -129,6 +138,23 @@ class AlarmViewModel {
         }
 
 
+    }
+
+    private func withAlarmKitRows(_ original: [AlarmRow], name: String) -> [AlarmRow] {
+        guard let alarm = AlarmKitAlarm.allCases.first(where: { $0.settingsName == name }) else { return original }
+        var rows = original
+        rows.insert(contentsOf: [
+            .toggle(title: "Använd även AlarmKit", isOn: alarm.enabled.value, id: "alarmKitEnabled." + alarm.rawValue),
+            .segmentedPicker(title: "AlarmKit", selected: AlarmKitPeriod.allCases.firstIndex(of: alarm.period) ?? 1,
+                             options: AlarmKitPeriod.allCases.map(\.title), id: "alarmKitPeriod." + alarm.rawValue)
+        ], at: min(1, rows.count))
+        return rows
+    }
+
+    func updateAlarmKitPeriod(id: String, index: Int) {
+        guard let alarm = AlarmKitAlarm(rawValue: String(id.dropFirst("alarmKitPeriod.".count))),
+              AlarmKitPeriod.allCases.indices.contains(index) else { return }
+        alarm.periodValue.value = AlarmKitPeriod.allCases[index].rawValue
     }
 
     // MARK: - Formatters

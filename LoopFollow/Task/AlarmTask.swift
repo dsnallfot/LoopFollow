@@ -34,6 +34,8 @@ extension MainViewController {
                 isTempDebug: true
             )
 
+            if #available(iOS 26.0, *) { LoopFollowAlarmKit.shared.reconcile() }
+
             switch reason {
             case .bg:
                 if self.bgData.count > 0 {

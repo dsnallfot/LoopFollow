@@ -1552,9 +1552,7 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
             backgroundTask.stopBackgroundTask()
         }
         
-        if Storage.shared.backgroundRefreshType.value != .none {
-            BackgroundAlertManager.shared.stopBackgroundAlert()
-        }
+        BackgroundAlertManager.shared.stopBackgroundAlert()
 
         TaskScheduler.shared.checkTasksNow()
         NightscoutSocketManager.shared.connectIfNeeded()

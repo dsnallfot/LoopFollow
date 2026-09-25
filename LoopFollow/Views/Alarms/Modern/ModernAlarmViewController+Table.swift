@@ -8,6 +8,9 @@ extension ModernAlarmViewController {
         guard let row = dataSource.itemIdentifier(for: indexPath) else { return }
 
         switch row {
+        case .action(_, let id) where id == "alarmKitPermission":
+            requestAlarmKitPermission()
+
         case .dateValue(let title, let currentDate, let id):
             showDateSheet(title: title, currentDate: currentDate, id: id)
 
@@ -30,6 +33,8 @@ extension ModernAlarmViewController {
         }
         let sectionType = snapshot.sectionIdentifiers[section]
         switch sectionType {
+        case .alarmKitSettings:
+            return "AlarmKit inställningar"
         case .globalSettings:
             return "Snooza eller tysta alla larm"
         case .specificAlarm(let name):
@@ -73,6 +78,12 @@ extension ModernAlarmViewController {
             return nil
         }
         let sectionType = snapshot.sectionIdentifiers[section]
+        if case .alarmKitSettings = sectionType {
+            if #available(iOS 26.0, *) {
+                return LoopFollowAlarmKit.shared.permissionText + "\nKvittering i iOS snoozar enligt larmets vanliga snoozetid. Vid lika dag- och nattid räknas hela dygnet som natt."
+            }
+            return "AlarmKit kräver iOS 26 eller senare. Vanliga larm används."
+        }
         if case .specificAlarm(let name) = sectionType, name == "Låg" {
             return "Alerts when BG drops below value. Persistent for minutes will allow the alert to be ignored..."
         }

@@ -350,6 +350,7 @@ final class AlarmStatsViewController: ThemedViewController, ChartViewDelegate {
 
         // Per alarm-kind
         var perKind: [AlarmKind: Int] = [:]
+        var perAlarmKitKind: [AlarmKind: Int] = [:]
         AlarmKind.allCases.forEach { perKind[$0] = 0 }
 
         for alarm in alarmsInWindow {
@@ -357,7 +358,10 @@ final class AlarmStatsViewController: ThemedViewController, ChartViewDelegate {
             let alarmDayStart = calendar.startOfDay(for: alarmDate)
 
             let kind = AlarmKind.from(alarmLabel: alarm.alarmLabel)
-            if let kind { perKind[kind, default: 0] += 1 }
+            if let kind {
+                if alarm.alarmLabel?.hasSuffix(" AlarmKit") == true { perAlarmKitKind[kind, default: 0] += 1 }
+                else { perKind[kind, default: 0] += 1 }
+            }
 
             // Filtrering per vald grupp
             let includeInGroup: Bool = {
@@ -442,7 +446,13 @@ final class AlarmStatsViewController: ThemedViewController, ChartViewDelegate {
 
         // Section 2: alltid lista alla 17 cases
         alarmCaseRows = AlarmKind.allCases
-            .map { AlarmCaseRow(title: $0.title, count: perKind[$0, default: 0]) }
+            .flatMap { kind -> [AlarmCaseRow] in
+                var rows = [AlarmCaseRow(title: kind.title, count: perKind[kind, default: 0])]
+                if let count = perAlarmKitKind[kind], count > 0 {
+                    rows.append(AlarmCaseRow(title: kind.title + " AlarmKit", count: count))
+                }
+                return rows
+            }
             .sorted { lhs, rhs in
                 if lhs.count == rhs.count {
                     return lhs.title < rhs.title
@@ -1169,7 +1179,7 @@ private final class DailyBGAndAlertsViewController: ThemedViewController, ChartV
                 // y: nearest BG mmol at ~same time (skip if we have no BG)
                 guard let yMmol = self.nearestBGValue(to: alarmDate) else { continue }
 
-                let title = kind?.title
+                let title = (a.alarmLabel?.hasSuffix(" AlarmKit") == true ? a.alarmLabel : kind?.title)
                     ?? (a.alarmLabel?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
                         ? (a.alarmLabel ?? "Okänt larm")
                         : "Okänt larm")

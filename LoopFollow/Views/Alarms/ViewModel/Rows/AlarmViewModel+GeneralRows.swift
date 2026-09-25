@@ -34,13 +34,13 @@ extension AlarmViewModel {
         // --- Nattinställningar (Time Windows) ---
         // Eureka använde TimeInlineRow, vi mappar dem till .dateValue eller en dedikerad .timePicker om du har det
         rows.append(.dateValue(
-            title: "Nattetid startar",
+            title: "Nattid startar",
             date: UserDefaultsRepository.quietHourStart.value,
             id: "quietHourStart"
         ))
 
         rows.append(.dateValue(
-            title: "Nattetid slutar",
+            title: "Dagtid startar",
             date: UserDefaultsRepository.quietHourEnd.value,
             id: "quietHourEnd"
         ))

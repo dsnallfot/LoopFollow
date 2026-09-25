@@ -10,6 +10,7 @@ extension ModernAlarmViewController {
         tableView.backgroundColor = .clear
 
         // 2. Registrera celler
+        tableView.register(AlarmPeriodCell.self, forCellReuseIdentifier: AlarmPeriodCell.reuseIdentifier)
         tableView.register(SettingSwitchCell.self, forCellReuseIdentifier: SettingSwitchCell.reuseIdentifier)
         tableView.register(SettingStepperCell.self, forCellReuseIdentifier: SettingStepperCell.reuseIdentifier)
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "DefaultCell")

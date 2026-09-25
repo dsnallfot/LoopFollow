@@ -4,6 +4,10 @@ extension AlarmViewModel {
     // Hantera Datum-ändringar (Snoozed Until, Global Snooze/Mute, Nattinställningar)
             func updateDate(id: String, date: Date) {
                 switch id {
+                case "alarmKitDayStart":
+                    AlarmKitSettings.dayStart.value = AlarmKitSettings.minute(of: date)
+                case "alarmKitNightStart":
+                    AlarmKitSettings.nightStart.value = AlarmKitSettings.minute(of: date)
                 case "urgent_low_snoozed_time":
                     UserDefaultsRepository.alertUrgentLowSnoozedTime.value = date
                     UserDefaultsRepository.alertUrgentLowIsSnoozed.value = true

@@ -56,7 +56,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Spela larm",
             currentOption: UserDefaultsRepository.alertUrgentLowAudible.value,
-            options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+            options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
             id: "urgent_low_audible"
         ))
 
@@ -64,7 +64,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "Repetera larm",
             currentOption: UserDefaultsRepository.alertUrgentLowRepeat.value,
-            options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
             id: "urgent_low_repeat"
         ))
 
@@ -72,7 +72,7 @@ extension AlarmViewModel {
         rows.append(.optionPicker(
             title: "För-Snooza",
             currentOption: UserDefaultsRepository.alertUrgentLowAutosnooze.value,
-            options: ["Aldrig", "Nattetid", "Dagtid"],
+            options: ["Aldrig", "Nattid", "Dagtid"],
             id: "urgent_low_autosnooze"
         ))
 
@@ -148,7 +148,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Spela larm",
                 currentOption: UserDefaultsRepository.alertLowAudible.value,
-                options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+                options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
                 id: "low_audible"
             ))
 
@@ -156,7 +156,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Repetera larm",
                 currentOption: UserDefaultsRepository.alertLowRepeat.value,
-                options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
                 id: "low_repeat"
             ))
 
@@ -164,7 +164,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "För-Snooza",
                 currentOption: UserDefaultsRepository.alertLowAutosnooze.value,
-                options: ["Aldrig", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Nattid", "Dagtid"],
                 id: "low_autosnooze"
             ))
 

@@ -43,7 +43,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Spela larm",
                 currentOption: UserDefaultsRepository.alertMissedReadingAudible.value,
-                options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+                options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
                 id: "missing_readings_audible"
             ))
 
@@ -51,7 +51,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Repetera larm",
                 currentOption: UserDefaultsRepository.alertMissedReadingRepeat.value,
-                options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
                 id: "missing_readings_repeat"
             ))
 
@@ -59,7 +59,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "För-Snooza",
                 currentOption: UserDefaultsRepository.alertMissedReadingAutosnooze.value,
-                options: ["Aldrig", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Nattid", "Dagtid"],
                 id: "missing_readings_autosnooze"
             ))
 
@@ -147,7 +147,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Spela larm",
                 currentOption: UserDefaultsRepository.alertNotLoopingAudible.value,
-                options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+                options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
                 id: "not_looping_audible"
             ))
 
@@ -155,7 +155,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Repetera larm",
                 currentOption: UserDefaultsRepository.alertNotLoopingRepeat.value,
-                options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
                 id: "not_looping_repeat"
             ))
 
@@ -163,7 +163,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "För-Snooza",
                 currentOption: UserDefaultsRepository.alertNotLoopingAutosnooze.value,
-                options: ["Aldrig", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Nattid", "Dagtid"],
                 id: "not_looping_autosnooze"
             ))
 

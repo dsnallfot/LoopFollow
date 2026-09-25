@@ -47,6 +47,12 @@ class ModernAlarmViewController: ThemedViewController, UITableViewDelegate {
         return sc
     }()
 
+    func requestAlarmKitPermission() {
+        if #available(iOS 26.0, *) {
+            Task { await LoopFollowAlarmKit.shared.requestPermission() }
+        }
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Alarm"
@@ -63,6 +69,18 @@ class ModernAlarmViewController: ThemedViewController, UITableViewDelegate {
                 self?.applySnapshot()
             }
             .store(in: &cancellables)
+
+        if #available(iOS 26.0, *) {
+            NotificationCenter.default.publisher(for: LoopFollowAlarmKit.changed)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in
+                    guard let self else { return }
+                    self.viewModel.updateSnapshotData()
+                    self.applySnapshot(animatingDifferences: false) { [weak self] in
+                        self?.tableView.reloadData() // Authorization is displayed in the section footer.
+                    }
+                }.store(in: &cancellables)
+        }
 
         // Initial load
         viewModel.updateSnapshotData()

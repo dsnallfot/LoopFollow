@@ -46,10 +46,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UNUserNotificationCenter.current().delegate = self
 
         // Ensure ViewControllerManager is initialized
+        if #available(iOS 26.0, *) { _ = LoopFollowAlarmKit.shared }
+
         _ = ViewControllerManager.shared
 
         _ = BLEManager.shared
         
+        _ = BackgroundAlertManager.shared // Also clean up persisted watchdogs when refresh is disabled.
         if Storage.shared.backgroundRefreshType.value != .none {
             LogManager.shared.log(category: .backgroundAlerts,
                                   message: "AppDelegate: starting BackgroundAlertManager on launch")

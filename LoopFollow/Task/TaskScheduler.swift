@@ -103,7 +103,7 @@ class TaskScheduler {
     }
     
     private func fireOverdueTasks() {
-        BackgroundAlertManager.shared.scheduleBackgroundAlert()
+        Task { @MainActor in BackgroundAlertManager.shared.scheduleBackgroundAlert() }
         let now = Date()
         let tasksToSkipAlarmCheck: Set<TaskID> = [.deviceStatus, .treatments, .fetchBG, .statsPrefetch]
         

@@ -56,7 +56,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Spela larm",
                 currentOption: UserDefaultsRepository.alertHighAudible.value,
-                options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+                options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
                 id: "high_audible"
             ))
 
@@ -64,7 +64,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Repetera larm",
                 currentOption: UserDefaultsRepository.alertHighRepeat.value,
-                options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
                 id: "high_repeat"
             ))
 
@@ -72,7 +72,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "För-Snooza",
                 currentOption: UserDefaultsRepository.alertHighAutosnooze.value,
-                options: ["Aldrig", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Nattid", "Dagtid"],
                 id: "high_autosnooze"
             ))
 
@@ -134,7 +134,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Spela larm",
                 currentOption: UserDefaultsRepository.alertUrgentHighAudible.value,
-                options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+                options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
                 id: "urgent_high_audible"
             ))
 
@@ -142,7 +142,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Repetera larm",
                 currentOption: UserDefaultsRepository.alertUrgentHighRepeat.value,
-                options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
                 id: "urgent_high_repeat"
             ))
 
@@ -150,7 +150,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "För-Snooza",
                 currentOption: UserDefaultsRepository.alertUrgentHighAutosnooze.value,
-                options: ["Aldrig", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Nattid", "Dagtid"],
                 id: "urgent_high_autosnooze"
             ))
 

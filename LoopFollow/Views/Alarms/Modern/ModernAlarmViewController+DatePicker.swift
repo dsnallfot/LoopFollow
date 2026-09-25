@@ -14,7 +14,7 @@ extension ModernAlarmViewController {
         datePicker.minuteInterval = 5
         datePicker.locale = Locale(identifier: "sv_SE")
 
-        if id.contains("quietHour") {
+        if id.contains("quietHour") || id == "alarmKitDayStart" || id == "alarmKitNightStart" {
             datePicker.datePickerMode = .time // Visa bara klockslag för nattinställningar
         } else {
             datePicker.datePickerMode = .dateAndTime // Visa både och för snooze

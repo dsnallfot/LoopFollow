@@ -3,6 +3,16 @@ import Foundation
 extension AlarmViewModel {
     // Hantera Switch-ändringar
     func updateActiveToggle(id: String, value: Bool) {
+        if id == "alarmKitEnabled" {
+            AlarmKitSettings.enabled.value = value
+            updateSnapshotData()
+            return
+        }
+        if id.hasPrefix("alarmKitEnabled."), let alarm = AlarmKitAlarm(rawValue: String(id.dropFirst("alarmKitEnabled.".count))) {
+            alarm.enabled.value = value
+            updateSnapshotData()
+            return
+        }
         switch id {
         case "missing_readings_active":
             UserDefaultsRepository.alertMissedReadingActive.value = value

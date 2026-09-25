@@ -72,7 +72,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Spela larm",
                 currentOption: UserDefaultsRepository.alertFastDropAudible.value,
-                options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+                options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
                 id: "fast_drop_audible"
             ))
 
@@ -80,7 +80,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Repetera larm",
                 currentOption: UserDefaultsRepository.alertFastDropRepeat.value,
-                options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
                 id: "fast_drop_repeat"
             ))
 
@@ -88,7 +88,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "För-Snooza",
                 currentOption: UserDefaultsRepository.alertFastDropAutosnooze.value,
-                options: ["Aldrig", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Nattid", "Dagtid"],
                 id: "fast_drop_autosnooze"
             ))
 
@@ -177,7 +177,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Spela larm",
                 currentOption: UserDefaultsRepository.alertFastRiseAudible.value,
-                options: ["Alltid", "Nattetid", "Dagtid", "Aldrig"],
+                options: ["Alltid", "Nattid", "Dagtid", "Aldrig"],
                 id: "fast_rise_audible"
             ))
 
@@ -185,7 +185,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "Repetera larm",
                 currentOption: UserDefaultsRepository.alertFastRiseRepeat.value,
-                options: ["Aldrig", "Alltid", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Alltid", "Nattid", "Dagtid"],
                 id: "fast_rise_repeat"
             ))
 
@@ -193,7 +193,7 @@ extension AlarmViewModel {
             rows.append(.optionPicker(
                 title: "För-Snooza",
                 currentOption: UserDefaultsRepository.alertFastRiseAutosnooze.value,
-                options: ["Aldrig", "Nattetid", "Dagtid"],
+                options: ["Aldrig", "Nattid", "Dagtid"],
                 id: "fast_rise_autosnooze"
             ))
 

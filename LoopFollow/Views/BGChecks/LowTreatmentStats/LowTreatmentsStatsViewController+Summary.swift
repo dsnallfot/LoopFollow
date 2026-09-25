@@ -23,7 +23,7 @@ extension LowTreatmentsStatsViewController {
         selectedTreatmentGrams.filter { $0 > 6 }.count
     }
 
-    // Nattetid definieras som 22:00–06:00
+    // Nattid definieras som 22:00–06:00
     var nightTreatmentCount: Int {
         guard !selectedTreatmentDates.isEmpty else { return 0 }
         let cal = Calendar.current

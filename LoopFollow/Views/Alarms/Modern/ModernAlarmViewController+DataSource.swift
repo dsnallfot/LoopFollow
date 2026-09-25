@@ -8,6 +8,26 @@ extension ModernAlarmViewController {
             guard let self = self else { return nil }
 
             switch row {
+            case .action(let title, _):
+                let cell = tableView.dequeueReusableCell(withIdentifier: "DefaultCell", for: indexPath)
+                cell.textLabel?.text = title
+                cell.accessoryView = nil
+                cell.accessoryType = .disclosureIndicator
+                var background = UIBackgroundConfiguration.listGroupedCell()
+                background.backgroundColor = UIColor.gray.withAlphaComponent(0.15)
+                cell.backgroundConfiguration = background
+                return cell
+
+            case .segmentedPicker(let title, let selected, let options, let id):
+                let cell = tableView.dequeueReusableCell(withIdentifier: AlarmPeriodCell.reuseIdentifier, for: indexPath) as! AlarmPeriodCell
+                cell.configure(title: title, selected: selected, options: options) { [weak self] index in
+                    self?.viewModel.updateAlarmKitPeriod(id: id, index: index)
+                }
+                var background = UIBackgroundConfiguration.listGroupedCell()
+                background.backgroundColor = UIColor.gray.withAlphaComponent(0.15)
+                cell.backgroundConfiguration = background
+                return cell
+
             case .toggle(let title, let isOn, let id):
                 let cell = tableView.dequeueReusableCell(withIdentifier: SettingSwitchCell.reuseIdentifier, for: indexPath) as! SettingSwitchCell
                 cell.configure(title: title, isOn: isOn) { [weak self] newValue in
@@ -15,6 +35,7 @@ extension ModernAlarmViewController {
                     self.viewModel.updateActiveToggle(id: id, value: newValue)
                     // ViewModel har nu uppdaterat sina sektioner, bara applicera snapshot
                     self.applySnapshot()
+                    if id == "alarmKitEnabled", newValue { self.requestAlarmKitPermission() }
                 }
                 var background = UIBackgroundConfiguration.listGroupedCell()
                 background.backgroundColor = UIColor.gray.withAlphaComponent(0.15)
@@ -85,6 +106,7 @@ extension ModernAlarmViewController {
                     let formatter = DateFormatter()
                     formatter.dateStyle = .none
                     formatter.timeStyle = .short
+                    if id == "alarmKitDayStart" || id == "alarmKitNightStart" { formatter.dateFormat = "HH:mm" }
                     detailLabel.text = formatter.string(from: date)
                 } else {
                     // Dynamisk text baserat på ID
@@ -107,7 +129,7 @@ extension ModernAlarmViewController {
         }
     }
 
-    func applySnapshot(animatingDifferences: Bool = true) {
+    func applySnapshot(animatingDifferences: Bool = true, completion: (() -> Void)? = nil) {
         guard isViewLoaded, dataSource != nil else { return }
         var snapshot = NSDiffableDataSourceSnapshot<AlarmSection, AlarmRow>()
         snapshot.appendSections(viewModel.sections)
@@ -116,7 +138,7 @@ extension ModernAlarmViewController {
             snapshot.appendItems(viewModel.rows(for: section), toSection: section)
         }
 
-        dataSource.apply(snapshot, animatingDifferences: animatingDifferences)
+        dataSource.apply(snapshot, animatingDifferences: animatingDifferences, completion: completion)
     }
 
 }

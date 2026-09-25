@@ -1,203 +1,238 @@
-//
-//  BackgroundAlertManager.swift
-//  LoopFollow
-//
-//  Created by Jonas Björkert on 2024-06-22.
-
-//
-
+import ActivityKit
+import AlarmKit
+import AppIntents
+import Combine
 import Foundation
+import SwiftUI
 import UserNotifications
 
-/// Enum representing different background alert durations.
+/// Only the 12- and 18-minute watchdogs are scheduled. Keep the old notification
+/// identifier below so an upgrade also removes outstanding six-minute warnings.
 enum BackgroundAlertDuration: TimeInterval, CaseIterable {
-    case sixMinutes = 360 // 6 minutes in seconds
-    case twelveMinutes = 720 // 12 minutes in seconds
-    case eighteenMinutes = 1080 // 18 minutes in seconds
+    case twelveMinutes = 720
+    case eighteenMinutes = 1080
 }
 
-/// Enum representing unique identifiers for each background alert.
 enum BackgroundAlertIdentifier: String, CaseIterable {
-    case sixMin = "loopfollow.background.alert.6min"
+    case sixMin = "loopfollow.background.alert.6min" // Cleanup only.
     case twelveMin = "loopfollow.background.alert.12min"
     case eighteenMin = "loopfollow.background.alert.18min"
 }
 
-class BackgroundAlertManager {
+/// A heartbeat moves both deadlines. Changes of delivery channel keep those deadlines.
+/// A single worker serializes asynchronous scheduling so an obsolete completion cannot
+/// cancel or overwrite the notifications belonging to a newer heartbeat.
+@MainActor final class BackgroundAlertManager {
     static let shared = BackgroundAlertManager()
-    
-    private init() {}
-    
-    /// Flag indicating whether background alerts are currently scheduled.
-    private var isAlertScheduled: Bool = false
-    
-    /// Title prefix for all background refresh notifications.
-    private let notificationTitlePrefix = "LoopFollow Background Refresh"
-    
-    /// Timestamp of the last scheduled background alert.
+
+    private var isAlertScheduled = false
     private var lastScheduleDate: Date?
-    
-    /// Start scheduling background alerts.
+    private var revision = 0
+    private var desiredAlerts: [BackgroundAlert] = []
+    private var worker: Task<Void, Never>?
+    private let center = UNUserNotificationCenter.current()
+    private let defaults = UserDefaults(suiteName: AppConstants.APP_GROUP_ID)!
+    private let idsKey = "alarmKit.background.systemIDs.v1"
+    private var systemIDs: Set<UUID> = []
+    private var schedulingIDs: Set<UUID> = []
+    private var preferenceObservation: ObservationToken?
+    private var subscriptions = Set<AnyCancellable>()
+
+    private init() {
+        systemIDs = Set((defaults.stringArray(forKey: idsKey) ?? []).compactMap(UUID.init(uuidString:)))
+        cancelSystemAlarms()
+        removeNotifications()
+        preferenceObservation = AlarmKitSettings.enabled.observeChanges { [weak self] _ in
+            DispatchQueue.main.async { self?.replaceAlerts() }
+        }
+        Storage.shared.backgroundRefreshType.$value.dropFirst().receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.replaceAlerts() }.store(in: &subscriptions)
+        NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
+            .receive(on: DispatchQueue.main).sink { [weak self] _ in
+                self?.stopBackgroundAlert()
+            }.store(in: &subscriptions)
+        if #available(iOS 26.0, *) {
+            Task { [weak self] in
+                for await _ in AlarmManager.shared.authorizationUpdates { self?.replaceAlerts() }
+            }
+        }
+    }
+
     func startBackgroundAlert() {
-        LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: startBackgroundAlert called. isAlertScheduled was \(isAlertScheduled)", isDebug: true)
+        // Foreground BLE heartbeats must not re-arm a watchdog just cancelled on activation.
+        guard UIApplication.shared.applicationState != .active else { return }
         isAlertScheduled = true
-        // Force execution to bypass throttle when starting
         scheduleBackgroundAlert(force: true)
     }
-    
-    /// Stop all scheduled background alerts.
-    func stopBackgroundAlert() {
-        LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: stopBackgroundAlert called. Cancelling alerts and removing notifications.", isDebug: true)
-        isAlertScheduled = false
-        removeDeliveredNotifications()
-        cancelBackgroundAlerts()
-    }
-    
-    /// (Re)schedule all background alerts based on predefined durations.
-    /// - Parameter force: When true, the scheduling is executed regardless of throttle constraints.
-    func scheduleBackgroundAlert(force: Bool = false) {
-        //LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: scheduleBackgroundAlert called. force=\(force), isAlertScheduled=\(isAlertScheduled), backgroundRefreshType=\(Storage.shared.backgroundRefreshType.value)", isDebug: true)
 
-        guard isAlertScheduled, Storage.shared.backgroundRefreshType.value != .none else {
-            //LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: scheduleBackgroundAlert aborted. isAlertScheduled=\(isAlertScheduled), backgroundRefreshType=\(Storage.shared.backgroundRefreshType.value)", isDebug: true)
+    func stopBackgroundAlert() {
+        isAlertScheduled = false
+        lastScheduleDate = nil
+        replaceAlerts()
+    }
+
+    func scheduleBackgroundAlert(force: Bool = false) {
+        guard isAlertScheduled else { return }
+        guard Storage.shared.backgroundRefreshType.value != .none else {
+            stopBackgroundAlert()
             return
         }
+        let now = Date()
+        guard force || now.timeIntervalSince(lastScheduleDate ?? .distantPast) >= 10 else { return }
+        lastScheduleDate = now
+        replaceAlerts()
+    }
 
-        // Throttle execution if not forced: only run once every 10 seconds (to avoid rapid duplicate scheduling).
-        if !force {
-            let now = Date()
-            if let lastDate = lastScheduleDate {
-                let delta = now.timeIntervalSince(lastDate)
-                if delta < 10 {
-                    //LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: scheduleBackgroundAlert throttled (delta=\(delta) < 10s)", isDebug: true)
-                    return
-                }
-            }
-            lastScheduleDate = now
+    private func replaceAlerts() {
+        revision += 1
+        if isAlertScheduled, Storage.shared.backgroundRefreshType.value != .none, let anchor = lastScheduleDate {
+            desiredAlerts = BackgroundAlert.planned(
+                since: anchor, isBluetooth: Storage.shared.backgroundRefreshType.value.isBluetooth,
+                expectedHeartbeat: BLEManager.shared.expectedHeartbeatInterval()
+            )
         } else {
-            lastScheduleDate = Date()
+            desiredAlerts = []
         }
+        // Stop existing alarms immediately, even if a preceding schedule is still suspended.
+        removeNotifications()
+        cancelSystemAlarms()
+        guard worker == nil else { return }
+        worker = Task { await applyLatestAlerts() }
+    }
 
-        //LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: proceeding with scheduling. lastScheduleDate=\(String(describing: lastScheduleDate))", isDebug: true)
-
-        // IMPORTANT: cancel any previously scheduled background alerts so that we only have one set active at a time.
-        cancelBackgroundAlerts()
-
-        // Remove any previously delivered notifications for these identifiers.
-        removeDeliveredNotifications()
-
-        let isBluetoothActive = Storage.shared.backgroundRefreshType.value.isBluetooth
-        let expectedHeartbeat = BLEManager.shared.expectedHeartbeatInterval()
-        //LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: isBluetoothActive=\(isBluetoothActive), expectedHeartbeat=\(expectedHeartbeat != nil ? String(expectedHeartbeat!) : "nil")", isDebug: true)
-
-        // Define alerts
-        let alerts: [BackgroundAlert] = [
-            BackgroundAlert(
-                identifier: BackgroundAlertIdentifier.sixMin.rawValue,
-                timeInterval: BackgroundAlertDuration.sixMinutes.rawValue,
-                body: isBluetoothActive
-                ? "App inaktiv i 6 minuter. Kontrollera bluetooth-anslutningen!"
-                : "App inaktiv i 6 minuter. Öppna för att aktivera igen.",
-                soundName: nil // även på natten vill vi ha default, kan ändras om du vill
-            ),
-            BackgroundAlert(
-                identifier: BackgroundAlertIdentifier.twelveMin.rawValue,
-                timeInterval: BackgroundAlertDuration.twelveMinutes.rawValue,
-                body: isBluetoothActive
-                ? "App inaktiv i 12 minuter. Kontrollera bluetooth-anslutningen!"
-                : "App inaktiv i 12 minuter. Öppna för att aktivera igen.",
-                soundName: "Sci-Fi_Computer_Console_Alarm.caf" // NATT-ljud
-            ),
-            BackgroundAlert(
-                identifier: BackgroundAlertIdentifier.eighteenMin.rawValue,
-                timeInterval: BackgroundAlertDuration.eighteenMinutes.rawValue,
-                body: isBluetoothActive
-                ? "App inaktiv i 18 minuter. Kontrollera bluetooth-anslutningen!"
-                : "App inaktiv i 18 minuter. Öppna för att aktivera igen.",
-                soundName: "Emergency_Alarm_Carbon_Monoxide.caf" // mest aggressiva 😅
-            )
-        ]
-
-        for alert in alerts {
-            if let heartbeat = expectedHeartbeat {
-                let threshold = heartbeat * 1.2
-                if threshold >= alert.timeInterval {
-                    //LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: skipping alert id=\(alert.identifier) because threshold=\(threshold) >= timeInterval=\(alert.timeInterval)", isDebug: true)
-                    continue
+    private func applyLatestAlerts() async {
+        let backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "Background watchdog alarms")
+        defer {
+            worker = nil
+            if backgroundTask != .invalid { UIApplication.shared.endBackgroundTask(backgroundTask) }
+        }
+        while true {
+            let applyingRevision = revision
+            let alerts = desiredAlerts
+            for alert in alerts {
+                guard applyingRevision == revision else { break }
+                if #available(iOS 26.0, *), AlarmKitSettings.enabled.value,
+                   AlarmManager.shared.authorizationState == .authorized {
+                    let id = UUID()
+                    systemIDs.insert(id)
+                    schedulingIDs.insert(id)
+                    persistIDs() // Ownership survives termination during schedule().
+                    do {
+                        let presentation = AlarmPresentation(alert: AlarmPresentation.Alert(
+                            title: LocalizedStringResource(stringLiteral: alert.body),
+                            secondaryButton: AlarmButton(text: "Öppna LoopFollow", textColor: .white, systemImageName: "arrow.up.forward.app"),
+                            secondaryButtonBehavior: .custom
+                        ))
+                        let config = AlarmManager.AlarmConfiguration<LoopFollowAlarmMetadata>.alarm(
+                            schedule: .fixed(max(alert.fireDate, Date().addingTimeInterval(1))),
+                            attributes: AlarmAttributes<LoopFollowAlarmMetadata>(presentation: presentation, tintColor: .orange),
+                            secondaryIntent: OpenLoopFollowBackgroundAlertIntent(),
+                            sound: .named(alert.soundName)
+                        )
+                        _ = try await AlarmManager.shared.schedule(id: id, configuration: config)
+                        schedulingIDs.remove(id)
+                        guard applyingRevision == revision else {
+                            cancelSystemAlarm(id)
+                            break
+                        }
+                        LogManager.shared.log(category: .backgroundAlerts, message: "Background AlarmKit scheduled: \(alert.identifier), deadline: \(alert.fireDate)", isDebug: true)
+                        continue
+                    } catch {
+                        schedulingIDs.remove(id)
+                        cancelSystemAlarm(id)
+                        guard applyingRevision == revision else { break }
+                        LogManager.shared.log(category: .backgroundAlerts, message: "Background AlarmKit failed; using notification: \(error)")
+                    }
+                }
+                guard applyingRevision == revision else { break }
+                await scheduleNotification(alert)
+                if applyingRevision != revision {
+                    // No newer notification has been added yet: this worker is serialized.
+                    center.removePendingNotificationRequests(withIdentifiers: [alert.identifier])
+                    center.removeDeliveredNotifications(withIdentifiers: [alert.identifier])
+                    break
                 }
             }
-
-            // Bestäm om det här larmet kommer att gå under dag- eller nattid
-            let now = Date()
-            let fireDate = now.addingTimeInterval(alert.timeInterval)
-            let hour = Calendar.current.component(.hour, from: fireDate)
-            // Natt: 21:00–07:00, Dag: 07:00–21:00
-            let isNightTime = (hour < 7 || hour >= 21)
-
-            // På natten: använd det definierade ljudet (om något)
-            // På dagen: alltid default notisljud, oavsett soundName i structen
-            let effectiveSoundName: String? = isNightTime ? alert.soundName : nil
-
-            let content = createNotificationContent(
-                for: notificationTitlePrefix,
-                body: alert.body,
-                soundName: effectiveSoundName
-            )
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: alert.timeInterval, repeats: false)
-            let request = UNNotificationRequest(identifier: alert.identifier, content: content, trigger: trigger)
-
-            //LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: scheduling alert id=\(alert.identifier) in \(alert.timeInterval) seconds (\(alert.timeInterval / 60) minutes). body=\(alert.body)", isDebug: true)
-
-            UNUserNotificationCenter.current().add(request) { error in
-                if let error = error {
-                    LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: error scheduling background alert id=\(alert.identifier) (\(alert.timeInterval / 60) minutes): \(error)", isDebug: true)
-                } else {
-                    LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: successfully scheduled background alert id=\(alert.identifier) (\(alert.timeInterval / 60) minutes)", isDebug: true)
-                }
-            }
+            if applyingRevision == revision { return }
         }
     }
 
-    /// Create notification content with a given title and body.
-    /// - Parameters:
-    ///   - title: The title of the notification.
-    ///   - body: The body text of the notification.
-    /// - Returns: Configured `UNMutableNotificationContent` object.
-    private func createNotificationContent(for title: String, body: String, soundName: String?) -> UNMutableNotificationContent {
+    private func scheduleNotification(_ alert: BackgroundAlert) async {
         let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-
-        if let soundName = soundName {
-            content.sound = UNNotificationSound(named: UNNotificationSoundName(soundName))
-        } else {
-            content.sound = .default
-        }
-
+        content.title = "LoopFollow Background Refresh"
+        content.body = alert.body
+        // Preserve the existing notification sound policy. AlarmKit uses the chosen
+        // watchdog sound throughout the day, independently of per-glucose periods.
+        let hour = Calendar.current.component(.hour, from: alert.fireDate)
+        content.sound = hour < 7 || hour >= 21
+            ? UNNotificationSound(named: UNNotificationSoundName(alert.soundName)) : .default
         content.interruptionLevel = .timeSensitive
         content.categoryIdentifier = "loopfollow.background.alert"
-        return content
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, alert.fireDate.timeIntervalSinceNow), repeats: false)
+        do {
+            try await center.add(UNNotificationRequest(identifier: alert.identifier, content: content, trigger: trigger))
+        } catch {
+            LogManager.shared.log(category: .backgroundAlerts, message: "Background notification scheduling failed: \(error)")
+        }
     }
 
-    /// Cancel all scheduled background alerts.
-    private func cancelBackgroundAlerts() {
-        let identifiers = BackgroundAlertIdentifier.allCases.map { $0.rawValue }
-        //LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: cancelBackgroundAlerts removing pending requests for identifiers: \(identifiers.joined(separator: ", "))", isDebug: true)
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
+    private func removeNotifications() {
+        let identifiers = BackgroundAlertIdentifier.allCases.map(\.rawValue)
+        center.removePendingNotificationRequests(withIdentifiers: identifiers)
+        center.removeDeliveredNotifications(withIdentifiers: identifiers)
     }
 
-    /// Remove all delivered notifications
-    private func removeDeliveredNotifications() {
-        let identifiers = BackgroundAlertIdentifier.allCases.map { $0.rawValue }
-        //LogManager.shared.log(category: .backgroundAlerts, message: "BackgroundAlertManager: removeDeliveredNotifications removing delivered notifications for identifiers: \(identifiers.joined(separator: ", "))", isDebug: true)
-        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: identifiers)
+    private func cancelSystemAlarms() {
+        for id in systemIDs { cancelSystemAlarm(id) }
+    }
+
+    private func cancelSystemAlarm(_ id: UUID) {
+        guard #available(iOS 26.0, *) else { return }
+        do {
+            try AlarmManager.shared.cancel(id: id)
+            if !schedulingIDs.contains(id) { systemIDs.remove(id) }
+        } catch {
+            try? AlarmManager.shared.stop(id: id)
+            if !schedulingIDs.contains(id), let alarms = try? AlarmManager.shared.alarms,
+               !alarms.contains(where: { $0.id == id }) { systemIDs.remove(id) }
+        }
+        persistIDs()
+    }
+
+    private func persistIDs() {
+        let ids = systemIDs.map(\.uuidString).sorted()
+        if defaults.stringArray(forKey: idsKey) != ids { defaults.set(ids, forKey: idsKey) }
     }
 }
 
-/// Struct representing a single background alert.
 struct BackgroundAlert {
     let identifier: String
-    let timeInterval: TimeInterval
+    let fireDate: Date
     let body: String
-    let soundName: String?
+    let soundName: String
+
+    static func planned(since anchor: Date, isBluetooth: Bool, expectedHeartbeat: TimeInterval?) -> [Self] {
+        let slots: [(BackgroundAlertIdentifier, BackgroundAlertDuration, String)] = [
+            (.twelveMin, .twelveMinutes, "Sci-Fi_Computer_Console_Alarm.caf"),
+            (.eighteenMin, .eighteenMinutes, "Emergency_Alarm_Carbon_Monoxide.caf")
+        ]
+        return slots.compactMap { identifier, duration, sound in
+            if let heartbeat = expectedHeartbeat, heartbeat * 1.2 >= duration.rawValue { return nil }
+            let minutes = Int(duration.rawValue / 60)
+            return Self(identifier: identifier.rawValue, fireDate: anchor.addingTimeInterval(duration.rawValue),
+                        body: "App inaktiv i \(minutes) minuter. " + (isBluetooth
+                            ? "Kontrollera bluetooth-anslutningen!" : "Öppna för att aktivera igen."),
+                        soundName: sound)
+        }
+    }
+}
+
+/// Opening the app resumes its ordinary heartbeat flow and cancels both watchdogs.
+/// Stopping just the 12-minute system alarm leaves the 18-minute escalation armed.
+@available(iOS 26.0, *)
+struct OpenLoopFollowBackgroundAlertIntent: LiveActivityIntent {
+    static var title: LocalizedStringResource = "Öppna LoopFollow"
+    static var isDiscoverable: Bool = false
+    static var openAppWhenRun: Bool = true
+    func perform() async throws -> some IntentResult { .result() }
 }
