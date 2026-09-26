@@ -115,6 +115,19 @@ enum AlarmKitAlarm: String, CaseIterable, Codable {
         }
     }
 
+    /// Presentation only: keep the stable label for snooze, history and notification IDs.
+    func presentationTitle(label: String, glucoseMGDL: Int?) -> String {
+        switch self {
+        case .urgentLow, .low, .high, .urgentHigh, .fastDrop, .fastRise:
+            guard let glucoseMGDL, glucoseMGDL > 0 else { return label }
+            let value = String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"),
+                               Double(glucoseMGDL) * GlucoseConversion.mgDlToMmolL)
+            return "\(label) (\(value) mmol/L)"
+        default:
+            return label
+        }
+    }
+
     static func from(label: String) -> Self? {
         let plain = label.replacingOccurrences(of: " AlarmKit", with: "")
             .replacingOccurrences(of: " (Comp. low?)", with: "")

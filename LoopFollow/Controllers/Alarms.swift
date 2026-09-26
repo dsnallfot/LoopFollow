@@ -824,7 +824,10 @@ extension MainViewController {
                     return
                 }
                 if #available(iOS 26.0, *) {
-                    let delivery = await LoopFollowAlarmKit.shared.deliver(label: alarmLabel, sound: sound)
+                    // Read after the settling delay, on every delivery (including after snooze).
+                    let delivery = await LoopFollowAlarmKit.shared.deliver(
+                        label: alarmLabel, sound: sound, glucoseMGDL: self.bgData.last?.sgv
+                    )
                     guard self.pendingAlarmID == id else { return }
                     if delivery == .delivered {
                         // The system owns this alarm until acknowledgement; stop the preceding local player/UI.

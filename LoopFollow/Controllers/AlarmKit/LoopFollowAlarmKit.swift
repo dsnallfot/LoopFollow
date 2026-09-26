@@ -114,7 +114,7 @@ import UserNotifications
     }
 
     /// Returns handled for a successful delivery, an already ringing alarm, or an explicit suppression.
-    func deliver(label: String, sound: String) async -> Delivery {
+    func deliver(label: String, sound: String, glucoseMGDL: Int? = nil) async -> Delivery {
         reconcile()
         guard let alarm = AlarmKitAlarm.from(label: label) else { return .fallback }
         // An outstanding alarm remains owned by AlarmKit across day/night boundaries.
@@ -138,13 +138,14 @@ import UserNotifications
             if retired.contains(event.id) { cancelSystemAlarm(event.id) }
             if backgroundTask != .invalid { UIApplication.shared.endBackgroundTask(backgroundTask) }
         }
+        let title = alarm.presentationTitle(label: label, glucoseMGDL: glucoseMGDL)
         let alert: AlarmPresentation.Alert
         if #available(iOS 26.1, *) {
             // iOS owns the stop control from 26.1; its stopIntent still applies our standard snooze.
-            alert = AlarmPresentation.Alert(title: LocalizedStringResource(stringLiteral: label))
+            alert = AlarmPresentation.Alert(title: LocalizedStringResource(stringLiteral: title))
         } else {
             alert = AlarmPresentation.Alert(
-                title: LocalizedStringResource(stringLiteral: label),
+                title: LocalizedStringResource(stringLiteral: title),
                 stopButton: AlarmButton(text: "Snooza", textColor: .white, systemImageName: "zzz")
             )
         }
