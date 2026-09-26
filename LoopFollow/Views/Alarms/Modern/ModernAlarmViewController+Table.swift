@@ -9,7 +9,9 @@ extension ModernAlarmViewController {
 
         switch row {
         case .action(_, let id) where id == "alarmKitPermission":
-            requestAlarmKitPermission()
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url)
+            }
 
         case .dateValue(let title, let currentDate, let id):
             showDateSheet(title: title, currentDate: currentDate, id: id)
