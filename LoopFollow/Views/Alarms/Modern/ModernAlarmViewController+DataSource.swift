@@ -1,10 +1,19 @@
 import UIKit
 import Combine
 
+/// UIKit asks the data source, not the delegate, for section footer titles.
+private final class AlarmTableDataSource: UITableViewDiffableDataSource<AlarmSection, AlarmRow> {
+    var footerTitle: ((Int) -> String?)?
+
+    override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        footerTitle?(section)
+    }
+}
+
 extension ModernAlarmViewController {
     // MARK: - Diffable Data Source
     func configureDataSource() {
-        dataSource = UITableViewDiffableDataSource(tableView: tableView) { [weak self] (tableView, indexPath, row) -> UITableViewCell? in
+        let source = AlarmTableDataSource(tableView: tableView) { [weak self] (tableView, indexPath, row) -> UITableViewCell? in
             guard let self = self else { return nil }
 
             switch row {
@@ -110,7 +119,7 @@ extension ModernAlarmViewController {
                     let formatter = DateFormatter()
                     formatter.dateStyle = .none
                     formatter.timeStyle = .short
-                    if id == "alarmKitDayStart" || id == "alarmKitNightStart" { formatter.dateFormat = "HH:mm" }
+                    if id == "quietHourStart" || id == "quietHourEnd" { formatter.dateFormat = "HH:mm" }
                     detailLabel.text = formatter.string(from: date)
                 } else {
                     // Dynamisk text baserat på ID
@@ -131,6 +140,10 @@ extension ModernAlarmViewController {
                 return UITableViewCell()
             }
         }
+        source.footerTitle = { [weak self] section in
+            self?.footerText(for: section)
+        }
+        dataSource = source
     }
 
     func applySnapshot(animatingDifferences: Bool = true, completion: (() -> Void)? = nil) {

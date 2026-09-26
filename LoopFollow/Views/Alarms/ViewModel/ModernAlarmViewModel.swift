@@ -63,9 +63,7 @@ class AlarmViewModel {
         case .alarmKitSettings:
             return [
                 .toggle(title: "Tillåt AlarmKit", isOn: AlarmKitSettings.enabled.value, id: "alarmKitEnabled"),
-                .action(title: "Behörighet i iOS inställningar", id: "alarmKitPermission"),
-                .dateValue(title: "AlarmKit dagtid", date: AlarmKitSettings.date(for: AlarmKitSettings.dayStart.value), id: "alarmKitDayStart"),
-                .dateValue(title: "AlarmKit nattid", date: AlarmKitSettings.date(for: AlarmKitSettings.nightStart.value), id: "alarmKitNightStart")
+                .action(title: "Behörighet i iOS inställningar", id: "alarmKitPermission")
             ]
 
         case .globalSettings:

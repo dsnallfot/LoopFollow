@@ -26,15 +26,20 @@ enum AlarmKitPeriod: String, CaseIterable {
 
 enum AlarmKitSettings {
     static let enabled = UserDefaultsValue<Bool>(key: "alarmKitEnabled", default: false)
-    static let dayStart = UserDefaultsValue<Int>(key: "alarmKitDayStart", default: 7 * 60)
-    static let nightStart = UserDefaultsValue<Int>(key: "alarmKitNightStart", default: 22 * 60)
 
     static func minute(of date: Date, calendar: Calendar = .current) -> Int {
         calendar.component(.hour, from: date) * 60 + calendar.component(.minute, from: date)
     }
 
-    static func date(for minutes: Int) -> Date {
-        Calendar.current.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: Date()) ?? Date()
+    static func allows(_ period: AlarmKitPeriod, at date: Date) -> Bool {
+        if period == .always { return true }
+        if period == .never { return false }
+        // Share the ordinary alarms' night/day settings; there is no separate AlarmKit clock.
+        guard let nightStart = UserDefaultsRepository.quietHourStart.value,
+              let dayStart = UserDefaultsRepository.quietHourEnd.value else {
+            return period == .day // No configured night interval.
+        }
+        return period.includes(minute: minute(of: date), dayStart: minute(of: dayStart), nightStart: minute(of: nightStart))
     }
 }
 
@@ -60,10 +65,7 @@ enum BackgroundAlertSettings {
     }
 
     static func usesAlarmKit(at fireDate: Date) -> Bool {
-        enabled.value && AlarmKitSettings.enabled.value && alarmKitEnabled.value && period.includes(
-            minute: AlarmKitSettings.minute(of: fireDate),
-            dayStart: AlarmKitSettings.dayStart.value, nightStart: AlarmKitSettings.nightStart.value
-        )
+        enabled.value && AlarmKitSettings.enabled.value && alarmKitEnabled.value && AlarmKitSettings.allows(period, at: fireDate)
     }
 }
 
@@ -131,10 +133,7 @@ enum AlarmKitAlarm: String, CaseIterable, Codable {
     var period: AlarmKitPeriod { AlarmKitPeriod(rawValue: periodValue.value) ?? .never }
 
     func usesAlarmKit(at date: Date = Date()) -> Bool {
-        AlarmKitSettings.enabled.value && enabled.value && period.includes(
-            minute: AlarmKitSettings.minute(of: date),
-            dayStart: AlarmKitSettings.dayStart.value, nightStart: AlarmKitSettings.nightStart.value
-        )
+        AlarmKitSettings.enabled.value && enabled.value && AlarmKitSettings.allows(period, at: date)
     }
 
     var active: UserDefaultsValue<Bool> {

@@ -8,6 +8,8 @@ extension ModernAlarmViewController {
         tableView.delegate = self
         tableView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         tableView.backgroundColor = .clear
+        tableView.sectionFooterHeight = UITableView.automaticDimension
+        tableView.estimatedSectionFooterHeight = 60
 
         // 2. Registrera celler
         tableView.register(AlarmPeriodCell.self, forCellReuseIdentifier: AlarmPeriodCell.reuseIdentifier)

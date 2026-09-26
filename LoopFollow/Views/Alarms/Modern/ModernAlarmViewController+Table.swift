@@ -75,7 +75,7 @@ extension ModernAlarmViewController {
         return container
     }
 
-    func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+    func footerText(for section: Int) -> String? {
         let snapshot = dataSource.snapshot()
         guard section >= 0 && section < snapshot.sectionIdentifiers.count else {
             return nil
@@ -83,16 +83,17 @@ extension ModernAlarmViewController {
         let sectionType = snapshot.sectionIdentifiers[section]
         if case .alarmKitSettings = sectionType {
             if #available(iOS 26.0, *) {
-                return LoopFollowAlarmKit.shared.permissionText + "\nKvittering i iOS snoozar enligt larmets vanliga snoozetid. Vid lika dag- och nattid räknas hela dygnet som natt."
+                return LoopFollowAlarmKit.shared.permissionText + "\nKvittering i iOS snoozar enligt larmets vanliga snoozetid. Dag/natt följer Nattid startar och Dagtid startar under Allmänna alarminställningar. Utan båda tiderna räknas dygnet som dag; vid lika tider som natt."
             }
             return "AlarmKit kräver iOS 26 eller senare. Vanliga larm används."
         }
         if case .inactivitySettings = sectionType {
             return "Aktiverat gäller både notiser och AlarmKit. AlarmKit kräver också Tillåt AlarmKit globalt och iOS-behörighet. Dag/natt bedöms vid respektive larms tidpunkt; annars används vanliga notiser. Tiderna räknas från senaste livstecknet och förutsätter aktiverad bakgrundsuppdatering."
         }
-        if case .specificAlarm(let name) = sectionType, name == "Låg" {
-            return "Alerts when BG drops below value. Persistent for minutes will allow the alert to be ignored..."
-        }
+        //Förberett nedan för ev fler förklaringstexter per larm om så önskas
+        //if case .specificAlarm(let name) = sectionType, name == "Låg" {
+        //    return "Alerts when BG drops below value. Persistent for minutes will allow the alert to be ignored..."
+        //}
         return nil
     }
 
