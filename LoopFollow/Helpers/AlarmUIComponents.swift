@@ -7,6 +7,7 @@ enum AlarmSection: Hashable {
     case globalSettings // Snooze all, mute all
     case specificAlarm(String) // T.ex. "Low Alert", "High Alert"
     case nightSettings
+    case inactivitySettings
 }
 
 enum AlarmRow: Hashable {

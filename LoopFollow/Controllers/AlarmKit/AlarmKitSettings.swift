@@ -38,6 +38,35 @@ enum AlarmKitSettings {
     }
 }
 
+/// Defaults preserve the existing background warnings and their 12/18-minute delays.
+enum BackgroundAlertSettings {
+    static let enabled = UserDefaultsValue<Bool>(key: "backgroundAlertEnabled", default: true)
+    static let alarmKitEnabled = UserDefaultsValue<Bool>(key: "backgroundAlertAlarmKitEnabled", default: true)
+    static let periodValue = UserDefaultsValue<String>(key: "backgroundAlertAlarmKitPeriod", default: AlarmKitPeriod.always.rawValue)
+    static let firstDelay = UserDefaultsValue<Int>(key: "backgroundAlertFirstMinutes", default: 12)
+    static let secondDelay = UserDefaultsValue<Int>(key: "backgroundAlertSecondMinutes", default: 18)
+
+    static var period: AlarmKitPeriod { AlarmKitPeriod(rawValue: periodValue.value) ?? .never }
+    static var firstMinutes: Int { min(30, max(10, firstDelay.value)) }
+    static var secondMinutes: Int { min(60, max(firstMinutes, secondDelay.value)) }
+
+    static func setFirstMinutes(_ minutes: Int) {
+        firstDelay.value = min(30, max(10, minutes))
+        secondDelay.value = secondMinutes
+    }
+
+    static func setSecondMinutes(_ minutes: Int) {
+        secondDelay.value = min(60, max(firstMinutes, minutes))
+    }
+
+    static func usesAlarmKit(at fireDate: Date) -> Bool {
+        enabled.value && AlarmKitSettings.enabled.value && alarmKitEnabled.value && period.includes(
+            minute: AlarmKitSettings.minute(of: fireDate),
+            dayStart: AlarmKitSettings.dayStart.value, nightStart: AlarmKitSettings.nightStart.value
+        )
+    }
+}
+
 /// Stable identifiers; display labels are never used as persistence keys.
 enum AlarmKitAlarm: String, CaseIterable, Codable {
     case urgentLow, low, high, urgentHigh, fastDrop, fastRise, temporary, missedReading, notLooping, battery, sage, cage, pump, cob, iob, missedBolus

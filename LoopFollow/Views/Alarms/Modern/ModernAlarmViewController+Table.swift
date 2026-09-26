@@ -41,6 +41,8 @@ extension ModernAlarmViewController {
             return "Alarminställningar för \(name)"
         case .nightSettings:
             return "Allmänna alarminställningar"
+        case .inactivitySettings:
+            return "Larm om Loop Follow inaktiveras"
         default:
             return nil
         }
@@ -54,6 +56,7 @@ extension ModernAlarmViewController {
 
         let label = UILabel()
         label.text = title
+        label.numberOfLines = 0
         label.font = UIFont.preferredFont(forTextStyle: .headline)
         label.textColor = .secondaryLabel
 
@@ -83,6 +86,9 @@ extension ModernAlarmViewController {
                 return LoopFollowAlarmKit.shared.permissionText + "\nKvittering i iOS snoozar enligt larmets vanliga snoozetid. Vid lika dag- och nattid räknas hela dygnet som natt."
             }
             return "AlarmKit kräver iOS 26 eller senare. Vanliga larm används."
+        }
+        if case .inactivitySettings = sectionType {
+            return "Aktiverat gäller både notiser och AlarmKit. AlarmKit kräver också Tillåt AlarmKit globalt och iOS-behörighet. Dag/natt bedöms vid respektive larms tidpunkt; annars används vanliga notiser. Tiderna räknas från senaste livstecknet och förutsätter aktiverad bakgrundsuppdatering."
         }
         if case .specificAlarm(let name) = sectionType, name == "Låg" {
             return "Alerts when BG drops below value. Persistent for minutes will allow the alert to be ignored..."

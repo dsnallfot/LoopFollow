@@ -14,6 +14,10 @@ extension AlarmViewModel {
             return
         }
         switch id {
+        case "backgroundAlertEnabled":
+            BackgroundAlertSettings.enabled.value = value
+        case "backgroundAlertAlarmKitEnabled":
+            BackgroundAlertSettings.alarmKitEnabled.value = value
         case "missing_readings_active":
             UserDefaultsRepository.alertMissedReadingActive.value = value
 

@@ -47,6 +47,10 @@ extension ModernAlarmViewController {
                 let cell = tableView.dequeueReusableCell(withIdentifier: SettingStepperCell.reuseIdentifier, for: indexPath) as! SettingStepperCell
                 cell.configure(title: title, value: value, min: min, max: max, step: step, unit: unit, id: id) { [weak self] newValue in
                     self?.viewModel.updateAlarmValue(id: id, value: newValue)
+                    if id == "backgroundAlertFirstMinutes" {
+                        // The second delay and its lower bound depend on the first delay.
+                        DispatchQueue.main.async { [weak self] in self?.applySnapshot(animatingDifferences: false) }
+                    }
                 }
                 var background = UIBackgroundConfiguration.listGroupedCell()
                 background.backgroundColor = UIColor.gray.withAlphaComponent(0.15)

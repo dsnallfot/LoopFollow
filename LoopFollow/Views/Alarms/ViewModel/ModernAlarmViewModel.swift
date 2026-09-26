@@ -51,6 +51,7 @@ class AlarmViewModel {
 
         // 3. Nattinställningar
         sections.append(.nightSettings)
+        sections.append(.inactivitySettings)
     }
 
     // MARK: - Helpers to get rows for a section
@@ -135,6 +136,18 @@ class AlarmViewModel {
 
         case .nightSettings:
             return getNightSettingsRows()
+
+        case .inactivitySettings:
+            return [
+                .toggle(title: "Aktiverat", isOn: BackgroundAlertSettings.enabled.value, id: "backgroundAlertEnabled"),
+                .toggle(title: "Använd även AlarmKit", isOn: BackgroundAlertSettings.alarmKitEnabled.value, id: "backgroundAlertAlarmKitEnabled"),
+                .segmentedPicker(title: "AlarmKit", selected: AlarmKitPeriod.allCases.firstIndex(of: BackgroundAlertSettings.period) ?? 1,
+                                 options: AlarmKitPeriod.allCases.map(\.title), id: "backgroundAlertAlarmKitPeriod"),
+                .valueStepper(title: "Första larm efter", value: Double(BackgroundAlertSettings.firstMinutes),
+                              min: 10, max: 30, step: 1, unit: " min", id: "backgroundAlertFirstMinutes"),
+                .valueStepper(title: "Andra larm efter", value: Double(BackgroundAlertSettings.secondMinutes),
+                              min: Double(BackgroundAlertSettings.firstMinutes), max: 60, step: 1, unit: " min", id: "backgroundAlertSecondMinutes")
+            ]
         }
 
 
@@ -152,6 +165,11 @@ class AlarmViewModel {
     }
 
     func updateAlarmKitPeriod(id: String, index: Int) {
+        guard AlarmKitPeriod.allCases.indices.contains(index) else { return }
+        if id == "backgroundAlertAlarmKitPeriod" {
+            BackgroundAlertSettings.periodValue.value = AlarmKitPeriod.allCases[index].rawValue
+            return
+        }
         guard let alarm = AlarmKitAlarm(rawValue: String(id.dropFirst("alarmKitPeriod.".count))),
               AlarmKitPeriod.allCases.indices.contains(index) else { return }
         alarm.periodValue.value = AlarmKitPeriod.allCases[index].rawValue

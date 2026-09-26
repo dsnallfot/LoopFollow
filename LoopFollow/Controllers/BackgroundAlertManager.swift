@@ -6,13 +6,8 @@ import Foundation
 import SwiftUI
 import UserNotifications
 
-/// Only the 12- and 18-minute watchdogs are scheduled. Keep the old notification
-/// identifier below so an upgrade also removes outstanding six-minute warnings.
-enum BackgroundAlertDuration: TimeInterval, CaseIterable {
-    case twelveMinutes = 720
-    case eighteenMinutes = 1080
-}
-
+/// Keep stable slot identifiers and the old six-minute identifier for upgrade cleanup.
+/// The first and second slots now have configurable delays.
 enum BackgroundAlertIdentifier: String, CaseIterable {
     case sixMin = "loopfollow.background.alert.6min" // Cleanup only.
     case twelveMin = "loopfollow.background.alert.12min"
@@ -35,16 +30,21 @@ enum BackgroundAlertIdentifier: String, CaseIterable {
     private let idsKey = "alarmKit.background.systemIDs.v1"
     private var systemIDs: Set<UUID> = []
     private var schedulingIDs: Set<UUID> = []
-    private var preferenceObservation: ObservationToken?
+    private var preferenceObservations: [ObservationToken] = []
     private var subscriptions = Set<AnyCancellable>()
 
     private init() {
         systemIDs = Set((defaults.stringArray(forKey: idsKey) ?? []).compactMap(UUID.init(uuidString:)))
         cancelSystemAlarms()
         removeNotifications()
-        preferenceObservation = AlarmKitSettings.enabled.observeChanges { [weak self] _ in
-            DispatchQueue.main.async { self?.replaceAlerts() }
-        }
+        observe(AlarmKitSettings.enabled)
+        observe(AlarmKitSettings.dayStart)
+        observe(AlarmKitSettings.nightStart)
+        observe(BackgroundAlertSettings.enabled)
+        observe(BackgroundAlertSettings.alarmKitEnabled)
+        observe(BackgroundAlertSettings.periodValue)
+        observe(BackgroundAlertSettings.firstDelay)
+        observe(BackgroundAlertSettings.secondDelay)
         Storage.shared.backgroundRefreshType.$value.dropFirst().receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.replaceAlerts() }.store(in: &subscriptions)
         NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
@@ -56,6 +56,12 @@ enum BackgroundAlertIdentifier: String, CaseIterable {
                 for await _ in AlarmManager.shared.authorizationUpdates { self?.replaceAlerts() }
             }
         }
+    }
+
+    private func observe<T>(_ value: UserDefaultsValue<T>) {
+        preferenceObservations.append(value.observeChanges { [weak self] _ in
+            DispatchQueue.main.async { self?.replaceAlerts() }
+        })
     }
 
     func startBackgroundAlert() {
@@ -85,7 +91,8 @@ enum BackgroundAlertIdentifier: String, CaseIterable {
 
     private func replaceAlerts() {
         revision += 1
-        if isAlertScheduled, Storage.shared.backgroundRefreshType.value != .none, let anchor = lastScheduleDate {
+        if isAlertScheduled, BackgroundAlertSettings.enabled.value,
+           Storage.shared.backgroundRefreshType.value != .none, let anchor = lastScheduleDate {
             desiredAlerts = BackgroundAlert.planned(
                 since: anchor, isBluetooth: Storage.shared.backgroundRefreshType.value.isBluetooth,
                 expectedHeartbeat: BLEManager.shared.expectedHeartbeatInterval()
@@ -111,7 +118,7 @@ enum BackgroundAlertIdentifier: String, CaseIterable {
             let alerts = desiredAlerts
             for alert in alerts {
                 guard applyingRevision == revision else { break }
-                if #available(iOS 26.0, *), AlarmKitSettings.enabled.value,
+                if #available(iOS 26.0, *), BackgroundAlertSettings.usesAlarmKit(at: max(alert.fireDate, Date())),
                    AlarmManager.shared.authorizationState == .authorized {
                     let id = UUID()
                     systemIDs.insert(id)
@@ -212,14 +219,14 @@ struct BackgroundAlert {
     let soundName: String
 
     static func planned(since anchor: Date, isBluetooth: Bool, expectedHeartbeat: TimeInterval?) -> [Self] {
-        let slots: [(BackgroundAlertIdentifier, BackgroundAlertDuration, String)] = [
-            (.twelveMin, .twelveMinutes, "Sci-Fi_Computer_Console_Alarm.caf"),
-            (.eighteenMin, .eighteenMinutes, "Emergency_Alarm_Carbon_Monoxide.caf")
+        let slots: [(BackgroundAlertIdentifier, Int, String)] = [
+            (.twelveMin, BackgroundAlertSettings.firstMinutes, "Sci-Fi_Computer_Console_Alarm.caf"),
+            (.eighteenMin, BackgroundAlertSettings.secondMinutes, "Emergency_Alarm_Carbon_Monoxide.caf")
         ]
-        return slots.compactMap { identifier, duration, sound in
-            if let heartbeat = expectedHeartbeat, heartbeat * 1.2 >= duration.rawValue { return nil }
-            let minutes = Int(duration.rawValue / 60)
-            return Self(identifier: identifier.rawValue, fireDate: anchor.addingTimeInterval(duration.rawValue),
+        return slots.compactMap { identifier, minutes, sound in
+            let interval = TimeInterval(minutes * 60)
+            if let heartbeat = expectedHeartbeat, heartbeat * 1.2 >= interval { return nil }
+            return Self(identifier: identifier.rawValue, fireDate: anchor.addingTimeInterval(interval),
                         body: "App inaktiv i \(minutes) minuter. " + (isBluetooth
                             ? "Kontrollera bluetooth-anslutningen!" : "Öppna för att aktivera igen."),
                         soundName: sound)
@@ -228,7 +235,7 @@ struct BackgroundAlert {
 }
 
 /// Opening the app resumes its ordinary heartbeat flow and cancels both watchdogs.
-/// Stopping just the 12-minute system alarm leaves the 18-minute escalation armed.
+/// Stopping just the first system alarm leaves the second escalation armed.
 @available(iOS 26.0, *)
 struct OpenLoopFollowBackgroundAlertIntent: LiveActivityIntent {
     static var title: LocalizedStringResource = "Öppna LoopFollow"

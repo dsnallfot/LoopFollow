@@ -4,6 +4,10 @@ extension AlarmViewModel {
         // Hantera Stepper-ändringar
         func updateAlarmValue(id: String, value: Double) {
             switch id {
+            case "backgroundAlertFirstMinutes":
+                BackgroundAlertSettings.setFirstMinutes(Int(value))
+            case "backgroundAlertSecondMinutes":
+                BackgroundAlertSettings.setSecondMinutes(Int(value))
             case "low_bg":
                 UserDefaultsRepository.alertLowBG.value = Float(value)
             case "low_persistent":
