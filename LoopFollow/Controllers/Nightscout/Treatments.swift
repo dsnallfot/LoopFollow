@@ -328,6 +328,8 @@ extension MainViewController {
             }
         }
 
+        updateSensorStatus()
+
         // Synka statistik-arrayerna med de senaste behandlingsdatan och spara cache
         self.stats_syncTreatmentsFromLive(replacingRecentSince: replacingRecentSince)
         self.updateStats()

@@ -23,6 +23,7 @@ extension MainViewController {
         }
     }
     func minAgoTaskAction() {
+        updateSensorStatus()
         guard bgData.count > 0, let lastBG = bgData.last else {
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }

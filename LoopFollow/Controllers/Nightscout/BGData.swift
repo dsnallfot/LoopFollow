@@ -489,6 +489,7 @@ extension MainViewController {
         DispatchQueue.main.async {
             TaskScheduler.shared.rescheduleTask(id: .minAgoUpdate, to: Date())
 
+            self.updateSensorStatus()
             let entries = self.bgData
             if entries.count < 2 { return } // Protect index out of bounds
 
@@ -654,33 +655,13 @@ extension MainViewController {
                 attributeString.addAttribute(.strikethroughColor, value: UIColor.systemRed, range: NSRange(location: 0, length: attributeString.length))
                 self.updateBadge(val: 0)
 
-                // If a Dexcom G7 sensor note – surface severity; otherwise N/A
-                if let status = self.dexcomG7SensorStatus(after: lastBGTime) {
-                    self.infoManager.updateInfoData(type: .sensorStatus, value: status)
-                    self.infoManager.setPriority(true, for: .sensorStatus)
-                } else {
-                    self.infoManager.updateInfoData(type: .sensorStatus, value: "--")
-                    self.infoManager.setPriority(false, for: .sensorStatus)
-                }
-
             } else if deltaTime >= 6 { // Data is stale for 6-11 min
                 attributeString.addAttribute(.strikethroughColor, value: UIColor.label, range: NSRange(location: 0, length: attributeString.length))
                 self.updateBadge(val: 0)
 
-                // If a Dexcom G7 sensor note – surface severity; otherwise N/A
-                if let status = self.dexcomG7SensorStatus(after: lastBGTime) {
-                    self.infoManager.updateInfoData(type: .sensorStatus, value: status)
-                    self.infoManager.setPriority(true, for: .sensorStatus)
-                } else {
-                    self.infoManager.updateInfoData(type: .sensorStatus, value: "--")
-                    self.infoManager.setPriority(false, for: .sensorStatus)
-                }
-
             } else { // Data is fresh
                 attributeString.addAttribute(.strikethroughColor, value: UIColor.clear, range: NSRange(location: 0, length: attributeString.length))
                 self.updateBadge(val: latestBG)
-                self.infoManager.updateInfoData(type: .sensorStatus, value: "OK 🟢")
-                self.infoManager.setPriority(false, for: .sensorStatus)
             }
             self.BGText.attributedText = attributeString
             
@@ -800,18 +781,44 @@ extension MainViewController {
         }
     }
     
+    /// Re-evaluate after BG, treatments, and elapsed-time updates. Call on the main thread.
+    func updateSensorStatus(now: TimeInterval = Date().timeIntervalSince1970) {
+        let status: String
+        let isPriority: Bool
+        if let latestBG = bgData.last {
+            if now - latestBG.date < 6 * 60 {
+                status = "OK 🟢"
+                isPriority = false
+            } else if let warning = dexcomG7SensorStatus(after: latestBG.date) {
+                status = warning
+                isPriority = true
+            } else {
+                status = "--"
+                isPriority = false
+            }
+        } else {
+            status = "--"
+            isPriority = false
+        }
+
+        // The minute timer can fire every second; reload only when the status changes.
+        guard infoManager.tableData[InfoType.sensorStatus.rawValue].value != status else { return }
+        infoManager.updateInfoData(type: .sensorStatus, value: status)
+        infoManager.setPriority(isPriority, for: .sensorStatus)
+    }
+
     /// Returns a sensor-status string based on Dexcom G7 Nightscout Note treatments AFTER the latest BG timestamp.
     /// We use the emoji prefix in the note to infer severity:
     /// - "⛔️ Dexcom G7"  -> "Fel ⛔️"
     /// - "⚠️ Dexcom G7" -> "Fel ⚠️"
     /// Returns nil if no matching note exists.
     private func dexcomG7SensorStatus(after latestBGTime: TimeInterval) -> String? {
-        // noteGraphData is populated from NS treatments (Notes.swift)
+        // Dexcom warning notes are routed to WarningEvent.swift by updateTreatments().
         // noteStruct.date is in seconds since 1970.
-        guard !noteGraphData.isEmpty else { return nil }
+        guard !warningGraphData.isEmpty else { return nil }
 
         // Only consider notes newer than the latest BG
-        let relevant = noteGraphData.filter { $0.date > latestBGTime }
+        let relevant = warningGraphData.filter { $0.date > latestBGTime }
         guard !relevant.isEmpty else { return nil }
 
         // Highest severity wins (⛔️ over ⚠️)
