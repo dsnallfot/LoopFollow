@@ -49,17 +49,7 @@ class SnoozeViewController: UIViewController, UNUserNotificationCenterDelegate {
         label.alpha = 0.0 // hidden by default
         return label
     }()
-    /*
-    // 🤲 6–7 hands overlay behind BGView contents (Snoozer)
-    private let hands67ImageView: UIImageView = {
-        let iv = UIImageView()
-        iv.translatesAutoresizingMaskIntoConstraints = false
-        iv.image = UIImage(named: "67handsHigh")
-        iv.contentMode = .scaleAspectFit
-        iv.alpha = 0.0
-        return iv
-    }()
-    */
+    
     // 🎯 target logo overlay behind BGView contents (Snoozer)
     private let targetLogoImageView: UIImageView = {
         let iv2 = UIImageView()
@@ -629,16 +619,7 @@ class SnoozeViewController: UIViewController, UNUserNotificationCenterDelegate {
             unicornLabel.centerXAnchor.constraint(equalTo: BGView.centerXAnchor),
             unicornLabel.centerYAnchor.constraint(equalTo: BGView.centerYAnchor)
         ])
-        /*
-        // 🤲 Setup 6–7 hands overlay behind BGView content
-        BGView.insertSubview(hands67ImageView, at: 0)
-        NSLayoutConstraint.activate([
-            hands67ImageView.centerXAnchor.constraint(equalTo: BGView.centerXAnchor),
-            hands67ImageView.centerYAnchor.constraint(equalTo: BGView.centerYAnchor),
-            hands67ImageView.widthAnchor.constraint(equalTo: BGView.widthAnchor, multiplier: 0.95),
-            hands67ImageView.heightAnchor.constraint(equalTo: BGView.heightAnchor, multiplier: 0.95)
-        ])
-        */
+
         // 🎯 Setup target logo overlay behind BGView content
         BGView.insertSubview(targetLogoImageView, at: 0)
         NSLayoutConstraint.activate([
@@ -728,15 +709,6 @@ class SnoozeViewController: UIViewController, UNUserNotificationCenterDelegate {
             self.unicornLabel.alpha = shouldShow ? 0.5 : 0.0
         }
     }
-    /*
-    /// Shows the 6–7 hands image behind BGView when BG is exactly 6.7 mmol/L
-    fileprivate func update67HandsVisibility(forBGDisplayString bg: String) {
-        let shouldShow = (bg == "6.7")
-        UIView.animate(withDuration: 0.25) {
-            self.hands67ImageView.alpha = shouldShow ? 0.4 : 0.0
-        }
-    }
-    */
     
     /// Shows the target logo image behind BGView when BG is exactly at target mmol/L,
     /// except when target is 5.5 or 6.7 (those are reserved for unicorn / 67-hands).

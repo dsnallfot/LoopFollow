@@ -30,13 +30,7 @@ class InfoManager {
         tableView?.reloadData()
         onReloadData?()
     }
-/*
-    func updateInfoData(type: InfoType, value: String, unit: String? = nil) {
-        let displayValue = unit != nil ? "\(value) \(unit!)" : value
-        tableData[type.rawValue].value = displayValue
-        reloadTables()
-    }
-*/
+
     func updateInfoData(type: InfoType, value: String? = nil, unit: String? = nil) {
         let displayValue: String
 

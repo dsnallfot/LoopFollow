@@ -70,33 +70,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         return true
     }
-/* Revertat ändring i 2f66847 & 94ad3e9 pga sämre UX
-    func applicationWillEnterForeground(_ application: UIApplication) {
-        // Get root tab bar controller
-        if let tabBar = window?.rootViewController as? UITabBarController,
-           let mainVC = tabBar.viewControllers?.first as? MainViewController {
-
-            // Immediate refresh of MinAgo
-            mainVC.minAgoTaskAction()
-
-            // Restore high-frequency updates
-            TaskScheduler.shared.rescheduleTask(
-                id: .minAgoUpdate,
-                to: Date().addingTimeInterval(1)
-            )
-        }
-    }
- */
 
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
         return orientationLock
-    }
-
-    func applicationWillTerminate(_ application: UIApplication) {
-        if UserDefaultsRepository.alertAppInactive.value {
-            AlarmSound.setSoundFile(str: "Alarm_Buzzer")
-            AlarmSound.playTerminated()
-        }
     }
 
     // MARK: UISceneSession Lifecycle

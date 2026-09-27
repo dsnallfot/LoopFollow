@@ -11,9 +11,7 @@ import AVFoundation
 import MediaPlayer
 import UIKit
 
-/*
- * Class that handles the playing and the volume of the alarm sound.
- */
+///Class that handles the playing and the volume of the alarm sound.
 class AlarmSound {
     
     static var isPlaying: Bool {
@@ -55,9 +53,7 @@ class AlarmSound {
         AlarmSound.stop()
     }
     
-    /*
-     * Sets the audio volume to 0.
-     */
+    ///Sets the audio volume to 0.
     static func muteVolume() {
         self.audioPlayer?.volume = 0
         self.muted = true
@@ -68,9 +64,7 @@ class AlarmSound {
         self.soundURL = Bundle.main.url(forResource: str, withExtension: "caf")!
     }
     
-    /*
-     * Sets the volume of the alarm back to the volume before it has been muted.
-     */
+    ///Sets the volume of the alarm back to the volume before it has been muted.
     static func unmuteVolume() {
         if UserDefaultsRepository.fadeInTimeInterval.value > 0 {
             self.audioPlayer?.setVolume(1.0, fadeDuration: UserDefaultsRepository.fadeInTimeInterval.value)
@@ -98,10 +92,6 @@ class AlarmSound {
         do {
             self.audioPlayer = try AVAudioPlayer(contentsOf: self.soundURL)
             self.audioPlayer!.delegate = self.audioPlayerDelegate
-            /*
-             try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category(rawValue: convertFromAVAudioSessionCategory(AVAudioSession.Category.playback)))*/
-            //try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: []) // TEST
-            //try AVAudioSession.sharedInstance().setActive(true)
             
             activateAudioSessionWithFallback()
             
@@ -132,14 +122,10 @@ class AlarmSound {
             return
         }
         
-        //enableAudio()
-        
         do {
             self.audioPlayer = try AVAudioPlayer(contentsOf: self.soundURL)
             self.audioPlayer!.delegate = self.audioPlayerDelegate
-            //try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: []) // TEST
-            /*try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category(rawValue: convertFromAVAudioSessionCategory(AVAudioSession.Category.playback)))*/
-            //try AVAudioSession.sharedInstance().setActive(true)
+
             activateAudioSessionWithFallback()
             
             // Play endless loops
@@ -176,53 +162,6 @@ class AlarmSound {
         }
     }
     
-    static func playTerminated() {
-        
-        guard !self.isPlaying else {
-            return
-        }
-        
-        do {
-            self.audioPlayer = try AVAudioPlayer(contentsOf: self.soundURL)
-            self.audioPlayer!.delegate = self.audioPlayerDelegate
-            
-            //try AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category(rawValue: convertFromAVAudioSessionCategory(AVAudioSession.Category.playback)))
-            //try AVAudioSession.sharedInstance().setActive(true)
-            
-            activateAudioSessionWithFallback()
-            
-            // Play endless loops
-            self.audioPlayer!.numberOfLoops = 2
-            
-            // Store existing volume
-            if self.systemOutputVolumeBeforeOverride == nil {
-                self.systemOutputVolumeBeforeOverride = AVAudioSession.sharedInstance().outputVolume
-            }
-            
-            
-            if !self.audioPlayer!.prepareToPlay() {
-                LogManager.shared.log(category: .alarm, message: "Terminate AlarmSound - audio player failed preparing to play")
-            }
-            
-            if self.audioPlayer!.play() {
-                if !self.isPlaying {
-                    LogManager.shared.log(category: .alarm, message: "Terminate AlarmSound - not playing after calling play")
-                    LogManager.shared.log(category: .alarm, message: "Terminate AlarmSound - rate value: \(audioPlayer!.rate)")
-                }
-            } else {
-                LogManager.shared.log(category: .alarm, message: "Terminate AlarmSound - audio player failed to play")
-            }
-            
-            
-            MPVolumeView.setVolume(1.0)
-            
-            
-        } catch let error {
-            LogManager.shared.log(category: .alarm, message: "Terminate AlarmSound - unable to play sound; error: \(error)")
-        }
-    }
-    
-    
     fileprivate static func restoreSystemOutputVolume() {
         
         guard UserDefaultsRepository.overrideSystemOutputVolume.value else {
@@ -239,17 +178,6 @@ class AlarmSound {
         
         self.systemOutputVolumeBeforeOverride = nil
     }
-    /*
-     fileprivate static func enableAudio() {
-     do {
-     //try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: []) // TEST
-     try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
-     try AVAudioSession.sharedInstance().setActive(true)
-     LogManager.shared.log(category: .alarm, message: "Audio session configured for alarm playback")
-     } catch {
-     LogManager.shared.log(category: .general, message: "Enable audio error: \(error)")
-     }
-     }*/
     
     // Background activation of a non-mixable .playback session is denied by iOS
     // (cannotInterruptOthers, 560557684) unless the app is already actively playing
@@ -264,11 +192,9 @@ class AlarmSound {
         && Storage.shared.backgroundRefreshType.value != .silentTune
         
         let dominate: (label: String, options: AVAudioSession.CategoryOptions) = ("[]", [])
-        //let duck: (label: String, options: AVAudioSession.CategoryOptions) = (".duckOthers", .duckOthers)
         let mix: (label: String, options: AVAudioSession.CategoryOptions) = (".mixWithOthers", .mixWithOthers)
         
         let candidates = isBackgroundWithoutSilentTune ? [mix] : [dominate, mix]
-        //let candidates = isBackgroundWithoutSilentTune ? [duck, mix] : [dominate, duck, mix]
         for candidate in candidates {
             do {
                 try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: candidate.options)
@@ -286,13 +212,13 @@ class AlarmSound {
 
 class AudioPlayerDelegate: NSObject, AVAudioPlayerDelegate {
 
-    /* audioPlayerDidFinishPlaying:successfully: is called when a sound has finished playing. This method is NOT called if the player is stopped due to an interruption. */
+    ///audioPlayerDidFinishPlaying:successfully: is called when a sound has finished playing. This method is NOT called if the player is stopped due to an interruption.
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         LogManager.shared.log(category: .general, message: "AlarmRule - audioPlayerDidFinishPlaying (\(flag))", isDebug: true)
         Observable.shared.alarmSoundPlaying.value = false
     }
     
-    /* if an error occurs while decoding it will be reported to the delegate. */
+    ///if an error occurs while decoding it will be reported to the delegate.
     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
         if let error = error {
             LogManager.shared.log(category: .general, message: "AlarmRule - audioPlayerDecodeErrorDidOccur: \(error)")
@@ -301,17 +227,17 @@ class AudioPlayerDelegate: NSObject, AVAudioPlayerDelegate {
         }
     }
     
-    /* AVAudioPlayer INTERRUPTION NOTIFICATIONS ARE DEPRECATED - Use AVAudioSession instead. */
+    // TODO: AVAudioPlayer INTERRUPTION NOTIFICATIONS ARE DEPRECATED - Use AVAudioSession instead.
     
-    /* audioPlayerBeginInterruption: is called when the audio session has been interrupted while the player was playing. The player will have been paused. */
+    ///audioPlayerBeginInterruption: is called when the audio session has been interrupted while the player was playing. The player will have been paused.
     func audioPlayerBeginInterruption(_ player: AVAudioPlayer) {
         LogManager.shared.log(category: .general, message: "AlarmRule - audioPlayerBeginInterruption")
         Observable.shared.alarmSoundPlaying.value = false
     }
     
     
-    /* audioPlayerEndInterruption:withOptions: is called when the audio session interruption has ended and this player had been interrupted while playing. */
-    /* Currently the only flag is AVAudioSessionInterruptionFlags_ShouldResume. */
+    ///audioPlayerEndInterruption:withOptions: is called when the audio session interruption has ended and this player had been interrupted while playing.
+    ///Currently the only flag is AVAudioSessionInterruptionFlags_ShouldResume.
     func audioPlayerEndInterruption(_ player: AVAudioPlayer, withOptions flags: Int) {
         LogManager.shared.log(category: .general, message: "AlarmRule - audioPlayerEndInterruption withOptions: \(flags)")
         Observable.shared.alarmSoundPlaying.value = false

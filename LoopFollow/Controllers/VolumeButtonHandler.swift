@@ -408,63 +408,7 @@ class VolumeButtonHandler: NSObject {
             self.lastVolume = currentVolume
         }
     }
-/* ORIGINAL KOD NEDAN IFALL DEN NYA INTE FUNKAR SOM TÄNKT
-    func startMonitoring() {
-        guard !isMonitoring else { return }
 
-        isMonitoring = true
-
-        volumeObserver = AVAudioSession.sharedInstance().observe(\.outputVolume, options: [.new]) { [weak self] session, _ in
-            guard let self = self, let alarmStartTime = self.alarmStartTime else { return }
-
-            let currentVolume = session.outputVolume
-            let now = Date()
-
-            // On the first observation, capture the initial volume when the audio session
-            // becomes active. This solves the race condition. We then return to avoid
-            // treating this initial setup as a user-initiated button press.
-            if self.lastVolume == 0.0, currentVolume > 0.0 {
-                LogManager.shared.log(category: .volumeButtonSnooze, message: "Observer received initial valid volume: \(currentVolume)")
-                self.lastVolume = currentVolume
-                return
-            }
-
-            guard self.lastVolume > 0.0 else { return }
-
-            let volumeDifference = abs(currentVolume - self.lastVolume)
-
-            if volumeDifference > self.volumeButtonPressThreshold {
-                let timeSinceAlarmStart = now.timeIntervalSince(alarmStartTime)
-
-                // Ignore volume changes from the alarm system's own ramp-up.
-                if timeSinceAlarmStart < 2.0, currentVolume > self.lastVolume {
-                    if volumeDifference <= 0.15, timeSinceAlarmStart < 1.5 {
-                        self.lastVolume = currentVolume
-                        return
-                    }
-                }
-
-                self.recordVolumeChange(currentVolume: currentVolume, timestamp: now)
-
-                if timeSinceAlarmStart > self.volumeButtonActivationDelay {
-                    if let lastPress = self.lastVolumeButtonPressTime {
-                        let timeSinceLastPress = now.timeIntervalSince(lastPress)
-                        if timeSinceLastPress < self.volumeButtonCooldown {
-                            self.lastVolume = currentVolume
-                            return
-                        }
-                    }
-
-                    if self.isLikelyVolumeButtonPress(volumeDifference: volumeDifference, timestamp: now) {
-                        self.snoozeActiveAlarm()
-                        LogManager.shared.log(category: .volumeButtonSnooze, message: "Snoozing active alarm due to likely volume button press")
-                    }
-                }
-            }
-            self.lastVolume = currentVolume
-        }
-    }
-*/
     func stopMonitoring() {
         guard isMonitoring else { return }
 

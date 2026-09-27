@@ -446,41 +446,6 @@ extension MainViewController {
                         to: Date().addingTimeInterval(interval)
                     )
                 }
-        
-        /*
-        DispatchQueue.main.async {
-            if secondsAgo >= (20 * 60) {
-                TaskScheduler.shared.rescheduleTask(
-                    id: .deviceStatus,
-                    to: Date().addingTimeInterval(5 * 60)
-                )
-
-            } else if secondsAgo >= (10 * 60) {
-                TaskScheduler.shared.rescheduleTask(
-                    id: .deviceStatus,
-                    to: Date().addingTimeInterval(60)
-                )
-
-            } else if secondsAgo >= (7 * 60) {
-                TaskScheduler.shared.rescheduleTask(
-                    id: .deviceStatus,
-                    to: Date().addingTimeInterval(30)
-                )
-
-            } else if secondsAgo >= (5 * 60) {
-                TaskScheduler.shared.rescheduleTask(
-                    id: .deviceStatus,
-                    to: Date().addingTimeInterval(10)
-                )
-            } else {
-                let interval = (310 - secondsAgo)
-                TaskScheduler.shared.rescheduleTask(
-                    id: .deviceStatus,
-                    to: Date().addingTimeInterval(interval)
-                )
-            }
-        }
-        */
         LogManager.shared.log(category: .deviceStatus, message: "Update Device Status done", isDebug: true)
     }
 }

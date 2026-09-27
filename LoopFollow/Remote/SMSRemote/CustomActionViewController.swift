@@ -252,10 +252,6 @@ class CustomActionViewController: ThemedViewController, UIPickerViewDataSource, 
                 LogManager.shared.log(category: .remote, message: "Failed to encode callback URLs")
                 return
             }
-            
-            /*let urlString = "shortcuts://run-shortcut?name=Remote%20Custom%20Action&input=text&text=\(encodedString)"
-            if let url = URL(string: urlString) {
-                UIApplication.shared.open(url, options: [:], completionHandler: nil)*/
             let urlString = "shortcuts://x-callback-url/run-shortcut?name=Remote%20Custom%20Action&input=text&text=\(encodedString)&x-success=\(successEncoded)&x-error=\(errorEncoded)&x-cancel=\(cancelEncoded)"
             
             if let url = URL(string: urlString) {

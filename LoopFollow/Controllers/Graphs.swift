@@ -539,16 +539,6 @@ extension MainViewController {
         BGChart.data?.notifyDataChanged()
         BGChart.notifyDataSetChanged()
     }
-    /*
-    func chartValueSelected(_ chartView: ChartViewBase, entry: ChartDataEntry, highlight: Highlight) {
-        if chartView == BGChartFull {
-            BGChart.moveViewToX(entry.x)
-        }
-        if entry.data as? String == "hide"{
-            BGChart.highlightValue(nil, callDelegate: false)
-        }
-        
-    }*/
     
     // MARK: - Meal Analysis helpers for graph taps
 
@@ -2281,9 +2271,6 @@ extension MainViewController {
             if carbShift {
                 dateTimeStamp = dateTimeStamp - 250
             }
-            
-            /*let dot = ChartDataEntry(x: Double(dateTimeStamp), y: Double(carbData[i].sgv), data: valueString)
-            BGChart.data?.dataSets[dataIndex].addEntry(dot)*/
             
             let line2 = "Kolhydrater " + formatter.string(from: NSNumber(value: carbData[i].value))! + " g / Fett " + fatString + " g / Protein " + proteinString + " g"
             let line2FPU = "Kolhydratersekvivalenter " + formatter.string(from: NSNumber(value: carbData[i].value))! + " g"

@@ -220,11 +220,6 @@ final class NightscoutCache {
             }
             let localDayStart = calendar.startOfDay(for: dayDate)
             if localDayStart < oldestToKeep {
-                /*LogManager.shared.log(
-                    category: .temporaryDebug,
-                    message: "purgeOldFiles – DELETING \(localDayStart) (< oldestToKeep \(oldestToKeep))",
-                    isDebug: true
-                )*/
                 try? FileManager.default.removeItem(at: url)
             } else {
                 /*LogManager.shared.log(
@@ -361,25 +356,7 @@ final class NightscoutCache {
             }
         }
     }
-/*
-    /// Debug: List all cached day files and their sizes.
-    static func debugListSegments() {
-        do {
-            let urls = try FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.fileSizeKey], options: [.skipsHiddenFiles])
-            print("📦 NightscoutCache — Cached segments:")
-            if urls.isEmpty {
-                print("   (no cached day files)")
-            }
-            for url in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
-                let attrs = try? url.resourceValues(forKeys: [.fileSizeKey])
-                let size = attrs?.fileSize ?? 0
-                print("   • \(url.lastPathComponent) — \(size) bytes")
-            }
-        } catch {
-            print("❌ NightscoutCache.debugListSegments error:", error.localizedDescription)
-        }
-    }
-*/
+
     private static func fileURL(for date: Date) -> URL {
         let dayStr = isoFormatter.string(from: Calendar.current.startOfDay(for: date))
         return dir.appendingPathComponent(dayStr).appendingPathExtension("json")
@@ -838,25 +815,6 @@ final class GlucoseNSOnlyCache {
             }
         }
     }
-/*
-    /// Debug: List all cached NS-only glucose day files and their sizes.
-    static func debugListSegments() {
-        do {
-            let urls = try FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.fileSizeKey], options: [.skipsHiddenFiles])
-            print("📦 GlucoseNSOnlyCache — Cached segments:")
-            if urls.isEmpty {
-                print("   (no cached day files)")
-            }
-            for url in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
-                let attrs = try? url.resourceValues(forKeys: [.fileSizeKey])
-                let size = attrs?.fileSize ?? 0
-                print("   • \(url.lastPathComponent) — \(size) bytes")
-            }
-        } catch {
-            print("❌ GlucoseNSOnlyCache.debugListSegments error:", error.localizedDescription)
-        }
-    }
- */
 
     // MARK: - Private helpers
 

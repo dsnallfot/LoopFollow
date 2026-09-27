@@ -211,11 +211,6 @@ extension MainViewController {
         parameters["find[type][$ne]"] = "cal"
         
         NightscoutUtils.executeRequest(eventType: .sgv, parameters: parameters) { (result: Result<[ShareGlucoseData], Error>) in
-            /*LogManager.shared.log(
-                category: .temporaryDebug,
-                message: "[BGFetch] webLoadNSBGData callback – result=\(result)",
-                isDebug: true
-            )*/
             switch result {
             case .success(let entriesResponse):
                 if let latest = entriesResponse.first {
@@ -436,21 +431,7 @@ extension MainViewController {
         
         viewUpdateNSBG(sourceName: sourceName)
     }
-    /*
-    /// Computes the sensor schedule offset (in seconds) for a given time interval.
-    /// The offset is the remainder (in seconds) of the time elapsed since midnight (UTC) divided by 300 seconds.
-    /// For example, if the sensor reports a time that corresponds to 13:06:30, the offset is 90 seconds.
-    func sensorScheduleOffset(for timeInterval: TimeInterval) -> TimeInterval {
-        var calendar = Calendar(identifier: .gregorian)
-        // Use UTC to be consistent with our sensor timestamps.
-        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
-        
-        let date = Date(timeIntervalSince1970: timeInterval)
-        let startOfDay = calendar.startOfDay(for: date)
-        let secondsSinceStartOfDay = date.timeIntervalSince(startOfDay)
-        return secondsSinceStartOfDay.truncatingRemainder(dividingBy: 300)
-    }
-    */
+
     /// Computes the sensor schedule offset (in seconds) for a given time interval.
     /// The offset is the remainder (in seconds) of the time elapsed since midnight (UTC)
     /// divided by the given cycle length (default 300 seconds).
@@ -852,15 +833,7 @@ extension MainViewController {
             self.unicornLabel.alpha = shouldShow ? 0.5 : 0.0
         }
     }
-    /*
-    /// Shows the 6–7 hands image behind BGView when BG is exactly 6.7 mmol/L
-    fileprivate func update67HandsVisibility(forBGDisplayString bg: String) {
-        let shouldShow = (bg == "6.7")
-        UIView.animate(withDuration: 0.25) {
-            self.hands67ImageView.alpha = shouldShow ? 0.4 : 0.0
-        }
-    }
-     */
+
     /// Shows the target logo image behind BGView when BG is exactly at target mmol/L,
     /// except when target is 5.5 or 6.7 (those are reserved for unicorn / 67-hands).
     fileprivate func updateTargetLogoVisibility(forBGDisplayString bg: String) {

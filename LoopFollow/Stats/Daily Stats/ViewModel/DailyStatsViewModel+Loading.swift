@@ -202,32 +202,6 @@ extension DailyStatsViewModel {
                     timeInRangePercent = (Double(tirCount) / count) * 100.0
                 }
 
-                /*
-                // --- Sanity log (debug): glucose count per day ---
-                #if DEBUG
-                let dayString: String = {
-                    let df = DateFormatter()
-                    df.dateFormat = "yyyy-MM-dd"
-                    df.timeZone = TimeZone.current
-                    return df.string(from: dayStart)
-                }()
-
-                let countText = glucoseCountForDay.map(String.init) ?? "0"
-                let lowText = lowPercent.map { String(format: "%.1f", $0) } ?? "-"
-                let titrText = tightRangePercent.map { String(format: "%.1f", $0) } ?? "-"
-                let tirText = timeInRangePercent.map { String(format: "%.1f", $0) } ?? "-"
-
-                let suffix = (glucoseCountForDay ?? 0) < self.minGlucoseReadingsPerDay && !calendar.isDateInToday(dayStart) ? " ⚠️<\(self.minGlucoseReadingsPerDay)" : ""
-
-                LogManager.shared.log(
-                    category: .analysis,
-                    message: "[DailyStats][Sanity] day=\(dayString) glucoseCount=\(countText)\(suffix) low%=\(lowText) TITR%=\(titrText) TIR%=\(tirText)",
-                    isDebug: true
-                )
-                #endif
-                // --- End sanity log ---
-                */
-
                 // Kolhydrater
                 let carbs = carbsPerDay[dayStart]
 

@@ -498,11 +498,6 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
                 alarmVC.hidesBottomBarWhenPushed = false
                 navigationController?.pushViewController(alarmVC, animated: true)
                  
-                /*
-                if let alarmVC = ViewControllerManager.shared.alarmViewController {
-                    navigationController?.pushViewController(alarmVC, animated: true)
-                }
-                */
             case .general:
                 let controller = GeneralSettingsViewController()
                 controller.appStateController = appStateController

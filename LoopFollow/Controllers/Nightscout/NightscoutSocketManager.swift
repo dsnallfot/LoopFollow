@@ -76,15 +76,7 @@ class NightscoutSocketManager {
         currentToken = token
         connect()
     }
-/*
-    func reconnectIfNeeded() {
-        guard Storage.shared.webSocketEnabled.value, !currentURL.isEmpty else { return }
 
-        if connectionState == .disconnected || connectionState == .error {
-            connect()
-        }
-    }
-*/
     func disconnect() {
         let wasAuthenticated = connectionState == .authenticated
         

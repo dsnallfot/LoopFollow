@@ -23,18 +23,6 @@ extension MainViewController {
         }
     }
     func minAgoTaskAction() {
-        
-/* Revertat ändring i 2f66847 & 94ad3e9 pga sämre UX
-        // MinAgo is UI-only. Avoid frequent work when backgrounded.
-        let appState = UIApplication.shared.applicationState
-        if appState == .background {
-            // Slow cadence while backgrounded (5 min).
-            TaskScheduler.shared.rescheduleTask(id: .minAgoUpdate,
-                                                to: Date().addingTimeInterval(300))
-            return
-        }
-*/
-
         guard bgData.count > 0, let lastBG = bgData.last else {
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
@@ -97,14 +85,6 @@ extension MainViewController {
             // default: minutes
             return "\(Int(secondsAgo / 60))m"
         }()
-
-        // Debug logging for minAgo calculation
-        /*LogManager.shared.log(
-            category: .analysis,
-            message: "[MinAgo] lastBG.ts=\(bgSeconds), secondsAgo=\(secondsAgo), latestMinAgoString='\(latestMinAgoString)', newDisplayText='\(displayText)'",
-            isDebug: true
-        )
-         */
         // Update UI only if the display text has changed
         if displayText != latestMinAgoString {
             DispatchQueue.main.async { [weak self] in

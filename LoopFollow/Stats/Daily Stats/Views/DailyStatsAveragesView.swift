@@ -36,15 +36,7 @@ struct DailyStatsAveragesView: View {
             )
             
             Spacer(minLength: 0)
-/*
-            averageBadge(
-                title: "Basal",
-                value: avgBasal.map { String(format: "%.1f E", $0) } ?? "—",
-                background: Color(UIColor.insulin).opacity(avgBasal == nil ? 0.25 : 0.8)
-            )
 
-            Spacer(minLength: 0)
-*/
             // Medel BG
             let meanColor: Color = {
                 guard let v = avgMean else { return .gray.opacity(0.4) }

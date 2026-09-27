@@ -65,20 +65,6 @@ struct AdvancedSettingsView: View {
                         themedRow {
                             Toggle("Tillåt Clippy-info", isOn: $viewModel.allowClippy)
                         }
-                        /*Divider().opacity(0.8)
-                        themedRow {
-                            HStack {
-                                Text("Clippy historik")
-                                Spacer()
-                                Button {
-                                    showClippyHistory = true
-                                } label: {
-                                    Text("Visa")
-                                        .frame(width: 70, alignment: .center)
-                                }
-                                .buttonStyle(.glassProminent)
-                            }
-                        }*/
                     }
                     .themedCardBackground(opacity: 0.15)
 
@@ -178,9 +164,6 @@ struct AdvancedSettingsView: View {
                 .padding(.bottom, 24)
             }
         }
-        /*.sheet(isPresented: $showClippyHistory) {
-            ClippyHistoryView()
-        }*/
         .sheet(isPresented: $viewModel.isPresentingArchiveShareSheet, onDismiss: {
             viewModel.handleArchiveShareSheetDismissed()
         }) {

@@ -175,19 +175,7 @@ struct WatchConfig: Equatable {
         comboPresets = comboPresetDictionaries.map { WatchComboPreset(from: $0) }
         bgComplicationEnabled = dict["bgComplicationEnabled"] as? Bool ?? false
     }
-/*
-    func saveToDefaults() {
-        let defaults = UserDefaults.standard
-        defaults.set(toDictionary(), forKey: "watchConfig")
 
-        // Also mirror NS credentials to the App Group so the widget extension
-        // (a separate process) can fetch BG directly from Nightscout.
-        if let shared = UserDefaults(suiteName: WidgetData.appGroupID) {
-            shared.set(nsURL, forKey: "nsURL")
-            shared.set(nsToken, forKey: "nsToken")
-        }
-    }
-    */
     func saveToDefaults() {
         let defaults = UserDefaults.standard
         defaults.set(toDictionary(), forKey: "watchConfig")

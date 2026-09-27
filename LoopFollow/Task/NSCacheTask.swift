@@ -123,11 +123,6 @@ extension MainViewController {
             case .success(let raw):
                 if let first = raw.first {
                     let date = Date(timeIntervalSince1970: first.date)
-                    /*LogManager.shared.log(
-                        category: .temporaryDebug,
-                        message: "[CacheBG] webLoadNSBGDataCache SUCCESS for day \(start), first sgv=\(first.sgv) at \(date)",
-                        isDebug: true
-                    )*/
                 } else {
                     /*LogManager.shared.log(
                         category: .temporaryDebug,

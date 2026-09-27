@@ -87,15 +87,6 @@ class LogViewModel: ObservableObject {
 
         // Initial inläsning
         loadLogEntries()
-        /*
-        // Gamla timer-lösningen (behövs inte längre):
-        Timer.publish(every: 5.0, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                self?.loadLogEntries()
-            }
-            .store(in: &cancellables)
-        */
     }
 
     func loadLogEntries() {

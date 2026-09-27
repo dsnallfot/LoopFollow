@@ -127,17 +127,7 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
         label.alpha = 0.0 // hidden by default
         return label
     }()
-    /*
-    // 🤲 6–7 hands overlay behind BGView contents
-    let hands67ImageView: UIImageView = {
-        let iv = UIImageView()
-        iv.translatesAutoresizingMaskIntoConstraints = false
-        iv.image = UIImage(named: "67hands")
-        iv.contentMode = .scaleAspectFit
-        iv.alpha = 0.0
-        return iv
-    }()
-    */
+
     // target logo overlay behind BGView contents
     let targetLogoImageView: UIImageView = {
         let iv2 = UIImageView()
@@ -533,16 +523,6 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
             unicornLabel.centerXAnchor.constraint(equalTo: BGView.centerXAnchor),
             unicornLabel.centerYAnchor.constraint(equalTo: BGView.centerYAnchor)
         ])
-        /*
-        // 🤲 Setup 6–7 hands overlay behind BGView content (deepest layer)
-        BGView.insertSubview(hands67ImageView, at: 0)
-        NSLayoutConstraint.activate([
-            hands67ImageView.centerXAnchor.constraint(equalTo: BGView.centerXAnchor),
-            hands67ImageView.centerYAnchor.constraint(equalTo: BGView.centerYAnchor),
-            hands67ImageView.widthAnchor.constraint(equalTo: BGView.widthAnchor, multiplier: 0.95),
-            hands67ImageView.heightAnchor.constraint(equalTo: BGView.heightAnchor, multiplier: 0.95)
-        ])
-         */
         // 🎯 Setup target logo overlay behind BGView content (deepest layer)
         BGView.insertSubview(targetLogoImageView, at: 0)
         NSLayoutConstraint.activate([
@@ -1151,51 +1131,7 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
 
         present(alert, animated: true, completion: nil)
     }
-    /*
-    private func setupSwipeUpToStatus() {
-        let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipeUpToStatsView(_:)))
-        swipeUp.direction = .up
-        swipeUp.numberOfTouchesRequired = 1
-        swipeUp.cancelsTouchesInView = false // don't steal taps from buttons/steppers
-        view.addGestureRecognizer(swipeUp)
-    }
-
-    @objc private func handleSwipeUpToStatsView(_ gesture: UISwipeGestureRecognizer) {
-        guard gesture.state == .ended else { return }
-        // Require swipe to start in the lower quarter to minimize accidental triggers
-        let startPoint = gesture.location(in: view)
-        let lowerThreshold = view.bounds.height * 0.75
-        guard startPoint.y >= lowerThreshold else { return }
-
-        // Avoid double-presenting
-        guard presentedViewController == nil else { return }
-
-        // Light haptic for feedback
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
-
-        // Build AggregatedStatsView with this MainViewController as context
-        let viewModel = AggregatedStatsViewModel(mainViewController: self)
-        let statsRootView = NavigationView {
-            if #available(iOS 26.0, *) {
-                AggregatedStatsView(viewModel: viewModel)
-            } else {
-                // Fallback on earlier versions
-            }
-        }
-
-        let hostingController = UIHostingController(rootView: statsRootView)
-        hostingController.modalPresentationStyle = .formSheet
-
-        if UserDefaultsRepository.forceDarkMode.value {
-            hostingController.overrideUserInterfaceStyle = .dark
-        }
-
-        present(hostingController, animated: true, completion: nil)
-    }
-    */
-
-    
+     
     override func viewWillAppear(_ animated: Bool) {
         updateStatsHeadlineText()
         // set screen lock
@@ -1678,35 +1614,6 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
             UIApplication.shared.applicationIconBadgeNumber = 0
         }
     }
-/*
-    func setBGTextColor() {
-        if bgData.count > 0 {
-            guard let snoozer = self.tabBarController?.viewControllers?[2] as? SnoozeViewController else { return }
-            let latestBG = bgData[bgData.count - 1].sgv
-            var color: UIColor = .label // Default color
-            if UserDefaultsRepository.colorBGText.value {
-                if Float(latestBG) >= UserDefaultsRepository.highLine.value {
-                    color = UIColor.systemPurple.withAlphaComponent(0.8) // Directly use systemPurple with alpha
-                }
-                
-                if let loopRed = UIColor(named: "LoopRed") {
-                    if Float(latestBG) <= UserDefaultsRepository.lowLine.value {
-                        color = loopRed
-                    }
-                }
-                
-                if let loopGreen = UIColor(named: "LoopGreen") {
-                    if Float(latestBG) > UserDefaultsRepository.lowLine.value && Float(latestBG) < UserDefaultsRepository.highLine.value {
-                        color = loopGreen
-                    }
-                }
-            }
-            
-            BGText.textColor = color
-            snoozer.BGLabel.textColor = color
-        }
-    }
-*/
     
     func setBGTextColor() {
         guard bgData.count > 0 else { return }

@@ -86,32 +86,6 @@ class TIRCalculator {
                                                       highThreshold: highThreshold,
                                                       veryHighThreshold: veryHighThreshold)
 
-        /*
-        // --- Sanity log (debug) ---
-        let minTs = normalizedBG.min(by: { $0.date < $1.date })?.date ?? 0
-        let maxTs = normalizedBG.max(by: { $0.date < $1.date })?.date ?? 0
-
-        let total = allReadings.count
-        let veryLowCount = allReadings.reduce(0) { $0 + ($1 < veryLowThreshold ? 1 : 0) }
-        let lowCount = allReadings.reduce(0) { $0 + (($1 >= veryLowThreshold && $1 < lowThreshold) ? 1 : 0) }
-        let inRangeCount = allReadings.reduce(0) { $0 + (($1 >= lowThreshold && $1 <= highThreshold) ? 1 : 0) }
-        let highCount = allReadings.reduce(0) { $0 + (($1 > highThreshold && $1 <= veryHighThreshold) ? 1 : 0) }
-        let veryHighCount = allReadings.reduce(0) { $0 + ($1 > veryHighThreshold ? 1 : 0) }
-
-        let exactlyLowCount = allReadings.reduce(0) { $0 + ($1 == lowThreshold ? 1 : 0) }
-        let exactlyHighCount = allReadings.reduce(0) { $0 + ($1 == highThreshold ? 1 : 0) }
-
-        print(
-            "[Sanity][TIRCalculator] raw=\(rawCount) deduped=\(dedupedCount) dropped=\(dropped) total=\(total) useTightRange=\(useTightRange) " +
-            "thresholds(vl=<\(veryLowThreshold), l<\(lowThreshold), hi>\(highThreshold), vh>\(veryHighThreshold)) " +
-            "counts(vl=\(veryLowCount), l=\(lowCount), in=\(inRangeCount), hi=\(highCount), vh=\(veryHighCount)) " +
-            "exactlyLow=\(exactlyLowCount) exactlyHigh=\(exactlyHighCount) " +
-            "min=\(Date(timeIntervalSince1970: minTs)) max=\(Date(timeIntervalSince1970: maxTs)) " +
-            "pct(vl=\(averagePercentages.veryLow), l=\(averagePercentages.low), in=\(averagePercentages.inRange), hi=\(averagePercentages.high), vh=\(averagePercentages.veryHigh))"
-        )
-        // --- End sanity log ---
-        */
-
         tirPoints.append(TIRDataPoint(
             period: .average,
             veryLow: averagePercentages.veryLow,

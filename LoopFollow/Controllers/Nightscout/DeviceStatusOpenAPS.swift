@@ -24,63 +24,7 @@ extension MainViewController {
 
         //var wasEnacted: Bool
         var lastLoopTime: TimeInterval = UserDefaultsRepository.alertLastLoopTime.value // Default to the stored value
-/*
-        if let enacted = lastLoopRecord["enacted"] as? [String: AnyObject] {
-            //wasEnacted = true
-            if let timestampString = enacted["timestamp"] as? String,
-               let parsedLoopTime = formatter.date(from: timestampString)?.timeIntervalSince1970 {
-                lastLoopTime = parsedLoopTime
-                UserDefaultsRepository.alertLastLoopTime.value = lastLoopTime
-                
-                latestLoopTime = lastLoopTime
-                
-                // Format the `lastLoopTime` as HH.mm:ss
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "HH.mm:ss"
-                let formattedLastLoopTime = dateFormatter.string(from: Date(timeIntervalSince1970: lastLoopTime))
-                
-                LogManager.shared.log(category: .deviceStatus, message: "New LastLoopTime: \(formattedLastLoopTime)", isDebug: true)
-            }
-        } else {
-            //wasEnacted = false
-            LogManager.shared.log(category: .deviceStatus, message: "Last devicestatus is missing enacted")
-            
-            // Format the `lastLoopTime` as HH.mm:ss
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "HH.mm:ss"
-            let formattedLastLoopTime = dateFormatter.string(from: Date(timeIntervalSince1970: lastLoopTime))
-            
-            LoopStatusLabel.text = " ᮰"
-            LoopStatusLabel.textColor = UIColor.gray
-            latestLoopStatusString = "᮰"
-            LogManager.shared.log(category: .deviceStatus, message: "Loop status 🔘 (\(formattedLastLoopTime))")
-        }
 
-        // Evaluate loop status based on `lastLoopTime`
-        let timeDifferenceMinutes = (TimeInterval(Date().timeIntervalSince1970) - lastLoopTime) / 60
-        
-        // Format the `lastLoopTime` as HH.mm:ss
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "HH.mm:ss"
-        let formattedLastLoopTime = dateFormatter.string(from: Date(timeIntervalSince1970: lastLoopTime))
-        
-        if timeDifferenceMinutes > 16 {
-            LoopStatusLabel.text = " ᮰"
-            LoopStatusLabel.textColor = UIColor(named: "LoopRed")
-            latestLoopStatusString = "᮰"
-            LogManager.shared.log(category: .deviceStatus, message: "Loop status 🔴 (\(formattedLastLoopTime))")
-        } else if timeDifferenceMinutes > 11 {
-            LoopStatusLabel.text = " ᮰"
-            LoopStatusLabel.textColor = UIColor(named: "LoopYellow")
-            latestLoopStatusString = "᮰"
-            LogManager.shared.log(category: .deviceStatus, message: "Loop status 🟡 (\(formattedLastLoopTime))")
-        } else {
-            LoopStatusLabel.text = " ᮰"
-            LoopStatusLabel.textColor = UIColor(named: "LoopGreen")
-            latestLoopStatusString = "᮰"
-            LogManager.shared.log(category: .deviceStatus, message: "Loop status 🟢 (\(formattedLastLoopTime))", isDebug: true)
-        }
- */
         if let enacted = lastLoopRecord["enacted"] as? [String: AnyObject] {
             if let timestampString = enacted["timestamp"] as? String,
                let parsedLoopTime = formatter.date(from: timestampString)?.timeIntervalSince1970 {
@@ -90,11 +34,6 @@ extension MainViewController {
                 
                 let formattedLastLoopTime = formatTime(lastLoopTime)
                 LogManager.shared.log(category: .deviceStatus, message: "New LastLoopTime: \(formattedLastLoopTime)", isDebug: true)
-/*
-                // Daniel: Set the timestamp directly for infoManager.updateInfoData**
-                let formattedTime = Localizer.formatTimestampToLocalString(parsedLoopTime)
-                infoManager.updateInfoData(type: .updated, value: formattedTime)
-*/
             }
         } else {
             LogManager.shared.log(category: .deviceStatus, message: "Last devicestatus is missing enacted")
@@ -127,17 +66,6 @@ extension MainViewController {
             latestLoopStatusString = "᮰"
             LogManager.shared.log(category: .deviceStatus, message: "Loop status 🟢 (\(formattedLastLoopTime))", isDebug: true)
         }
-
-/*
-            var updatedTime: TimeInterval?
-
-            if let timestamp = enactedOrSuggested["timestamp"] as? String,
-               let parsedTime = formatter.date(from: timestamp)?.timeIntervalSince1970 {
-                updatedTime = parsedTime
-                let formattedTime = Localizer.formatTimestampToLocalString(parsedTime)
-                infoManager.updateInfoData(type: .updated, value: formattedTime)
-            }
-*/
 
         // ISF
         let profileISF = profileManager.currentISF()
@@ -305,30 +233,6 @@ extension MainViewController {
                 LogManager.shared.log(category: .deviceStatus, message: "BGI pattern not found in reason string.", isDebug: true)
             }
         }
-/*
-        // Dev
-        if let reasonString = enactedOrSuggested["reason"] as? String {
-            let pattern = "Dev:\\s([-+]?[0-9]*\\.?[0-9])"
-
-            if let regex = try? NSRegularExpression(pattern: pattern),
-               let match = regex.firstMatch(in: reasonString, range: NSRange(location: 0, length: reasonString.utf16.count)) {
-
-                let devValueString = (reasonString as NSString).substring(with: match.range(at: 1))
-
-                if let devValue = Double(devValueString) {
-                    let formattedDev = String(format: "%@%.1f", devValue > 0 ? "+" : "", devValue)
-                    let devString = "\(formattedDev)"
-
-                    infoManager.updateInfoData(type: .dev, value: devString, unit: "mmol/L")
-                    //LogManager.shared.log(category: .deviceStatus, message: "Extracted Dev: \(devString)", isDebug: true)
-                } else {
-                    LogManager.shared.log(category: .deviceStatus, message: "Failed to convert Dev value to Double.", isDebug: true)
-                }
-            } else {
-                LogManager.shared.log(category: .deviceStatus, message: "Dev pattern not found in reason string.", isDebug: true)
-            }
-        }
-*/
         
         // Dev
         if let reasonString = enactedOrSuggested["reason"] as? String {

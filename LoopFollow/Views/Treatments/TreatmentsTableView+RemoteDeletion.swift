@@ -208,6 +208,4 @@ extension TreatmentsTableView {
                   message: NSLocalizedString("\nGenvägen avbröts pga fel lösenkod. Du kan försöka igen.", comment: "Genvägen avbröts pga fel lösenkod. Du kan försöka igen."),
                   completion: { /* Re-enable send button if needed */ })
     }
-    
-    /// Presents an alert with a title, message, and calls completion after dismissal.
 }

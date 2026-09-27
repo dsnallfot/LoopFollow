@@ -570,11 +570,6 @@ struct StatCard: View {
                         }
 
                         if let pair = tooltipValuePair {
-                            /*Text("Förändring:")
-                                .font(.caption2)
-                                .fontWeight(.semibold)
-                                .tint(.primary)*/
-
                             Text(tooltipChangeString(for: pair))
                                 .font(.caption2)
                                 .foregroundColor(.white)
@@ -638,10 +633,6 @@ struct StatCard: View {
         }
     }
 }
-    /*private func formatBasal(_ value: Double?) -> String {
-        guard let value = value else { return "---" }
-        return String(format: "%.2f", value)
-    }*/
 
 struct StatsGridView: View {
     @ObservedObject var simpleStats: SimpleStatsViewModel

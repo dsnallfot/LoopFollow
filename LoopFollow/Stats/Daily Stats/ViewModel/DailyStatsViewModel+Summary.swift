@@ -78,12 +78,4 @@ extension DailyStatsViewModel {
         guard !values.isEmpty else { return nil }
         return values.reduce(0, +) / Double(values.count)
     }
-/*
-    /// Genomsnittlig teoretisk basal (E/dag) från profilen.
-    var averageProfileBasal: Double? {
-        let values = filteredRowsForDisplay.compactMap { $0.profileBasal }
-        guard !values.isEmpty else { return nil }
-        return values.reduce(0, +) / Double(values.count)
-    }
-*/
 }

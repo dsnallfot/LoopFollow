@@ -167,18 +167,6 @@ final class TrioSettingsLogView: ThemedViewController, UITableViewDataSource, UI
             sb.topAnchor.constraint(equalTo: topSearchContainer.topAnchor, constant: 6),
             sb.bottomAnchor.constraint(equalTo: topSearchContainer.bottomAnchor, constant: -2)
         ])
-/*
-        let sep = UIView()
-        sep.translatesAutoresizingMaskIntoConstraints = false
-        sep.backgroundColor = UIColor.separator
-        topSearchContainer.addSubview(sep)
-        NSLayoutConstraint.activate([
-            sep.heightAnchor.constraint(equalToConstant: 0.5),
-            sep.leadingAnchor.constraint(equalTo: topSearchContainer.leadingAnchor),
-            sep.trailingAnchor.constraint(equalTo: topSearchContainer.trailingAnchor),
-            sep.bottomAnchor.constraint(equalTo: topSearchContainer.bottomAnchor)
-        ])
-        */
     }
 
     // MARK: - Setup table

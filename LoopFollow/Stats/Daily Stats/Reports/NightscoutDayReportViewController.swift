@@ -59,10 +59,7 @@ final class NightscoutDayReportViewController: UIViewController, WKNavigationDel
         } else {
             self.title = "Nightscout"
         }
-/*
-        let doneButton = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(closeTapped))
-        navigationItem.rightBarButtonItem = doneButton
-*/
+
         let doneButton = UIBarButtonItem(title: "Klar", style: .plain, target: self, action: #selector(closeTapped))
         navigationItem.rightBarButtonItem = doneButton
 

@@ -1346,9 +1346,7 @@ extension MainViewController {
     }
     
     func isOnPhoneCall() -> Bool {
-        /*
-         Returns true if the user is currently on a phone call
-         */
+        ///Returns true if the user is currently on a phone call
         for call in CXCallObserver().calls {
             if call.hasEnded == false {
                 return true

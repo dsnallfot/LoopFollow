@@ -72,20 +72,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
         handleReceivedConfig(message)
     }
-/*
-    private func handleReceivedConfig(_ dict: [String: Any]) {
-        // Ignore if this is a requestConfig message from Watch itself
-        guard dict["requestConfig"] == nil else { return }
-        // Ignore if it doesn't look like a config (needs at least one data source key)
-        guard dict["nsURL"] != nil || dict["dexUsername"] != nil else { return }
 
-        let newConfig = WatchConfig(from: dict)
-        newConfig.saveToDefaults()
-        DispatchQueue.main.async {
-            self.config = newConfig
-        }
-    }
-    */
     private func handleReceivedConfig(_ dict: [String: Any]) {
         guard dict["requestConfig"] == nil else { return }
         guard dict["nsURL"] != nil || dict["dexUsername"] != nil else { return }

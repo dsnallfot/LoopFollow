@@ -561,13 +561,6 @@ class MealViewController: ThemedViewController, UITextFieldDelegate, TwilioReque
         }
     }
     
-    /*
-     @IBAction func presetButtonTapped(_ sender: Any) {
-        let customActionViewController = storyboard!.instantiateViewController(withIdentifier: "remoteCustomAction") as! CustomActionViewController
-        self.present(customActionViewController, animated: true, completion: nil)
-    }
-*/
-    
     @IBAction func sendRemoteMealPressed(_ sender: Any) {
         // Disable the button to prevent multiple taps
         if !isButtonDisabled {
@@ -740,14 +733,6 @@ class MealViewController: ThemedViewController, UITextFieldDelegate, TwilioReque
                 // Get selected date from mealDateTime and format to ISO 8601
                 let selectedDate = mealDateTime.date
                 let formattedDate = formatDateToISO8601(selectedDate)
-                /*
-                if UserDefaultsRepository.hideRemoteBolus.value {
-                    // Construct and return the combinedString without bolus
-                    return "Remote Måltid\nKolhydrater: \(carbs)g\nFett: \(fats)g\nProtein: \(proteins)g\nNotering: \(cleanedMealNotes)\nDatum: \(formattedDate)\nInlagt av: \(name)\nHemlig kod: \(secret)"
-                } else {
-                    // Construct and return the combinedString with bolus
-                    return "Remote Måltid\nKolhydrater: \(carbs)g\nFett: \(fats)g\nProtein: \(proteins)g\nNotering: \(cleanedMealNotes)\nDatum: \(formattedDate)\nInsulin: \(trimmedBolusValue)E\nInlagt av: \(name)\nHemlig kod: \(secret)"
-                }*/
                 
                 // Get the current timestamp and format to ISO 8601
                 let currentTimestamp = Date()
@@ -896,12 +881,7 @@ class MealViewController: ThemedViewController, UITextFieldDelegate, TwilioReque
                   let cancelEncoded = cancelCallback.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
                 LogManager.shared.log(category: .remote, message: "Failed to encode callback URLs")
                 return
-            }
-            
-            
-            /*let urlString = "shortcuts://run-shortcut?name=Remote%20Meal&input=text&text=\(encodedString)"
-            if let url = URL(string: urlString) {
-                UIApplication.shared.open(url, options: [:], completionHandler: nil)*/
+                }
                 // Construct the final URL with x-callback-url
                 let urlString = "shortcuts://x-callback-url/run-shortcut?name=Remote%20Meal&input=text&text=\(encodedString)&x-success=\(successEncoded)&x-error=\(errorEncoded)&x-cancel=\(cancelEncoded)"
                 
