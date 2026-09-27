@@ -9,8 +9,6 @@ import SwiftUI
 struct BackgroundRefreshSettingsView: View {
     @ObservedObject var viewModel: BackgroundRefreshSettingsViewModel
     @Environment(\.presentationMode) var presentationMode
-    @State private var forceRefresh = false
-    @State private var timer: Timer?
     @State private var showSyncNewSensorView: Bool = false
     @State private var minAgoNavText: String = ""
     @State private var minAgoNavShortText: String = ""
@@ -29,7 +27,12 @@ struct BackgroundRefreshSettingsView: View {
     let manyDaysOld = 75
 
     var body: some View {
-        ZStack {
+        // Share one calculation across the selected device, list and offset button.
+        let suggestion = viewModel.backgroundRefreshType == .dexcom
+            ? bleManager.suggestedHeartbeatOffsetForNextSensor(optimalWindow: 40...60) : nil
+        let hitIDs = suggestion.map { hitDeviceIDs(for: $0.offset, optimalWindow: 40...60) } ?? []
+
+        return ZStack {
             ThemeBackground()
                 .ignoresSafeArea()
 
@@ -96,13 +99,7 @@ struct BackgroundRefreshSettingsView: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     HStack {
                                         let deviceName = storedDevice.name ?? "Okänd enhet"
-                                        let isHitDevice: Bool = {
-                                            guard viewModel.backgroundRefreshType == .dexcom,
-                                                  let suggestion = bleManager.suggestedHeartbeatOffsetForNextSensor(optimalWindow: 40...60)
-                                            else { return false }
-
-                                            return hitDeviceIDs(for: suggestion.offset, optimalWindow: 40...60).contains(storedDevice.id)
-                                        }()
+                                        let isHitDevice = hitIDs.contains(storedDevice.id)
 
                                         Text(isHitDevice ? "* \(deviceName)" : deviceName)
                                             .font(.headline)
@@ -132,7 +129,9 @@ struct BackgroundRefreshSettingsView: View {
                                         }
                                     }
 
-                                    deviceConnectionStatus(for: storedDevice)
+                                    TimelineView(.periodic(from: .now, by: 5)) { context in
+                                        deviceConnectionStatus(for: storedDevice, now: context.date)
+                                    }
 
                                     if storedDevice.rssi != 0 {
                                         Text("RSSI: \(storedDevice.rssi) dBm")
@@ -195,7 +194,6 @@ struct BackgroundRefreshSettingsView: View {
                                 .padding(.vertical, 12)
                             }
                             .themedCardBackground()
-                            .id(forceRefresh)
                         }
 
                         Text("Tillgängliga enheter")
@@ -211,7 +209,10 @@ struct BackgroundRefreshSettingsView: View {
 
                                 BLEDeviceSelectionView(
                                     bleManager: bleManager,
+                                    devices: bleManager.devices,
+                                    selectedDeviceID: Storage.shared.selectedBLEDevice.value?.id,
                                     selectedFilter: viewModel.backgroundRefreshType,
+                                    hitDeviceIDs: hitIDs,
                                     onSelectDevice: { device in
                                         bleManager.connect(device: device)
                                     }
@@ -233,7 +234,7 @@ struct BackgroundRefreshSettingsView: View {
                         VStack(spacing: 0) {
                             if #available(iOS 26.0, *) {
                                 Button {
-                                    if let suggestion = bleManager.suggestedHeartbeatOffsetForNextSensor(optimalWindow: 40...60) {
+                                    if let suggestion {
                                         // Store the suggested offset and show confirmation alert
                                         pendingOffset = suggestion.offset
                                         showOffsetConfirmAlert = true
@@ -244,7 +245,7 @@ struct BackgroundRefreshSettingsView: View {
                                     }
                                 } label: {
                                     VStack(spacing: 6) {
-                                        if let suggestion = bleManager.suggestedHeartbeatOffsetForNextSensor(optimalWindow: 40...60) {
+                                        if let suggestion {
                                             Text("\(suggestion.offset) sekunder")
                                                 .font(.headline)
                                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -254,7 +255,6 @@ struct BackgroundRefreshSettingsView: View {
                                                 .foregroundStyle(.secondary)
                                                 .frame(maxWidth: .infinity, alignment: .center)
                                             
-                                            let hitIDs = hitDeviceIDs(for: suggestion.offset, optimalWindow: 40...60)
                                             let hitNames: [String] = bleManager.devices
                                                 .filter { hitIDs.contains($0.id) }
                                                 .compactMap { $0.name }
@@ -328,8 +328,6 @@ struct BackgroundRefreshSettingsView: View {
                 .padding(.bottom, 24)
             }
         }
-        .onAppear { startTimer() }
-        .onDisappear { stopTimer() }
         .sheet(isPresented: $showSyncNewSensorView) {
             SyncNewSensorSheetContainer()
         }
@@ -365,9 +363,8 @@ struct BackgroundRefreshSettingsView: View {
     }
 
 
-    private func deviceConnectionStatus(for device: BLEDevice) -> some View {
+    private func deviceConnectionStatus(for device: BLEDevice, now: Date) -> some View {
         let expectedConnectionTime: TimeInterval = bleManager.expectedHeartbeatInterval() ?? 300
-        let now = Date()
         let timeSinceLastConnection = device.isConnected ? 0 : now.timeIntervalSince(device.lastConnected ?? now)
 
         if device.isConnected {
@@ -395,17 +392,6 @@ struct BackgroundRefreshSettingsView: View {
             return Text("Återansluter...")
                 .foregroundColor(.orange)
         }
-    }
-
-    private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
-            self.forceRefresh.toggle()
-        }
-    }
-
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
     }
 
     /// ✅ Get SF Symbol based on battery level

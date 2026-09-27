@@ -6,8 +6,12 @@
 import SwiftUI
 
 struct BLEDeviceSelectionView: View {
-    @ObservedObject var bleManager: BLEManager
+    // The parent observes BLEManager and supplies the shared hit calculation.
+    let bleManager: BLEManager
+    var devices: [BLEDevice]
+    var selectedDeviceID: UUID?
     var selectedFilter: BackgroundRefreshType
+    var hitDeviceIDs: Set<UUID>
     var onSelectDevice: (BLEDevice) -> Void
 
     // MARK: - Constants for Activation Date thresholds
@@ -27,7 +31,7 @@ struct BLEDeviceSelectionView: View {
 
     // MARK: - Computed Property for Filtered Devices
     var filteredDevices: [BLEDevice] {
-        bleManager.devices.filter { selectedFilter.matches($0) && !isSelected($0) }
+        devices.filter { selectedFilter.matches($0) && $0.id != selectedDeviceID }
     }
 
     @State private var showConfirmAlert: Bool = false
@@ -36,7 +40,7 @@ struct BLEDeviceSelectionView: View {
     // MARK: - Body
     var body: some View {
         let dexcomMode = Storage.shared.backgroundRefreshType.value == .dexcom
-        let suggestion = dexcomMode ? bleManager.suggestedHeartbeatOffsetForNextSensor(optimalWindow: 40...60) : nil
+        let filteredDevices = self.filteredDevices
 
         return VStack(alignment: .leading, spacing: 0) {
             if filteredDevices.isEmpty {
@@ -51,30 +55,7 @@ struct BLEDeviceSelectionView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             // Device Name
                             let deviceName = device.name ?? "Okänd"
-                            let isHit: Bool = {
-                                // Only show hit-markers for Dexcom mode (5-min cycle alignment)
-                                guard dexcomMode,
-                                      BackgroundRefreshType.dexcom.matches(device),
-                                      let suggestion,
-                                      let d = bleManager.expectedSensorFetchOffsetSeconds(for: device)
-                                else { return false }
-
-                                // Exclude very old sensors (> manyDaysOld days) from being marked as hits
-                                if let sensorID = device.name,
-                                   let activationStr = Storage.shared.latestActivationDate(for: sensorID) {
-                                    let formatter = Self.activationFormatter
-
-                                    if let activationDate = formatter.date(from: activationStr) {
-                                        let ageDays = Calendar.current.dateComponents([.day], from: activationDate, to: Date()).day ?? 0
-                                        if ageDays > manyDaysOld {
-                                            return false
-                                        }
-                                    }
-                                }
-
-                                let shifted = (d + suggestion.offset) % 300
-                                return (40...60).contains(shifted)
-                            }()
+                            let isHit = hitDeviceIDs.contains(device.id)
                             Text(isHit ? "* \(deviceName)" : deviceName)
 
                             // RSSI
@@ -182,11 +163,4 @@ struct BLEDeviceSelectionView: View {
         }
     }
 
-    // MARK: - Helper
-    private func isSelected(_ device: BLEDevice) -> Bool {
-        guard let selectedDevice = Storage.shared.selectedBLEDevice.value else {
-            return false
-        }
-        return selectedDevice.id == device.id
-    }
 }

@@ -95,6 +95,12 @@ class Storage {
     var showProfileBasal = StorageValue<Bool>(key: "showProfileBasal", defaultValue: false)
     var showLowPercentage = StorageValue<Bool>(key: "showLowPercentage", defaultValue: false)
     
+    // Key the derived lookup by the persisted bytes so imports, edits and deletions
+    // invalidate it, including writes made directly to UserDefaults.
+    private let activationDateCacheLock = NSLock()
+    private var activationDateCacheData: Data?
+    private var activationDateCache: [String: String] = [:]
+
     static let shared = Storage()
 
     private init() { }
@@ -872,14 +878,22 @@ extension Storage {
 extension Storage {
     /// Finds the most recent activation date for a given sensor ID.
     func latestActivationDate(for sensorID: String) -> String? {
-        let sensorNotes = sensorStartNotes
-        let matchingNotes = sensorNotes.compactMap { entry -> String? in
-            if let extracted = entry.extractedSensorInfo, extracted.id == sensorID {
-                return extracted.activationDate
+        activationDateCacheLock.lock()
+        defer { activationDateCacheLock.unlock() }
+
+        let storedData = UserDefaults.standard.data(forKey: "sensorStartNotes")
+        if storedData != activationDateCacheData {
+            var dates: [String: String] = [:]
+            for entry in sensorStartNotes {
+                guard let info = entry.extractedSensorInfo else { continue }
+                if dates[info.id].map({ $0 < info.activationDate }) ?? true {
+                    dates[info.id] = info.activationDate
+                }
             }
-            return nil
+            activationDateCache = dates
+            activationDateCacheData = storedData
         }
 
-        return matchingNotes.sorted().last // Return the latest activation date if found.
+        return activationDateCache[sensorID]
     }
 }

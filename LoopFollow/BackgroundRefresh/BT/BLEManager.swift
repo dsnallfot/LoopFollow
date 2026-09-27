@@ -163,9 +163,6 @@ class BLEManager: NSObject, ObservableObject {
                 newDevice.lastSeen = Date()
                 self.devices.append(newDevice)
             }
-
-            // Force SwiftUI to refresh for in-place mutations.
-            self.devices = self.devices
         }
     }
 
@@ -257,7 +254,6 @@ extension BLEManager: CBCentralManagerDelegate {
             var device = devices[idx]
             update(&device)
             devices[idx] = device
-            devices = devices
         } else {
             LogManager.shared.log(category: .bluetooth, message: "Device not found in devices array for update")
         }
