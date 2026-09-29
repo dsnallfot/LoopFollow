@@ -37,6 +37,7 @@ struct BolusView: View {
             ThemeBackground()
                 .ignoresSafeArea()
         VStack {
+                RemoteCommandPendingBanner()
             Form {
                 Section {
                     HKQuantityInputView(

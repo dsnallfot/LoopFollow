@@ -465,7 +465,9 @@ class PushNotificationManager {
     }
 
     private func sendPushNotification(message: PushMessage, completion: @escaping (Bool, String?) -> Void) {
-        LogManager.shared.log(category: .remote, message: "Push message to send: \(message)", isDebug: true)
+        // Log metadata only: the payload contains the shared secret and treatment data.
+        let notificationID = UUID().uuidString.lowercased()
+        let logContext = "APNs \(notificationID) [\(message.commandType.rawValue)]"
 
         var missingFields = [String]()
         if sharedSecret.isEmpty { missingFields.append("sharedSecret") }
@@ -516,8 +518,11 @@ class PushNotificationManager {
         request.httpMethod = "POST"
         request.setValue("bearer \(jwt)", forHTTPHeaderField: "authorization")
         request.setValue("application/json", forHTTPHeaderField: "content-type")
+        // Correlation for diagnostics, not a delivery receipt or deduplication key.
+        request.setValue(notificationID, forHTTPHeaderField: "apns-id")
         request.setValue("10", forHTTPHeaderField: "apns-priority")
-        //request.setValue("300", forHTTPHeaderField: "apns-expiration")
+        // APNs may retain only one notification per app/device while unreachable,
+        // even without apns-collapse-id. A serial HTTP queue cannot prevent this.
         let expiration = Int(message.timestamp + 300)
         request.setValue(
             String(expiration),
@@ -529,18 +534,20 @@ class PushNotificationManager {
         do {
             let jsonData = try JSONEncoder().encode(message)
             request.httpBody = jsonData
+            LogManager.shared.log(category: .apns, message: "\(logContext): submitting; timestamp=\(message.timestamp), expiration=\(expiration)")
 
             let task = URLSession.shared.dataTask(with: request) { data, response, error in
                 if let error = error {
                     let errorMessage = "Failed to send push notification: \(error.localizedDescription)"
-                    LogManager.shared.log(category: .apns, message: errorMessage)
+                    // An interrupted response does not prove the command was rejected.
+                    // Do not retry treatment commands without receiver-side deduplication.
+                    LogManager.shared.log(category: .apns, message: "\(logContext): transport error; acceptance/delivery unknown. \(error.localizedDescription)")
                     completion(false, errorMessage)
                     return
                 }
 
                 if let httpResponse = response as? HTTPURLResponse {
-                    LogManager.shared.log(category: .remote, message: "Push notification sent.", isDebug: true)
-                    LogManager.shared.log(category: .remote, message: "Status code: \(httpResponse.statusCode)", isDebug: true)
+                    LogManager.shared.log(category: .apns, message: "\(logContext): HTTP \(httpResponse.statusCode)")
                     LogManager.shared.log(category: .apns, message: "Response headers:", isDebug: true)
                     for (key, value) in httpResponse.allHeaderFields {
                         LogManager.shared.log(category: .apns, message: "\(key): \(value)", isDebug: true)
@@ -558,8 +565,16 @@ class PushNotificationManager {
                         LogManager.shared.log(category: .apns, message: "No response body", isDebug: true)
                     }
 
+                    if httpResponse.statusCode != 200 {
+                        DispatchQueue.main.async {
+                            RemoteCommandReceiptTracker.shared.rejected(id: notificationID)
+                        }
+                    }
+
                     switch httpResponse.statusCode {
                     case 200:
+                        // Success here means APNs acceptance only, not Trio execution.
+                        LogManager.shared.log(category: .apns, message: "\(logContext): accepted by APNs; delivery and execution in Trio are unconfirmed")
                         MealBolusReminder.registrationSent(message)
                         completion(true, nil)
                     case 400:
@@ -584,10 +599,16 @@ class PushNotificationManager {
                         completion(false, "Unexpected status code: \(httpResponse.statusCode). \(responseBodyMessage)")
                     }
                 } else {
+                    LogManager.shared.log(category: .apns, message: "\(logContext): invalid HTTP response; acceptance/delivery unknown")
                     completion(false, "Failed to get a valid HTTP response.")
                 }
             }
-            task.resume()
+            DispatchQueue.main.async {
+                RemoteCommandReceiptTracker.shared.track(
+                    message, id: notificationID, site: ObservableUserDefaults.shared.url.value
+                )
+                task.resume()
+            }
 
         } catch {
             let errorMessage = "Failed to encode push message: \(error.localizedDescription)"

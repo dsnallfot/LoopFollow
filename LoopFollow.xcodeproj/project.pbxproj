@@ -225,6 +225,8 @@
 		A339ED582171BE8FADBDEE5C /* LowTreatmentsStatsViewController+ChartLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47F79C014DE68D6A9446948A /* LowTreatmentsStatsViewController+ChartLayout.swift */; };
 		A4F251EFD490D22E638A04AA /* AlarmViewModel+HardwareRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E15EC88CFF05A0E2F69D74 /* AlarmViewModel+HardwareRows.swift */; };
 		A5862E103B1D51F4630ACAAF /* MealAnalysisView+ChartSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F54F2637440D6C360C781AEB /* MealAnalysisView+ChartSetup.swift */; };
+		A917CE012FCA000000000010 /* RemoteCommandReceiptTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A917CE012FCA000000000000 /* RemoteCommandReceiptTracker.swift */; };
+		A917CE012FCA000000000011 /* RemoteCommandPendingBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A917CE012FCA000000000001 /* RemoteCommandPendingBanner.swift */; };
 		A91F6D19990411B0E7ECBB4F /* GlucoseView+NearestReading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34BEF7C7D009580BFAF7491D /* GlucoseView+NearestReading.swift */; };
 		A939E01C7C7E7EB387A0BD1A /* DailyStatsTableView+Cells.swift in Sources */ = {isa = PBXBuildFile; fileRef = A636B4349EA556E1E16C42AD /* DailyStatsTableView+Cells.swift */; };
 		AA952DAD9CA816987794E321 /* AddTrainingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FADC8680A433DC9986EB21D /* AddTrainingView.swift */; };
@@ -805,6 +807,8 @@
 		A7D55B42A22051DAD69E89D0 /* Pods_LoopFollow.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LoopFollow.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A8671A9C09529A71103A1475 /* TreatmentsTableView+Editing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Editing.swift"; sourceTree = "<group>"; };
 		A8B135CD0EE0DDC335588355 /* AlarmUIRefreshing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmUIRefreshing.swift; sourceTree = "<group>"; };
+		A917CE012FCA000000000000 /* RemoteCommandReceiptTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteCommandReceiptTracker.swift; sourceTree = "<group>"; };
+		A917CE012FCA000000000001 /* RemoteCommandPendingBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteCommandPendingBanner.swift; sourceTree = "<group>"; };
 		AF4D38CBF029975219466728 /* UserDataStatsView+ChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UserDataStatsView+ChartData.swift"; sourceTree = "<group>"; };
 		B04F8CA9CB690D162D4A5666 /* TreatmentsTableView+Details.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Details.swift"; sourceTree = "<group>"; };
 		B0E6836F88802B9F5E37B15C /* Value1TableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Value1TableViewCell.swift; sourceTree = "<group>"; };
@@ -1898,6 +1902,8 @@
 				DD48780D2C7B74A40048F05C /* TrioRemoteControlViewModel.swift */,
 				DD48780F2C7B74BF0048F05C /* TrioRemoteControlView.swift */,
 				DD4878182C7C56D60048F05C /* TrioNightscoutRemoteController.swift.swift */,
+				A917CE012FCA000000000000 /* RemoteCommandReceiptTracker.swift */,
+				A917CE012FCA000000000001 /* RemoteCommandPendingBanner.swift */,
 				DD48781D2C7DAF2F0048F05C /* PushNotificationManager.swift */,
 				DD48781F2C7DAF890048F05C /* PushMessage.swift */,
 			);
@@ -2854,6 +2860,8 @@
 			isa = PBXSourcesBuildPhase;
 			files = (
 				DD5334292C6166A500062F9D /* InfoDisplaySettingsView.swift in Sources */,
+				A917CE012FCA000000000010 /* RemoteCommandReceiptTracker.swift in Sources */,
+				A917CE012FCA000000000011 /* RemoteCommandPendingBanner.swift in Sources */,
 				DD48781E2C7DAF2F0048F05C /* PushNotificationManager.swift in Sources */,
 				65B347812F97B861001CA945 /* WarningEvent.swift in Sources */,
 				653A8D942F33F13B0026A491 /* AlarmUIComponents.swift in Sources */,

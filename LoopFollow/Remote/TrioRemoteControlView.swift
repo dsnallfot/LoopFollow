@@ -19,6 +19,7 @@ struct TrioRemoteControlView: View {
                     ThemeBackground()
                         .ignoresSafeArea()
                 VStack {
+                    RemoteCommandPendingBanner()
                     let columns = [
                         GridItem(.flexible(), spacing: 16),
                         GridItem(.flexible(), spacing: 16)

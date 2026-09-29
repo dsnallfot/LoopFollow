@@ -45,6 +45,7 @@ struct TempTargetView: View {
             ThemeBackground()
                 .ignoresSafeArea()
         VStack {
+                RemoteCommandPendingBanner()
             if device.value != "Trio" {
                 ErrorMessageView(
                     message: "Remote commands are currently only available for Trio."

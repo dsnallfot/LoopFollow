@@ -35,6 +35,7 @@ struct ManualGlucoseView: View {
                 .ignoresSafeArea()
 
             VStack {
+                RemoteCommandPendingBanner()
                 Form {
                     Section {
                         HKQuantityInputView(

@@ -76,6 +76,7 @@ struct MealView: View {
             ThemeBackground()
                 .ignoresSafeArea()
             VStack {
+                RemoteCommandPendingBanner()
                 Form {
                     if #available(iOS 17.0, *) {
                         Section() {

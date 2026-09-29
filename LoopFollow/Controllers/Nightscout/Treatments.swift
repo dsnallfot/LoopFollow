@@ -58,6 +58,7 @@ extension MainViewController {
             "find[created_at][$lte]": currentTimeString,
             "count": "\(estimatedCount)",//TEST
         ]
+        let receiptSite = ObservableUserDefaults.shared.url.value
         NightscoutUtils.executeDynamicRequest(eventType: .treatments, parameters: parameters) { (result: Result<Any, Error>) in
             switch result {
             case .success(let data):
@@ -73,6 +74,9 @@ extension MainViewController {
                     }
                     // Uppdatera appens behandlingstillstånd på main-tråden som tidigare
                     DispatchQueue.main.async {
+                        RemoteCommandReceiptTracker.shared.observe(
+                            entries.map { $0 as [String: Any] }, site: receiptSite, requestStartedAt: now
+                        )
                         self.updateTreatments(entries: entries, replacingRecentSince: now.addingTimeInterval(-24 * 60 * 60))
                     }
                     

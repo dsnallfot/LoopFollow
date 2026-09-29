@@ -97,6 +97,7 @@ struct ComboView: View {
                     .background(Color.clear)
                 }
             }
+            .safeAreaInset(edge: .top, spacing: 0) { RemoteCommandPendingBanner() }
             .navigationTitle("Snabbval")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -250,6 +251,7 @@ private struct ComboEditorView: View {
                 .ignoresSafeArea()
 
             VStack {
+                RemoteCommandPendingBanner()
                 Form {
                     if mode != .sendFromPreset {
                         Section() {
