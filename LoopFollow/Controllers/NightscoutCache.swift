@@ -113,7 +113,13 @@ struct TreatmentJSON: Codable, Equatable {
         self.amount     = dict["amount"]   as? String
         self.foodType   = dict["foodType"] as? String
         self.notes      = dict["notes"] as? String
-        self.glucose      = dict["glucose"]    as? Double
+        if let glucose = dict["glucose"] as? Double {
+            self.glucose = glucose
+        } else if let glucose = dict["glucose"] as? String {
+            self.glucose = Double(glucose.replacingOccurrences(of: ",", with: "."))
+        } else {
+            self.glucose = nil
+        }
 
         // Parse fat and protein, supporting both Double and String (with "," or ".")
         if let fatVal = dict["fat"] as? Double {

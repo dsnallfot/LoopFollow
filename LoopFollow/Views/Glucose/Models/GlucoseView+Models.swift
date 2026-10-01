@@ -39,7 +39,7 @@ extension GlucoseView {
     enum GlucoseRow {
         case glucose(Reading)
         case missing(Date, MissingReason)
-        case sensorError(date: Date, durationMinutes: Int, note: Treatment)
+        case sensorError(date: Date, durationMinutes: Int?, note: Treatment)
 
         var date: Date {
             switch self {

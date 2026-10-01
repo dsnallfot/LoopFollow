@@ -21,8 +21,11 @@ extension GlucoseView {
 
         showRefreshIndicator()
         if dataMode == .sensorErrors {
-            // Rebuild the entire displayed history, including old rows whose note text was lost.
-            Task { await loadSensorErrors90Days(forceFullReload: true) }
+            // Restore the glucose evidence as well as rebuilding the cached notes.
+            Task {
+                await backfillLastDays(sensorErrorLookbackDays)
+                await loadSensorErrors90Days()
+            }
             return
         }
         Task {
@@ -33,18 +36,19 @@ extension GlucoseView {
         }
     }
 
-    /// Fetches X days back from Nightscout and writes SGVs into the NS-only glucose cache.
+    /// Fetches X days back from Nightscout into both glucose caches.
     /// Overwrites existing cached days only if needed.
     private func backfillLastDays(_ days: Int) async {
         let cal = Calendar.current
         let now = Date()
-        let start = cal.date(byAdding: .day, value: -days, to: now)!
+        let start = cal.date(byAdding: .day, value: -days, to: cal.startOfDay(for: now))!
 
         //print("🔄 Backfilling \(days) days (NS-only glucose): \(start) → \(now)")
 
         let sgvBatch = await NightscoutUtils.fetchSGVWindow(from: start, to: now)
         if !sgvBatch.isEmpty {
             GlucoseNSOnlyCache.mergeSGVBatch(sgvBatch)
+            NightscoutCache.mergeSGVBatch(sgvBatch)
             GlucoseNSOnlyCache.purgeOldFiles()
         }
 

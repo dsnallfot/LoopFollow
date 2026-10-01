@@ -73,6 +73,8 @@ extension GlucoseView {
         var msg = fullNote
         if let durationMinutes = durationMinutes {
             msg += "\n\nVaraktighet: \(durationMinutes) min"
+        } else {
+            msg += "\n\nVaraktighet: okänd – inget efterföljande sensorvärde hittades"
         }
         if let enteredBy = note.rawData["enteredBy"] as? String, !enteredBy.isEmpty {
             msg += "\nInlagt av: \(enteredBy)"

@@ -225,6 +225,21 @@ class NightscoutUtils {
     /// Fetch SGV readings from Nightscout entries API for an arbitrary time window
     /// and convert them into lightweight `SGVJSON` structs (seconds since 1970).
     static func fetchSGVWindow(from start: Date, to end: Date) async -> [SGVJSON] {
+        // Large requests can be truncated by the server. Fetch bounded daily windows
+        // so a 90-day backfill also retrieves the oldest readings.
+        guard end > start else { return [] }
+        var cursor = start
+        var byTimestamp: [TimeInterval: SGVJSON] = [:]
+        while cursor < end {
+            let windowEnd = min(cursor.addingTimeInterval(86400), end)
+            let batch = await fetchSGVDayWindow(from: cursor, to: windowEnd)
+            for reading in batch { byTimestamp[reading.date] = reading }
+            cursor = windowEnd
+        }
+        return byTimestamp.values.sorted { $0.date < $1.date }
+    }
+
+    private static func fetchSGVDayWindow(from start: Date, to end: Date) async -> [SGVJSON] {
         await withCheckedContinuation { continuation in
             // Grov uppskattning: 12 värden per timme + liten buffert
             let hours = max(1, Int(ceil(end.timeIntervalSince(start) / 3600)))

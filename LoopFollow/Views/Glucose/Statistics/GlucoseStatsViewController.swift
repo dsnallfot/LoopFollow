@@ -246,13 +246,17 @@ final class GlucoseStatsViewController: ThemedTableViewController {
 
             case 3:
                 cell.textLabel?.text = "Tid med sensorfel"
-                let totalMin = selectedSensorErrorOutages.reduce(0) { $0 + $1.durationMinutes }
+                let totalMin = selectedSensorErrorOutages.reduce(0) { $0 + ($1.durationMinutes ?? 0) }
                 let h = totalMin / 60
                 let m = totalMin % 60
                 if h > 0 {
                     cell.detailTextLabel?.text = "\(h) h \(m) min"
                 } else {
                     cell.detailTextLabel?.text = "\(m) min"
+                }
+                if selectedSensorErrorOutages.contains(where: { $0.durationMinutes == nil }) {
+                    cell.detailTextLabel?.text = selectedSensorErrorOutages.allSatisfy { $0.durationMinutes == nil }
+                        ? "Okänd" : (cell.detailTextLabel?.text ?? "") + " + okänd tid"
                 }
 
             case 4:

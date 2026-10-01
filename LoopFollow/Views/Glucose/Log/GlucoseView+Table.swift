@@ -87,7 +87,7 @@ extension GlucoseView {
             }
 
         case .sensorError(let date, let durationMinutes, _):
-            cell.textLabel?.text = "Sensorfel • \(durationMinutes) min"
+            cell.textLabel?.text = "Sensorfel • " + (durationMinutes.map { "\($0) min" } ?? "–")
             cell.textLabel?.font = UIFont.monospacedDigitSystemFont(ofSize: 17, weight: .regular)//.systemFont(ofSize: 17, weight: .semibold)
 
             let df = DateFormatter()
@@ -106,6 +106,32 @@ extension GlucoseView {
     }
 
     // MARK: - UITableViewDelegate
+    func tableView(_ tableView: UITableView,
+                   trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        guard dataMode == .sensorErrors,
+              filteredRows.indices.contains(indexPath.row),
+              case .sensorError(let date, _, _) = filteredRows[indexPath.row] else { return nil }
+
+        // Capture the cache identity, not the row index: a refresh can reorder the list.
+        let timestamp = date.timeIntervalSince1970
+        let remove = UIContextualAction(style: .destructive, title: "Radera ur cache") { [weak self] _, _, completion in
+            guard let self else {
+                completion(false)
+                return
+            }
+            var items = Storage.shared.dexcomSensorErrorOutagesCache
+            items.removeAll { $0.noteTimestamp == timestamp }
+            Storage.shared.dexcomSensorErrorOutagesCache = items
+            self.sensorErrorRows = self.loadSensorErrorRowsFromCache()
+            completion(true)
+            self.tableView.reloadData()
+            self.updateStatsLabel()
+        }
+        let configuration = UISwipeActionsConfiguration(actions: [remove])
+        configuration.performsFirstActionWithFullSwipe = false
+        return configuration
+    }
+
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 44
     }

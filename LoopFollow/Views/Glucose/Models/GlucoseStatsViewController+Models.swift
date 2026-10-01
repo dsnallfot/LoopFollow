@@ -4,7 +4,7 @@ import Charts
 extension GlucoseStatsViewController {
     struct SensorErrorOutage {
         let noteDate: Date
-        let durationMinutes: Int
+        let durationMinutes: Int?
     }
     enum ChartMode: Int {
         case glucoseValues = 0

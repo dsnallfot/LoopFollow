@@ -14,9 +14,7 @@ extension GlucoseView {
             .sorted { $0.noteTimestamp > $1.noteTimestamp }
             .compactMap { item in
                 let noteDate = Date(timeIntervalSince1970: item.noteTimestamp)
-                let start = Date(timeIntervalSince1970: item.startTimestamp)
-                let end = Date(timeIntervalSince1970: item.endTimestamp)
-                let minutes = max(0, Int(round(end.timeIntervalSince(start) / 60.0)))
+                let minutes = item.durationMinutes
 
                 // Create minimal Treatment so existing alert logic can reuse note.rawData["notes"/"enteredBy"].
                 var raw: [String: AnyObject] = [
@@ -43,78 +41,19 @@ extension GlucoseView {
     // (saveSensorErrorRowsToCache and sensorErrorLastRefreshDate removed; no longer used)
 
     /// Loads Dexcom sensor error Notes from the treatment cache and computes duration based on nearest BGs.
-    /// A full reload bypasses the incremental window to repair older cached rows as well.
-    func loadSensorErrors90Days(forceFullReload: Bool = false) async {
+    /// Rebuild the complete local window so grouping is independent of the refresh boundary.
+    func loadSensorErrors90Days() async {
         let cal = Calendar.current
         let now = Date()
 
         let hardFloor = cal.date(byAdding: .day, value: -sensorErrorLookbackDays, to: now) ?? now.addingTimeInterval(-91 * 86400)
-        let overlap: TimeInterval = 6 * 3600
-
-        // Use shared Storage cache for incremental refresh.
-        let cachedItems = Storage.shared.dexcomSensorErrorOutagesCache
-        let start: Date
-
-        if !forceFullReload, cachedItems.count >= 3, let last = Storage.shared.dexcomSensorErrorOutagesRefreshedAt {
-            start = max(hardFloor, last.addingTimeInterval(-overlap))
-        } else {
-            start = hardFloor
-        }
-        // Load a single wide window from the merged cache (includes Dexcom + NS values) + treatments.
-        let (sgvJSON, treatsJSON) = await NightscoutCache.loadWindow(from: start, to: now)
-
-        // Convert BG points (we only need timestamps)
-        let bgTimes: [Date] = sgvJSON
-            .map { Date(timeIntervalSince1970: $0.date) }
-            .sorted()
-
-        // Filter Dexcom Notes first to reduce mapping work
-        let dexcomTreatJSON = treatsJSON.filter { tjson in
-            tjson.eventType == "Note" && (tjson.notes?.localizedCaseInsensitiveContains("Dexcom") ?? false)
-        }
-
-        let dexcomNotes = dexcomTreatJSON.sorted { $0.created_at < $1.created_at }
-
-        // Build outage intervals (cache items) and dedupe multiple notes inside the same [prevBG,nextBG] span
-        var outageItems: [DexcomSensorErrorOutageCacheItem] = []
-        outageItems.reserveCapacity(dexcomNotes.count)
-
-        var lastSpanKey: String?
-
-        for note in dexcomNotes {
-            let prev = nearestBG(before: note.created_at, in: bgTimes)
-            let next = nearestBG(after: note.created_at, in: bgTimes)
-
-            // Span key: same prev/next => same outage, only keep first
-            let prevKey = prev?.timeIntervalSince1970 ?? -1
-            let nextKey = next?.timeIntervalSince1970 ?? -1
-            let spanKey = "\(prevKey)-\(nextKey)"
-
-            if spanKey == lastSpanKey {
-                continue
-            }
-            lastSpanKey = spanKey
-
-            let startTime = prev ?? note.created_at
-            let endTime = next ?? now
-
-            let notesText = note.notes
-            let enteredBy = note.enteredBy
-
-            outageItems.append(
-                DexcomSensorErrorOutageCacheItem(
-                    noteTimestamp: note.created_at.timeIntervalSince1970,
-                    startTimestamp: startTime.timeIntervalSince1970,
-                    endTimestamp: endTime.timeIntervalSince1970,
-                    notesText: notesText,
-                    enteredBy: enteredBy,
-                    trioSentAt: note.trioSentAt
-                )
-            )
-        }
-
-        // Newest first (from the fetched window)
-        let newestItems = outageItems.sorted { $0.noteTimestamp > $1.noteTimestamp }
+        // Read the full local window so repeated notes are grouped consistently across refreshes.
+        // Network backfill remains exclusive to the long-press action.
+        let (sgvJSON, treatsJSON) = await NightscoutCache.loadWindow(from: hardFloor.addingTimeInterval(-60), to: now)
+        let notesInWindow = treatsJSON.filter { $0.created_at >= hardFloor }
+        let newestItems = DexcomSensorErrorOutageCacheItem.build(readings: sgvJSON, treatments: treatsJSON.filter { $0.eventType != "Note" || $0.created_at >= hardFloor }, now: now)
+            .filter { $0.noteTimestamp >= hardFloor.timeIntervalSince1970 }
+        let sourceTimestamps = Set(notesInWindow.filter { $0.eventType == "Note" }.map { $0.created_at.timeIntervalSince1970 })
 
         await MainActor.run {
             // Merge by noteTimestamp (latest computed wins), keep only within retention.
@@ -122,7 +61,7 @@ extension GlucoseView {
 
             // Start with existing cache, drop anything older than hardFloor
             let floorTS = hardFloor.timeIntervalSince1970
-            for item in Storage.shared.dexcomSensorErrorOutagesCache where item.noteTimestamp >= floorTS {
+            for item in Storage.shared.dexcomSensorErrorOutagesCache where item.noteTimestamp >= floorTS && !sourceTimestamps.contains(item.noteTimestamp) {
                 mergedByNote[item.noteTimestamp] = item
             }
 

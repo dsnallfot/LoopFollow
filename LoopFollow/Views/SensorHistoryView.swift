@@ -395,18 +395,13 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
             let now = Date()
 
             // Keep up to 90 days (same as GlucoseView sensorfel retention)
-            let hardFloor = cal.date(byAdding: .day, value: -(91 - 1), to: cal.startOfDay(for: now)) ?? cal.startOfDay(for: now)
+            let hardFloor = cal.date(byAdding: .day, value: -91, to: now) ?? now.addingTimeInterval(-91 * 86400)
 
-            // Incremental refresh from last refreshed, with overlap so prev/next BG span resolves.
-            let overlap: TimeInterval = 12 * 3600
-            let last = Storage.shared.dexcomSensorErrorOutagesRefreshedAt
-            let start = max(hardFloor, (last ?? hardFloor).addingTimeInterval(-overlap))
-
-            // Load SGV + treatments window (same as GlucoseStatsViewController)
-            let (allSGV, allTreatments) = await NightscoutCache.loadWindow(from: start, to: now)
-
-            // Build outages from this window
-            let newItems = self.buildDexcomOutageItems(allSGV: allSGV, allTreatments: allTreatments, now: now)
+            // Use the same full local window as the sensor-error list.
+            let (allSGV, allTreatments) = await NightscoutCache.loadWindow(from: hardFloor.addingTimeInterval(-60), to: now)
+            let newItems = self.buildDexcomOutageItems(allSGV: allSGV, allTreatments: allTreatments.filter { $0.eventType != "Note" || $0.created_at >= hardFloor }, now: now)
+                .filter { $0.noteTimestamp >= hardFloor.timeIntervalSince1970 }
+            let sourceTimestamps = Set(allTreatments.filter { $0.eventType == "Note" }.map { $0.created_at.timeIntervalSince1970 })
 
             await MainActor.run {
                 // Merge by noteTimestamp (latest computed wins)
@@ -414,7 +409,7 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
 
                 // Existing persisted cache, but drop anything older than hardFloor
                 for item in Storage.shared.dexcomSensorErrorOutagesCache {
-                    if item.noteTimestamp >= hardFloor.timeIntervalSince1970 {
+                    if item.noteTimestamp >= hardFloor.timeIntervalSince1970 && !sourceTimestamps.contains(item.noteTimestamp) {
                         mergedByNote[item.noteTimestamp] = item
                     }
                 }
@@ -435,89 +430,7 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
     }
 
     private func buildDexcomOutageItems(allSGV: [SGVJSON], allTreatments: [TreatmentJSON], now: Date) -> [DexcomSensorErrorOutageCacheItem] {
-        // BG timestamps sorted asc
-        let bgTimes: [Date] = allSGV
-            .map { Date(timeIntervalSince1970: $0.date) }
-            .sorted()
-
-        // Filter Dexcom Notes
-        let dexcomTreatJSON = allTreatments.filter { tjson in
-            tjson.eventType == "Note" && (tjson.notes?.localizedCaseInsensitiveContains("Dexcom") ?? false)
-        }
-
-        // Keep original timestamps for SGV spans and Trio timestamps for ownership.
-        let dexcomNotes = dexcomTreatJSON.sorted { $0.created_at < $1.created_at }
-
-        var items: [DexcomSensorErrorOutageCacheItem] = []
-        items.reserveCapacity(dexcomNotes.count)
-
-        var lastSpanKey: String?
-
-        for note in dexcomNotes {
-            let prev = nearestBG(before: note.created_at, in: bgTimes)
-            let next = nearestBG(after: note.created_at, in: bgTimes)
-
-            let prevKey = prev?.timeIntervalSince1970 ?? -1
-            let nextKey = next?.timeIntervalSince1970 ?? -1
-            let spanKey = "\(prevKey)-\(nextKey)"
-
-            // Same prev/next span => same outage => keep only first
-            if spanKey == lastSpanKey { continue }
-            lastSpanKey = spanKey
-
-            let startTime = (prev ?? note.created_at)
-            let endTime = (next ?? now)
-
-            items.append(
-                DexcomSensorErrorOutageCacheItem(
-                    noteTimestamp: note.created_at.timeIntervalSince1970,
-                    startTimestamp: startTime.timeIntervalSince1970,
-                    endTimestamp: endTime.timeIntervalSince1970,
-                    notesText: note.notes,
-                    enteredBy: note.enteredBy,
-                    trioSentAt: note.trioSentAt
-                )
-            )
-        }
-
-        // Newest first
-        return items.sorted { $0.noteTimestamp > $1.noteTimestamp }
-    }
-
-    private func nearestBG(before date: Date, in bgTimes: [Date]) -> Date? {
-        guard !bgTimes.isEmpty else { return nil }
-        var lo = 0
-        var hi = bgTimes.count - 1
-        var result: Date?
-        while lo <= hi {
-            let mid = (lo + hi) / 2
-            let d = bgTimes[mid]
-            if d < date {
-                result = d
-                lo = mid + 1
-            } else {
-                hi = mid - 1
-            }
-        }
-        return result
-    }
-
-    private func nearestBG(after date: Date, in bgTimes: [Date]) -> Date? {
-        guard !bgTimes.isEmpty else { return nil }
-        var lo = 0
-        var hi = bgTimes.count - 1
-        var result: Date?
-        while lo <= hi {
-            let mid = (lo + hi) / 2
-            let d = bgTimes[mid]
-            if d > date {
-                result = d
-                hi = mid - 1
-            } else {
-                lo = mid + 1
-            }
-        }
-        return result
+        DexcomSensorErrorOutageCacheItem.build(readings: allSGV, treatments: allTreatments, now: now)
     }
 
     private func formatTotalDuration(minutes totalMin: Int?) -> String {
@@ -561,14 +474,8 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
 
         var result = Array(repeating: 0, count: daysToShow)
 
-        // Pre-clamp each outage to the session window to avoid edge cases.
-        let clampedOutages: [(start: Date, end: Date)] = outages.compactMap { item in
-            let s = Date(timeIntervalSince1970: item.startTimestamp)
-            let e = Date(timeIntervalSince1970: item.endTimestamp)
-            let start = max(s, sessionStart)
-            let end = min(e, sessionEnd)
-            return end > start ? (start: start, end: end) : nil
-        }
+        let clampedOutages = DexcomSensorErrorOutageCacheItem.mergedIntervals(
+            outages, from: sessionStart.timeIntervalSince1970, to: sessionEnd.timeIntervalSince1970)
 
         guard !clampedOutages.isEmpty else { return result }
 
@@ -690,7 +597,8 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
                 showSensorErrorAlert(
                     indexPath: indexPath,
                     sensorName: parsedSensorName(fromNote: entry.note),
-                    message: persistedMessage
+                    message: sensorHistory[masterIndex].sensorErrorsCalculationVersion == 3
+                        ? persistedMessage : "Äldre sammanfattning – varaktigheten är inte verifierad.\nGlukosunderlag saknas för omberäkning."
                 )
             } else {
                 let message = buildSensorErrorMessage(
@@ -709,30 +617,36 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         }
 
         let count = relevant.count
-        let totalMinutes = relevant.reduce(0) { acc, item in
-            acc + max(0, Int(round((item.endTimestamp - item.startTimestamp) / 60.0)))
-        }
-        let averageMinutes = count > 0 ? totalMinutes / count : 0
-        let averageText = count > 0 ? "\(averageMinutes) min" : "--"
+        let intervals = DexcomSensorErrorOutageCacheItem.mergedIntervals(
+            relevant, from: sessionStart.timeIntervalSince1970, to: sessionEnd.timeIntervalSince1970)
+        let totalMinutes = Int(round(intervals.reduce(0) { $0 + $1.duration } / 60))
+        let unknownCount = relevant.filter { $0.durationMinutes == nil }.count
+        let averageText: String? = unknownCount == 0 && count > 0 ? "\(totalMinutes / count) min" : nil
         let perDayMinutes = perCalendarDayErrorMinutes(outages: relevant, sessionStart: sessionStart, sessionEnd: sessionEnd, maxDays: 10)
 
-        let message = buildSensorErrorMessage(
+        var message = buildSensorErrorMessage(
             countText: "\(count) st",
-            durationText: formatTotalDuration(minutes: totalMinutes),
+            durationText: unknownCount == count ? "Okänd" : formatTotalDuration(minutes: totalMinutes) + (unknownCount > 0 ? " (känd tid)" : ""),
             averageText: averageText,
             perDayErrorMinutes: perDayMinutes
         )
+
+        if unknownCount > 0 {
+            message += "\n\n\(unknownCount) fel har okänd varaktighet och ingår inte i tidsummorna."
+        }
 
         // Persistent analystext för avslutade sensorer (inte den pågående)
         if masterIndex > 0 {
             // Uppdatera in-memory-listan
             sensorHistory[masterIndex].sensorErrors = message
+            sensorHistory[masterIndex].sensorErrorsCalculationVersion = 3
 
             // Uppdatera även persistent storage (Storage.shared.sensorStartNotes)
             var stored = Storage.shared.sensorStartNotes
             if let storedIndex = stored.firstIndex(where: { $0.date == entry.date && $0.note == entry.note }) {
                 var updated = stored[storedIndex]
                 updated.sensorErrors = message
+                updated.sensorErrorsCalculationVersion = 3
                 stored[storedIndex] = updated
                 Storage.shared.sensorStartNotes = stored
             }
@@ -901,7 +815,10 @@ extension SensorHistoryViewController: UIDocumentPickerDelegate {
                         if let idx = storedHistory.firstIndex(where: { $0.date == entry.date && $0.note == entry.note }) {
                             // Uppdatera befintlig entry – inklusive sensorErrors om den finns
                             var updated = storedHistory[idx]
-                            updated.sensorErrors = entry.sensorErrors ?? updated.sensorErrors
+                            if let summary = entry.sensorErrors {
+                                updated.sensorErrors = summary
+                                updated.sensorErrorsCalculationVersion = entry.sensorErrorsCalculationVersion
+                            }
                             updated.trioSentAt = entry.trioSentAt ?? updated.trioSentAt
                             storedHistory[idx] = updated
                         } else {

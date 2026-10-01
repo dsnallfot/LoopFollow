@@ -111,6 +111,7 @@ struct SensorStartHistoryEntry: Codable, Equatable {
     var note: String
     /// Optional, persisted summary of sensor error analysis (text shown in alert)
     var sensorErrors: String?
+    var sensorErrorsCalculationVersion: Int?
     /// When Trio began using this sensor; activation/lifetime still uses `date`.
     var trioSentAt: Date?
 
@@ -167,6 +168,92 @@ struct DexcomSensorErrorOutageCacheItem: Codable, Equatable {
     var enteredBy: String?
     /// Used only to assign this error to a sensor session.
     var trioSentAt: Date?
+
+    /// nil identifies legacy, unvalidated durations; false means missing boundary readings.
+    var durationIsKnown: Bool?
+
+    var durationMinutes: Int? {
+        guard durationIsKnown == true, calculationVersion == Self.currentCalculationVersion else { return nil }
+        return max(0, Int(round((endTimestamp - startTimestamp) / 60)))
+    }
+
+    /// Version 3 measures from the first error note to the next non-fingerstick SGV.
+    var calculationVersion: Int?
+    static let currentCalculationVersion = 3
+
+    static func build(readings: [SGVJSON], treatments: [TreatmentJSON], now: Date) -> [Self] {
+        let glucose = readings.filter { $0.sgv > 0 && $0.readingDate <= now }
+            .sorted { $0.readingDate < $1.readingDate }
+        var fingersticks = Set<Int>()
+        // Trio uploads a manual SGV and BG Check with the same measurement timestamp.
+        // Allow 60 seconds for timestamp rounding, and 2 mg/dL for mmol rounding.
+        for check in treatments where check.eventType == "BG Check" {
+            var lo = 0
+            var hi = glucose.count
+            let lower = check.created_at.addingTimeInterval(-60)
+            while lo < hi {
+                let mid = (lo + hi) / 2
+                if glucose[mid].readingDate < lower { lo = mid + 1 } else { hi = mid }
+            }
+            let mgdl = check.glucose.map {
+                check.units?.lowercased().contains("mmol") == true ? $0 * 18.0182 : $0
+            }
+            var best: Int?
+            var distance = TimeInterval.infinity
+            while lo < glucose.count && glucose[lo].readingDate <= check.created_at.addingTimeInterval(60) {
+                let delta = abs(glucose[lo].readingDate.timeIntervalSince(check.created_at))
+                if !fingersticks.contains(lo), mgdl.map({ abs(Double(glucose[lo].sgv) - $0) <= 2 }) ?? true,
+                   delta < distance {
+                    best = lo
+                    distance = delta
+                }
+                lo += 1
+            }
+            if let best { fingersticks.insert(best) }
+        }
+        let sensorDates = glucose.enumerated().filter { !fingersticks.contains($0.offset) }.map { $0.element.readingDate }
+        let notes = treatments.filter {
+            $0.eventType == "Note" && ($0.notes?.localizedCaseInsensitiveContains("Dexcom") ?? false) && $0.created_at <= now
+        }.sorted { $0.created_at < $1.created_at }
+        var result: [Self] = []
+        var recoveryIndex = 0
+        var lastRecoveryIndex: Int?
+        for note in notes {
+            while recoveryIndex < sensorDates.count && sensorDates[recoveryIndex] <= note.created_at {
+                recoveryIndex += 1
+            }
+            // Repeated notes before the same recovery belong to one outage.
+            if lastRecoveryIndex == recoveryIndex { continue }
+            lastRecoveryIndex = recoveryIndex
+            let recovery = recoveryIndex < sensorDates.count ? sensorDates[recoveryIndex] : nil
+            result.append(Self(noteTimestamp: note.created_at.timeIntervalSince1970,
+                               startTimestamp: note.created_at.timeIntervalSince1970,
+                               endTimestamp: (recovery ?? now).timeIntervalSince1970,
+                               notesText: note.notes, enteredBy: note.enteredBy, trioSentAt: note.trioSentAt,
+                               durationIsKnown: recovery != nil, calculationVersion: currentCalculationVersion))
+        }
+        return result.reversed()
+    }
+
+    /// Union of measured intervals, clipped to the sensor session when supplied.
+    static func mergedIntervals(_ items: [Self], from lower: TimeInterval = -.infinity,
+                                to upper: TimeInterval = .infinity) -> [DateInterval] {
+        let spans = items.filter { $0.durationMinutes != nil }.compactMap { item -> DateInterval? in
+            let start = max(lower, item.startTimestamp)
+            let end = min(upper, item.endTimestamp)
+            guard end > start else { return nil }
+            return DateInterval(start: Date(timeIntervalSince1970: start), end: Date(timeIntervalSince1970: end))
+        }.sorted { $0.start < $1.start }
+        var result: [DateInterval] = []
+        for span in spans {
+            if let last = result.last, span.start <= last.end {
+                result[result.count - 1] = DateInterval(start: last.start, end: max(last.end, span.end))
+            } else {
+                result.append(span)
+            }
+        }
+        return result
+    }
 
     var sensorErrorTimestamp: TimeInterval { trioSentAt?.timeIntervalSince1970 ?? noteTimestamp }
 }
