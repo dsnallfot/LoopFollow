@@ -111,6 +111,17 @@ struct SensorStartHistoryEntry: Codable, Equatable {
     var note: String
     /// Optional, persisted summary of sensor error analysis (text shown in alert)
     var sensorErrors: String?
+    /// When Trio began using this sensor; activation/lifetime still uses `date`.
+    var trioSentAt: Date?
+
+    var usageStartTimestamp: TimeInterval { trioSentAt?.timeIntervalSince1970 ?? date }
+
+    func sensorUsageWindow(in history: [SensorStartHistoryEntry], now: Date) -> Range<TimeInterval> {
+        let start = usageStartTimestamp
+        let next = history.map(\.usageStartTimestamp).filter { $0 > start }.min()
+        let end = min(next ?? now.timeIntervalSince1970, now.timeIntervalSince1970)
+        return start..<max(start, end)
+    }
 
     static func == (lhs: SensorStartHistoryEntry, rhs: SensorStartHistoryEntry) -> Bool {
         return lhs.date == rhs.date && lhs.note == rhs.note
@@ -146,7 +157,7 @@ struct SensorStartHistoryEntry: Codable, Equatable {
 
 // Dexcom sensor error outage cache item (derived from Note + SGV span)
 struct DexcomSensorErrorOutageCacheItem: Codable, Equatable {
-    /// The Dexcom Note timestamp (seconds since 1970)
+    /// Original created_at timestamp; retained for display, SGV spans and cache identity.
     var noteTimestamp: TimeInterval
     /// Outage start time (seconds since 1970)
     var startTimestamp: TimeInterval
@@ -154,6 +165,10 @@ struct DexcomSensorErrorOutageCacheItem: Codable, Equatable {
     var endTimestamp: TimeInterval
     var notesText: String?
     var enteredBy: String?
+    /// Used only to assign this error to a sensor session.
+    var trioSentAt: Date?
+
+    var sensorErrorTimestamp: TimeInterval { trioSentAt?.timeIntervalSince1970 ?? noteTimestamp }
 }
 
 struct PumpChangeHistoryEntry: Codable, Equatable {

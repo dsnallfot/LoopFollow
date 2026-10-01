@@ -53,6 +53,7 @@ struct SGVJSON: Codable, Equatable {
 struct TreatmentJSON: Codable, Equatable {
     let _id:        String
     let created_at: Date
+    let trioSentAt: Date?
     let eventType:  String
 
     // --- meta ---
@@ -78,6 +79,16 @@ struct TreatmentJSON: Codable, Equatable {
 
     // If you add more Nightscout keys later, pop them in here as optionals.
 
+    /// Preserve fractional seconds and timezone offsets for sensor ownership boundaries.
+    static func parseTrioSentAt(_ raw: String?) -> Date? {
+        guard let raw else { return nil }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: raw) { return date }
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.date(from: raw)
+    }
+
     /// Build a `TreatmentJSON` from the raw Nightscout dictionary returned by `/treatments`.
     /// Only the fields MealAnalysisView needs are extracted; others default to `nil`.
     init?(dict: [String : Any]) {
@@ -89,6 +100,7 @@ struct TreatmentJSON: Codable, Equatable {
         else { return nil }
 
         self._id        = id
+        self.trioSentAt = Self.parseTrioSentAt(dict["trioSentAt"] as? String)
         self.created_at = date
         self.eventType  = type
 

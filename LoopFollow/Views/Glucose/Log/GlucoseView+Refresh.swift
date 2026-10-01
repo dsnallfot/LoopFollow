@@ -4,6 +4,10 @@ import Charts
 extension GlucoseView {
     @objc func refreshButtonTapped() {
         showRefreshIndicator()
+        if dataMode == .sensorErrors {
+            Task { await loadSensorErrors90Days() }
+            return
+        }
         Task {
             await backfillLastDays(backfillDays)
             DispatchQueue.main.async {
@@ -16,6 +20,11 @@ extension GlucoseView {
         guard recognizer.state == .began else { return }
 
         showRefreshIndicator()
+        if dataMode == .sensorErrors {
+            // Rebuild the entire displayed history, including old rows whose note text was lost.
+            Task { await loadSensorErrors90Days(forceFullReload: true) }
+            return
+        }
         Task {
             await backfillLastDays(initialBackfillDays)
             await MainActor.run {

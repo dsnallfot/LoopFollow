@@ -42,8 +42,9 @@ extension GlucoseView {
 
     // (saveSensorErrorRowsToCache and sensorErrorLastRefreshDate removed; no longer used)
 
-    /// Loads a 90-day list of Dexcom sensor error Notes and computes duration based on nearest BGs.
-    func loadSensorErrors90Days() async {
+    /// Loads Dexcom sensor error Notes from the treatment cache and computes duration based on nearest BGs.
+    /// A full reload bypasses the incremental window to repair older cached rows as well.
+    func loadSensorErrors90Days(forceFullReload: Bool = false) async {
         let cal = Calendar.current
         let now = Date()
 
@@ -54,7 +55,7 @@ extension GlucoseView {
         let cachedItems = Storage.shared.dexcomSensorErrorOutagesCache
         let start: Date
 
-        if cachedItems.count >= 3, let last = Storage.shared.dexcomSensorErrorOutagesRefreshedAt {
+        if !forceFullReload, cachedItems.count >= 3, let last = Storage.shared.dexcomSensorErrorOutagesRefreshedAt {
             start = max(hardFloor, last.addingTimeInterval(-overlap))
         } else {
             start = hardFloor
@@ -72,25 +73,7 @@ extension GlucoseView {
             tjson.eventType == "Note" && (tjson.notes?.localizedCaseInsensitiveContains("Dexcom") ?? false)
         }
 
-        let dexcomNotes: [Treatment] = dexcomTreatJSON.compactMap { tjson in
-            Treatment(dictionary: [
-                "_id":       tjson._id as AnyObject,
-                "eventType": tjson.eventType as AnyObject,
-                "enteredBy": tjson.enteredBy as AnyObject,
-                "created_at": ISO8601DateFormatter().string(from: tjson.created_at) as AnyObject,
-                "rate":      tjson.rate as AnyObject,
-                "absolute":  tjson.absolute as AnyObject,
-                "insulin":   tjson.insulin as AnyObject,
-                "carbs":     tjson.carbs as AnyObject,
-                "amount":    tjson.amount as AnyObject,
-                "foodType":  tjson.foodType as AnyObject,
-                "notes":     tjson.notes as AnyObject,
-                "glucose":   tjson.glucose as AnyObject,
-                "units":     tjson.units as AnyObject,
-                "duration":  tjson.tempBasalDuration as AnyObject
-            ])
-        }
-        .sorted { $0.timestamp < $1.timestamp }
+        let dexcomNotes = dexcomTreatJSON.sorted { $0.created_at < $1.created_at }
 
         // Build outage intervals (cache items) and dedupe multiple notes inside the same [prevBG,nextBG] span
         var outageItems: [DexcomSensorErrorOutageCacheItem] = []
@@ -99,8 +82,8 @@ extension GlucoseView {
         var lastSpanKey: String?
 
         for note in dexcomNotes {
-            let prev = nearestBG(before: note.timestamp, in: bgTimes)
-            let next = nearestBG(after: note.timestamp, in: bgTimes)
+            let prev = nearestBG(before: note.created_at, in: bgTimes)
+            let next = nearestBG(after: note.created_at, in: bgTimes)
 
             // Span key: same prev/next => same outage, only keep first
             let prevKey = prev?.timeIntervalSince1970 ?? -1
@@ -112,19 +95,20 @@ extension GlucoseView {
             }
             lastSpanKey = spanKey
 
-            let startTime = prev ?? note.timestamp
+            let startTime = prev ?? note.created_at
             let endTime = next ?? now
 
-            let notesText = note.rawData["notes"] as? String
-            let enteredBy = note.rawData["enteredBy"] as? String
+            let notesText = note.notes
+            let enteredBy = note.enteredBy
 
             outageItems.append(
                 DexcomSensorErrorOutageCacheItem(
-                    noteTimestamp: note.timestamp.timeIntervalSince1970,
+                    noteTimestamp: note.created_at.timeIntervalSince1970,
                     startTimestamp: startTime.timeIntervalSince1970,
                     endTimestamp: endTime.timeIntervalSince1970,
                     notesText: notesText,
-                    enteredBy: enteredBy
+                    enteredBy: enteredBy,
+                    trioSentAt: note.trioSentAt
                 )
             )
         }
@@ -138,7 +122,7 @@ extension GlucoseView {
 
             // Start with existing cache, drop anything older than hardFloor
             let floorTS = hardFloor.timeIntervalSince1970
-            for item in cachedItems where item.noteTimestamp >= floorTS {
+            for item in Storage.shared.dexcomSensorErrorOutagesCache where item.noteTimestamp >= floorTS {
                 mergedByNote[item.noteTimestamp] = item
             }
 
@@ -158,7 +142,11 @@ extension GlucoseView {
             self.tableView.reloadData()
 
             // Stats label: count
-            self.statsLabel.text = "Antal sensorfel: \(merged.count) st (90d)   "
+            if self.dataMode == .sensorErrors {
+                self.statsLabel.text = "Antal sensorfel: \(merged.count) st (90d)   "
+            } else {
+                self.updateStatsLabel()
+            }
             self.hideRefreshIndicator()
         }
     }

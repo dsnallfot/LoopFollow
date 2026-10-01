@@ -228,7 +228,7 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         // Exclude index 0 (ongoing). For each i >= 1, endDate is the newer entry at i-1
         for i in 1..<sensorHistory.count {
             let start = Date(timeIntervalSince1970: sensorHistory[i].date)
-            let end = Date(timeIntervalSince1970: sensorHistory[i - 1].date)
+            let end = Date(timeIntervalSince1970: sensorHistory[i - 1].usageStartTimestamp)
             var interval = end.timeIntervalSince(start)
             if interval < 0 { interval = 0 }
             let hours = Int(interval / 3600)
@@ -337,9 +337,9 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         if isOngoing {
             endDate = openedAt
         } else {
-            // "Next" activation in time is the row above (newer) since list is sorted desc
+            // The previous sensor remained in use until Trio started using the newer sensor.
             let newer = sensorHistory[index - 1]
-            endDate = Date(timeIntervalSince1970: newer.date)
+            endDate = Date(timeIntervalSince1970: newer.usageStartTimestamp)
         }
         var interval = endDate.timeIntervalSince(currentStart)
         if interval < 0 { interval = 0 } // guard against ordering glitches
@@ -366,9 +366,8 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         if !isOngoing && totalHours < 24 { snippet += " ⛔️" }
 
         // Append warning if this sensor session has identified Dexcom sensorfel
-        let startTs = currentStart.timeIntervalSince1970
-        let endTs = endDate.timeIntervalSince1970
-        if dexcomOutagesCache.contains(where: { $0.noteTimestamp >= startTs && $0.noteTimestamp < endTs }) {
+        let errorWindow = current.sensorUsageWindow(in: sensorHistory, now: openedAt)
+        if dexcomOutagesCache.contains(where: { errorWindow.contains($0.sensorErrorTimestamp) }) {
             snippet += " ⚠️"
         }
 
@@ -430,6 +429,7 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
                 self.dexcomOutagesCache = merged
                 Storage.shared.dexcomSensorErrorOutagesCache = merged
                 Storage.shared.dexcomSensorErrorOutagesRefreshedAt = now
+                self.tableView.reloadData()
             }
         }
     }
@@ -445,26 +445,8 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
             tjson.eventType == "Note" && (tjson.notes?.localizedCaseInsensitiveContains("Dexcom") ?? false)
         }
 
-        // Convert to Treatment (same mapping style as GlucoseView)
-        let dexcomNotes: [Treatment] = dexcomTreatJSON.compactMap { tjson in
-            Treatment(dictionary: [
-                "_id":       tjson._id as AnyObject,
-                "eventType": tjson.eventType as AnyObject,
-                "enteredBy": tjson.enteredBy as AnyObject,
-                "created_at": ISO8601DateFormatter().string(from: tjson.created_at) as AnyObject,
-                "rate":      tjson.rate as AnyObject,
-                "absolute":  tjson.absolute as AnyObject,
-                "insulin":   tjson.insulin as AnyObject,
-                "carbs":     tjson.carbs as AnyObject,
-                "amount":    tjson.amount as AnyObject,
-                "foodType":  tjson.foodType as AnyObject,
-                "notes":     tjson.notes as AnyObject,
-                "glucose":   tjson.glucose as AnyObject,
-                "units":     tjson.units as AnyObject,
-                "duration":  tjson.tempBasalDuration as AnyObject
-            ])
-        }
-        .sorted { $0.timestamp < $1.timestamp }
+        // Keep original timestamps for SGV spans and Trio timestamps for ownership.
+        let dexcomNotes = dexcomTreatJSON.sorted { $0.created_at < $1.created_at }
 
         var items: [DexcomSensorErrorOutageCacheItem] = []
         items.reserveCapacity(dexcomNotes.count)
@@ -472,8 +454,8 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         var lastSpanKey: String?
 
         for note in dexcomNotes {
-            let prev = nearestBG(before: note.timestamp, in: bgTimes)
-            let next = nearestBG(after: note.timestamp, in: bgTimes)
+            let prev = nearestBG(before: note.created_at, in: bgTimes)
+            let next = nearestBG(after: note.created_at, in: bgTimes)
 
             let prevKey = prev?.timeIntervalSince1970 ?? -1
             let nextKey = next?.timeIntervalSince1970 ?? -1
@@ -483,14 +465,17 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
             if spanKey == lastSpanKey { continue }
             lastSpanKey = spanKey
 
-            let startTime = (prev ?? note.timestamp)
+            let startTime = (prev ?? note.created_at)
             let endTime = (next ?? now)
 
             items.append(
                 DexcomSensorErrorOutageCacheItem(
-                    noteTimestamp: note.timestamp.timeIntervalSince1970,
+                    noteTimestamp: note.created_at.timeIntervalSince1970,
                     startTimestamp: startTime.timeIntervalSince1970,
-                    endTimestamp: endTime.timeIntervalSince1970
+                    endTimestamp: endTime.timeIntervalSince1970,
+                    notesText: note.notes,
+                    enteredBy: note.enteredBy,
+                    trioSentAt: note.trioSentAt
                 )
             )
         }
@@ -693,20 +678,11 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         }
 
         let sessionStart = Date(timeIntervalSince1970: sensorHistory[masterIndex].date)
-        let sessionEnd: Date
-        if masterIndex == 0 {
-            // Ongoing session
-            sessionEnd = Date()
-        } else {
-            // Next newer sensor activation is the row above
-            sessionEnd = Date(timeIntervalSince1970: sensorHistory[masterIndex - 1].date)
-        }
+        let errorWindow = sensorHistory[masterIndex].sensorUsageWindow(in: sensorHistory, now: Date())
+        let sessionEnd = Date(timeIntervalSince1970: errorWindow.upperBound)
 
-        let startTs = sessionStart.timeIntervalSince1970
-        let endTs = sessionEnd.timeIntervalSince1970
-
-        // Outages whose NOTE happened within this session window
-        let relevant = dexcomOutagesCache.filter { $0.noteTimestamp >= startTs && $0.noteTimestamp < endTs }
+        // Ownership follows when Trio used each sensor; activation remains the day-count origin.
+        let relevant = dexcomOutagesCache.filter { errorWindow.contains($0.sensorErrorTimestamp) }
 
         guard !relevant.isEmpty else {
             // Om vi har en persisterad analys för denna sensor, använd den även om cache-fönstret inte längre räcker.
@@ -885,7 +861,9 @@ extension SensorHistoryViewController: AddManualSensorNoteDelegate {
         // Find the original entry we are replacing using the snapshot of the table's ordering
         let original = sensorHistory[index]
         if let storedIndex = stored.firstIndex(where: { $0.date == original.date && $0.note == original.note }) {
-            stored[storedIndex] = note
+            var updated = note
+            updated.trioSentAt = original.trioSentAt
+            stored[storedIndex] = updated
             Storage.shared.sensorStartNotes = stored
         }
         // Refresh local cache and table order
@@ -924,6 +902,7 @@ extension SensorHistoryViewController: UIDocumentPickerDelegate {
                             // Uppdatera befintlig entry – inklusive sensorErrors om den finns
                             var updated = storedHistory[idx]
                             updated.sensorErrors = entry.sensorErrors ?? updated.sensorErrors
+                            updated.trioSentAt = entry.trioSentAt ?? updated.trioSentAt
                             storedHistory[idx] = updated
                         } else {
                             // Ny entry – ta med allt (inkl sensorErrors)
@@ -1104,7 +1083,7 @@ final class SensorSessionStatsViewController: ThemedTableViewController {
         var histColors: [NSUIColor] = []
         for i in stride(from: history.count - 1, through: 1, by: -1) {
             let start = Date(timeIntervalSince1970: history[i].date)
-            let end = Date(timeIntervalSince1970: history[i - 1].date)
+            let end = Date(timeIntervalSince1970: history[i - 1].usageStartTimestamp)
             var interval = end.timeIntervalSince(start)
             if interval < 0 { interval = 0 }
             let hours = Int(interval / 3600)
