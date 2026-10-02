@@ -87,6 +87,17 @@ class CarbChartDataEntry: TreatmentChartDataEntry {
     }
 }
 
+// Rendering metadata stays separate from `data`, which is used by glucose taps.
+class GlucoseChartDataEntry: ChartDataEntry {
+    var delayedReading = false
+
+    override func copy(with zone: NSZone? = nil) -> Any {
+        let copy = GlucoseChartDataEntry(x: x, y: y, data: data)
+        copy.delayedReading = delayedReading
+        return copy
+    }
+}
+
 class CompositeRenderer: LineChartRenderer {
     let tempTargetRenderer: TempTargetRenderer
     let triangleRenderer: TriangleRenderer
@@ -203,6 +214,57 @@ class CompositeRenderer: LineChartRenderer {
         trainingSessionRenderer.drawExtras(context: context)
         // Daniel: Do not draw those triangles for smbs //
         triangleRenderer.drawExtras(context: context)
+        drawDelayedGlucoseArrows(context: context)
+    }
+
+    /// Only the main chart uses this renderer. Draw in screen coordinates so the
+    /// arrow follows its dot while retaining its size during zoom and scrolling.
+    private func drawDelayedGlucoseArrows(context: CGContext) {
+        guard let provider = dataProvider,
+              let data = provider.lineData,
+              data.dataSetCount > GraphDataIndex.bg.rawValue,
+              let glucose = data.dataSets[GraphDataIndex.bg.rawValue] as? LineChartDataSet,
+              glucose.isVisible, glucose.isDrawCirclesEnabled,
+              glucose.entryCount > 0 else { return }
+
+        let transformer = provider.getTransformer(forAxis: glucose.axisDependency)
+        let bounds = XBounds(chart: provider, dataSet: glucose, animator: animator)
+        let halfWidth = glucose.circleRadius * 0.75
+        let headSize = halfWidth * 0.55
+        let lineWidth = max(1, glucose.circleRadius * 0.3)
+
+        context.saveGState()
+        defer { context.restoreGState() }
+        context.clip(to: viewPortHandler.contentRect)
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+
+        for index in bounds {
+            guard let entry = glucose.entryForIndex(index) as? GlucoseChartDataEntry,
+                  entry.delayedReading else { continue }
+            let point = transformer.pixelForValues(x: entry.x, y: entry.y * animator.phaseY)
+            guard viewPortHandler.isInBoundsLeft(point.x),
+                  viewPortHandler.isInBoundsRight(point.x),
+                  viewPortHandler.isInBoundsY(point.y) else { continue }
+
+            let tip = CGPoint(x: point.x - halfWidth, y: point.y)
+            let arrow = CGMutablePath()
+            arrow.move(to: CGPoint(x: point.x + halfWidth, y: point.y))
+            arrow.addLine(to: tip)
+            arrow.move(to: CGPoint(x: tip.x + headSize, y: tip.y - headSize))
+            arrow.addLine(to: tip)
+            arrow.addLine(to: CGPoint(x: tip.x + headSize, y: tip.y + headSize))
+
+            // A narrow dark outline keeps the white arrow visible on bright dots.
+            context.addPath(arrow)
+            context.setStrokeColor(UIColor.white.cgColor)
+            context.setLineWidth(lineWidth + 2)
+            context.strokePath()
+            context.addPath(arrow)
+            context.setStrokeColor(UIColor.black.cgColor)
+            context.setLineWidth(lineWidth)
+            context.strokePath()
+        }
     }
 }
 
@@ -1747,7 +1809,7 @@ extension MainViewController {
             if Float(entries[i].sgv) > topBG - maxBGOffset {
                 topBG = Float(entries[i].sgv) + maxBGOffset
             }
-            let value = ChartDataEntry(
+            let value = GlucoseChartDataEntry(
                 x: Double(entries[i].date),
                 y: Double(entries[i].sgv),
                 data: formatPillTextExtraLine(
@@ -1756,6 +1818,11 @@ extension MainViewController {
                     time: entries[i].date
                 )
             )
+            value.delayedReading = SGVJSON(
+                date: entries[i].date,
+                sgv: entries[i].sgv,
+                trioSentAt: entries[i].trioSentAt
+            ).delayedReading
             mainChart.append(value)
             smallChart.append(value)
             
