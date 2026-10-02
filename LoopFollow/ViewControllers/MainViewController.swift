@@ -26,6 +26,15 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
     @IBOutlet weak var DirectionText: UILabel!
     @IBOutlet weak var BGChart: LineChartView!
     @IBOutlet weak var BGChartFull: LineChartView!
+    // A layer has no hit testing, so the overview keeps all existing gestures.
+    let overviewViewportLayer: CALayer = {
+        let layer = CALayer()
+        layer.backgroundColor = UIColor.gray.withAlphaComponent(0.20).cgColor
+        layer.borderColor = UIColor.gray.withAlphaComponent(0.65).cgColor
+        layer.borderWidth = 0.5
+        layer.isHidden = true
+        return layer
+    }()
     @IBOutlet weak var MinAgoText: UILabel!
     @IBOutlet weak var infoTable: UITableView!
     @IBOutlet weak var Console: UITableViewCell!

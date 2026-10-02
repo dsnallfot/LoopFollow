@@ -99,6 +99,8 @@ class GlucoseChartDataEntry: ChartDataEntry {
 }
 
 class CompositeRenderer: LineChartRenderer {
+    // Called after viewport transforms have been applied, including animated moves.
+    var viewportDidDraw: (() -> Void)?
     let tempTargetRenderer: TempTargetRenderer
     let triangleRenderer: TriangleRenderer
     let bgCheckRenderer: BGCheckRenderer
@@ -215,6 +217,7 @@ class CompositeRenderer: LineChartRenderer {
         // Daniel: Do not draw those triangles for smbs //
         triangleRenderer.drawExtras(context: context)
         drawDelayedGlucoseArrows(context: context)
+        viewportDidDraw?()
     }
 
     /// Only the main chart uses this renderer. Draw in screen coordinates so the
@@ -423,6 +426,16 @@ class TempTargetRenderer: LineChartRenderer {
     }
 }
 
+/// Retains the overview's temp-target rendering and reports its final geometry.
+class OverviewChartRenderer: TempTargetRenderer {
+    var viewportDidDraw: (() -> Void)?
+
+    override func drawExtras(context: CGContext) {
+        super.drawExtras(context: context)
+        viewportDidDraw?()
+    }
+}
+
 class InRangeBandRenderer: LineChartRenderer {
 
     override func drawExtras(context: CGContext) {
@@ -596,12 +609,68 @@ extension MainViewController {
             bgCheckDataSetIndex: bgCheckDataIndex,
             trainingDataSetIndex: trainingDataIndex
         )
+        compositeRenderer.viewportDidDraw = { [weak self] in
+            self?.updateOverviewViewport()
+        }
         BGChart.renderer = compositeRenderer
 
         BGChart.data?.notifyDataChanged()
         BGChart.notifyDataSetChanged()
     }
     
+    private func configureOverviewRenderer() {
+        if overviewViewportLayer.superlayer !== BGChartFull.layer {
+            BGChartFull.layer.addSublayer(overviewViewportLayer)
+        }
+        let renderer = OverviewChartRenderer(
+            dataProvider: BGChartFull,
+            animator: BGChartFull.chartAnimator,
+            viewPortHandler: BGChartFull.viewPortHandler,
+            tempTargetDataSetIndex: GraphDataIndex.tempTarget.rawValue
+        )
+        renderer.viewportDidDraw = { [weak self] in
+            self?.updateOverviewViewport()
+        }
+        BGChartFull.renderer = renderer
+        updateOverviewViewport()
+    }
+
+    /// Move only a composited layer, without redrawing the overview or changing
+    /// chart data/gestures. Both renderers call this after their transforms update.
+    private func updateOverviewViewport() {
+        guard let main = BGChart, let overview = BGChartFull else { return }
+        var viewport = CGRect.null
+        let content = overview.viewPortHandler.contentRect
+        if (main.data?.entryCount ?? 0) > 0,
+           (overview.data?.entryCount ?? 0) > 0,
+           main.viewPortHandler.contentWidth > 0,
+           !content.isEmpty {
+            let start = main.lowestVisibleX
+            let end = main.highestVisibleX
+            let transformer = overview.getTransformer(forAxis: .right)
+            let left = transformer.pixelForValues(x: start, y: 0).x
+            let right = transformer.pixelForValues(x: end, y: 0).x
+            if start.isFinite, end.isFinite, end > start,
+               left.isFinite, right.isFinite {
+                viewport = CGRect(x: min(left, right), y: content.minY,
+                                  width: abs(right - left), height: content.height)
+                    .intersection(content)
+            }
+        }
+
+        // No implicit animation: the rectangle must track the chart frame for frame.
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        let hidden = viewport.isNull || viewport.isEmpty
+        if overviewViewportLayer.isHidden != hidden {
+            overviewViewportLayer.isHidden = hidden
+        }
+        if !hidden, overviewViewportLayer.frame != viewport {
+            overviewViewportLayer.frame = viewport
+        }
+        CATransaction.commit()
+    }
+
     // MARK: - Meal Analysis helpers for graph taps
 
     enum MealAnalysisSource {
@@ -1563,6 +1632,7 @@ extension MainViewController {
         BGChart.highlightValue(nil, callDelegate: false)
         BGChart.data = data
         BGChart.setExtraOffsets(left: 5, top: 10, right: 5, bottom: 10)
+        updateChartRenderers()
 
 
     }
@@ -3045,6 +3115,7 @@ extension MainViewController {
         BGChartFull.scaleXEnabled = false
         BGChartFull.drawGridBackgroundEnabled = false
         BGChartFull.data = data
+        configureOverviewRenderer()
     }
     // Daniel: Test to make override attach to top regardless of mmol or mgdl
     func updateOverrideGraph() {
@@ -3194,13 +3265,7 @@ extension MainViewController {
         BGChart.notifyDataSetChanged()
 
         if let smallDataSet = smallChartDataSet {
-            let tempTargetRendererSmall = TempTargetRenderer(
-                dataProvider: BGChartFull,
-                animator: BGChartFull.chartAnimator,
-                viewPortHandler: BGChartFull.viewPortHandler,
-                tempTargetDataSetIndex: dataIndex
-            )
-            BGChartFull.renderer = tempTargetRendererSmall
+            configureOverviewRenderer()
 
             BGChartFull.data?.notifyDataChanged()
             BGChartFull.notifyDataSetChanged()
