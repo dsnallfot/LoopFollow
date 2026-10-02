@@ -213,7 +213,12 @@ struct DexcomSensorErrorOutageCacheItem: Codable, Equatable {
         }
         let sensorDates = glucose.enumerated().filter { !fingersticks.contains($0.offset) }.map { $0.element.readingDate }
         let notes = treatments.filter {
-            $0.eventType == "Note" && ($0.notes?.localizedCaseInsensitiveContains("Dexcom") ?? false) && $0.created_at <= now
+            $0.eventType == "Note" &&
+            ($0.notes?.localizedCaseInsensitiveContains("Dexcom") ?? false) &&
+            !($0.notes?.localizedCaseInsensitiveContains("värms upp") ?? false) &&
+            !($0.notes?.localizedCaseInsensitiveContains("löpt ut") ?? false) &&
+            !($0.notes?.localizedCaseInsensitiveContains("stoppades") ?? false) &&
+            $0.created_at <= now
         }.sorted { $0.created_at < $1.created_at }
         var result: [Self] = []
         var recoveryIndex = 0

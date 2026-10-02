@@ -68,6 +68,12 @@ extension GlucoseView {
             $0.eventType == "Note" &&
             (($0.rawData["notes"] as? String)?
                 .localizedCaseInsensitiveContains("Dexcom") ?? false) &&
+            !(($0.rawData["notes"] as? String)?
+                .localizedCaseInsensitiveContains("värms upp") ?? false) &&
+            !(($0.rawData["notes"] as? String)?
+                .localizedCaseInsensitiveContains("löpt ut") ?? false) &&
+            !(($0.rawData["notes"] as? String)?
+                .localizedCaseInsensitiveContains("stoppades") ?? false) &&
             // Must be after last successful BG (if known)
             (start == nil || $0.timestamp >= start!) &&
             // And must be before recovery (or end bound)
@@ -112,7 +118,13 @@ extension GlucoseView {
         let candidates = treatments.filter {
             $0.eventType == "Note" &&
             (($0.rawData["notes"] as? String)?
-                .localizedCaseInsensitiveContains("Dexcom") ?? false)
+                .localizedCaseInsensitiveContains("Dexcom") ?? false) &&
+            !(($0.rawData["notes"] as? String)?
+                .localizedCaseInsensitiveContains("värms upp") ?? false) &&
+            !(($0.rawData["notes"] as? String)?
+                .localizedCaseInsensitiveContains("löpt ut") ?? false) &&
+            !(($0.rawData["notes"] as? String)?
+                .localizedCaseInsensitiveContains("stoppades") ?? false)
         }
 
         guard !candidates.isEmpty else { return nil }
