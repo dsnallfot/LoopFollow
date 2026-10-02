@@ -5,7 +5,7 @@ import Combine
 /// Access on the main thread. Only fresh network responses count as evidence.
 final class RemoteCommandReceiptTracker: ObservableObject {
     static let shared = RemoteCommandReceiptTracker()
-    static let dismissalDelay: TimeInterval = 600
+    static let dismissalDelay: TimeInterval = 30
 
     enum Part: String, Hashable {
         case meal, bolus, glucose, override, target, cancelOverride, cancelTarget, unknown
@@ -75,6 +75,15 @@ final class RemoteCommandReceiptTracker: ObservableObject {
     @Published private(set) var pending: [Pending] = []
     private var latest: [String: [Treatment]] = [:]
     private var usedEvidence: Set<String> = []
+
+    var hasPendingCommands: Bool { !pending.isEmpty }
+
+    /// Main-thread check and registration are synchronous so simultaneous sends cannot pass together.
+    func beginSend(_ message: PushMessage, id: String, site: String, now: Date = Date()) -> Bool {
+        guard !hasPendingCommands else { return false }
+        track(message, id: id, site: site, now: now)
+        return true
+    }
 
     func track(_ message: PushMessage, id: String, site: String, now: Date = Date()) {
         var parts: Set<Part> = []

@@ -13,7 +13,7 @@ struct RemoteCommandPendingBanner: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Väntar på registrering i Nightscout", systemImage: "exclamationmark.triangle.fill")
                         .font(.headline)
-                    Text("Ett remotekommando skickades nyss. Vänta tills det registrerats i Nightscout innan du skickar ett nytt.")
+                    Text("Ett remotekommando väntar på registrering i Nightscout. Skicka-knapparna är tillfälligt låsta. Efter 30 sekunder kan du avfärda varningen.")
                         .font(.subheadline)
                     ForEach(tracker.pending) { command in
                         HStack(alignment: .firstTextBaseline) {
@@ -51,9 +51,9 @@ struct RemoteCommandPendingBanner_Previews: PreviewProvider {
         Group {
             RemoteCommandPendingBanner(tracker: example(age: 15))
                 .previewDisplayName("Väntar på Nightscout")
-            RemoteCommandPendingBanner(tracker: example(age: 601))
+            RemoteCommandPendingBanner(tracker: example(age: 31))
                 .preferredColorScheme(.dark)
-                .previewDisplayName("Kan avfärdas efter tio minuter")
+                .previewDisplayName("Kan avfärdas efter 30 sekunder")
         }
         .previewLayout(.sizeThatFits)
     }

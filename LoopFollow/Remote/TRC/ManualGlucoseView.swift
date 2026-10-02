@@ -4,6 +4,8 @@ import LocalAuthentication
 
 @available(iOS 16.0, *)
 struct ManualGlucoseView: View {
+    @ObservedObject private var receiptTracker = RemoteCommandReceiptTracker.shared
+
     @Environment(\.presentationMode) private var presentationMode
 
     @State private var manualGlucose = HKQuantity(
@@ -159,7 +161,7 @@ struct ManualGlucoseView: View {
     }
 
     private var isButtonDisabled: Bool {
-        isLoading ||
+        receiptTracker.hasPendingCommands || isLoading ||
         manualGlucose.doubleValue(
             for: HKUnit(from: "mmol/L")
         ) <= 0

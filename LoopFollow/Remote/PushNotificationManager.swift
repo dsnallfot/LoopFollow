@@ -536,77 +536,80 @@ class PushNotificationManager {
             request.httpBody = jsonData
             LogManager.shared.log(category: .apns, message: "\(logContext): submitting; timestamp=\(message.timestamp), expiration=\(expiration)")
 
-            let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                if let error = error {
-                    let errorMessage = "Failed to send push notification: \(error.localizedDescription)"
-                    // An interrupted response does not prove the command was rejected.
-                    // Do not retry treatment commands without receiver-side deduplication.
-                    LogManager.shared.log(category: .apns, message: "\(logContext): transport error; acceptance/delivery unknown. \(error.localizedDescription)")
-                    completion(false, errorMessage)
+            DispatchQueue.main.async {
+                guard RemoteCommandReceiptTracker.shared.beginSend(
+                    message, id: notificationID, site: ObservableUserDefaults.shared.url.value
+                ) else {
+                    completion(false, "Vänta tills föregående kommando registrerats i Nightscout eller avfärda varningen innan du skickar ett nytt.")
                     return
                 }
-
-                if let httpResponse = response as? HTTPURLResponse {
-                    LogManager.shared.log(category: .apns, message: "\(logContext): HTTP \(httpResponse.statusCode)")
-                    LogManager.shared.log(category: .apns, message: "Response headers:", isDebug: true)
-                    for (key, value) in httpResponse.allHeaderFields {
-                        LogManager.shared.log(category: .apns, message: "\(key): \(value)", isDebug: true)
+                let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                    if let error = error {
+                        let errorMessage = "Failed to send push notification: \(error.localizedDescription)"
+                        // An interrupted response does not prove the command was rejected.
+                        // Do not retry treatment commands without receiver-side deduplication.
+                        LogManager.shared.log(category: .apns, message: "\(logContext): transport error; acceptance/delivery unknown. \(error.localizedDescription)")
+                        completion(false, errorMessage)
+                        return
                     }
 
-                    var responseBodyMessage = ""
-                    if let data = data, let responseBody = String(data: data, encoding: .utf8) {
-                        LogManager.shared.log(category: .apns, message: "Response body: \(responseBody)", isDebug: true)
+                    if let httpResponse = response as? HTTPURLResponse {
+                        LogManager.shared.log(category: .apns, message: "\(logContext): HTTP \(httpResponse.statusCode)")
+                        LogManager.shared.log(category: .apns, message: "Response headers:", isDebug: true)
+                        for (key, value) in httpResponse.allHeaderFields {
+                            LogManager.shared.log(category: .apns, message: "\(key): \(value)", isDebug: true)
+                        }
 
-                            if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-                           let reason = json["reason"] as? String {
-                            responseBodyMessage = reason
+                        var responseBodyMessage = ""
+                        if let data = data, let responseBody = String(data: data, encoding: .utf8) {
+                            LogManager.shared.log(category: .apns, message: "Response body: \(responseBody)", isDebug: true)
+
+                                if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                               let reason = json["reason"] as? String {
+                                responseBodyMessage = reason
+                            }
+                        } else {
+                            LogManager.shared.log(category: .apns, message: "No response body", isDebug: true)
+                        }
+
+                        if httpResponse.statusCode != 200 {
+                            DispatchQueue.main.async {
+                                RemoteCommandReceiptTracker.shared.rejected(id: notificationID)
+                            }
+                        }
+
+                        switch httpResponse.statusCode {
+                        case 200:
+                            // Success here means APNs acceptance only, not Trio execution.
+                            LogManager.shared.log(category: .apns, message: "\(logContext): accepted by APNs; delivery and execution in Trio are unconfirmed")
+                            MealBolusReminder.registrationSent(message)
+                            completion(true, nil)
+                        case 400:
+                            completion(false, "Bad request. The request was invalid or malformed. \(responseBodyMessage)")
+                        case 403:
+                            completion(false, "Authentication error. Check your certificate or authentication token. \(responseBodyMessage)")
+                        case 404:
+                            completion(false, "Invalid request: The :path value was incorrect. \(responseBodyMessage)")
+                        case 405:
+                            completion(false, "Invalid request: Only POST requests are supported. \(responseBodyMessage)")
+                        case 410:
+                            completion(false, "The device token is no longer active for the topic. \(responseBodyMessage)")
+                        case 413:
+                            completion(false, "Payload too large. The notification payload exceeded the size limit. \(responseBodyMessage)")
+                        case 429:
+                            completion(false, "Too many requests. \(responseBodyMessage)")
+                        case 500:
+                            completion(false, "Internal server error at APNs. \(responseBodyMessage)")
+                        case 503:
+                            completion(false, "Service unavailable. The server is temporarily unavailable. Try again later. \(responseBodyMessage)")
+                        default:
+                            completion(false, "Unexpected status code: \(httpResponse.statusCode). \(responseBodyMessage)")
                         }
                     } else {
-                        LogManager.shared.log(category: .apns, message: "No response body", isDebug: true)
+                        LogManager.shared.log(category: .apns, message: "\(logContext): invalid HTTP response; acceptance/delivery unknown")
+                        completion(false, "Failed to get a valid HTTP response.")
                     }
-
-                    if httpResponse.statusCode != 200 {
-                        DispatchQueue.main.async {
-                            RemoteCommandReceiptTracker.shared.rejected(id: notificationID)
-                        }
-                    }
-
-                    switch httpResponse.statusCode {
-                    case 200:
-                        // Success here means APNs acceptance only, not Trio execution.
-                        LogManager.shared.log(category: .apns, message: "\(logContext): accepted by APNs; delivery and execution in Trio are unconfirmed")
-                        MealBolusReminder.registrationSent(message)
-                        completion(true, nil)
-                    case 400:
-                        completion(false, "Bad request. The request was invalid or malformed. \(responseBodyMessage)")
-                    case 403:
-                        completion(false, "Authentication error. Check your certificate or authentication token. \(responseBodyMessage)")
-                    case 404:
-                        completion(false, "Invalid request: The :path value was incorrect. \(responseBodyMessage)")
-                    case 405:
-                        completion(false, "Invalid request: Only POST requests are supported. \(responseBodyMessage)")
-                    case 410:
-                        completion(false, "The device token is no longer active for the topic. \(responseBodyMessage)")
-                    case 413:
-                        completion(false, "Payload too large. The notification payload exceeded the size limit. \(responseBodyMessage)")
-                    case 429:
-                        completion(false, "Too many requests. \(responseBodyMessage)")
-                    case 500:
-                        completion(false, "Internal server error at APNs. \(responseBodyMessage)")
-                    case 503:
-                        completion(false, "Service unavailable. The server is temporarily unavailable. Try again later. \(responseBodyMessage)")
-                    default:
-                        completion(false, "Unexpected status code: \(httpResponse.statusCode). \(responseBodyMessage)")
-                    }
-                } else {
-                    LogManager.shared.log(category: .apns, message: "\(logContext): invalid HTTP response; acceptance/delivery unknown")
-                    completion(false, "Failed to get a valid HTTP response.")
                 }
-            }
-            DispatchQueue.main.async {
-                RemoteCommandReceiptTracker.shared.track(
-                    message, id: notificationID, site: ObservableUserDefaults.shared.url.value
-                )
                 task.resume()
             }
 

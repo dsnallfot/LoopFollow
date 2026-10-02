@@ -12,6 +12,8 @@ import LocalAuthentication
 
 @available(iOS 16.0, *)
 struct BolusView: View {
+    @ObservedObject private var receiptTracker = RemoteCommandReceiptTracker.shared
+
     @Environment(\.presentationMode) private var presentationMode
     @State private var bolusAmount = HKQuantity(unit: .internationalUnit(), doubleValue: 0.0)
     private let pushNotificationManager = PushNotificationManager()
@@ -143,7 +145,7 @@ struct BolusView: View {
     }
 
     private var isButtonDisabled: Bool {
-        isLoading || buttonGuardrailMessage != nil
+        receiptTracker.hasPendingCommands || isLoading || buttonGuardrailMessage != nil
     }
 
     private func sendBolus() {

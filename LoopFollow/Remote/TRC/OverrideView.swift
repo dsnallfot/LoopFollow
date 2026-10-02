@@ -11,6 +11,8 @@ import HealthKit
 
 @available(iOS 16.0, *)
 struct OverrideView: View {
+    @ObservedObject private var receiptTracker = RemoteCommandReceiptTracker.shared
+
     @Environment(\.presentationMode) private var presentationMode
     private let pushNotificationManager = PushNotificationManager()
 
@@ -70,6 +72,7 @@ struct OverrideView: View {
                                     }
                                 }
                                 .tint(.red)
+                                .disabled(isLoading || receiptTracker.hasPendingCommands)
                             }
                             .listRowBackground(Color(.systemGray).opacity(0.15))
                         }
@@ -113,6 +116,7 @@ struct OverrideView: View {
                                                 .foregroundColor(.purple)
                                         }
                                     }
+                                    .disabled(isLoading || receiptTracker.hasPendingCommands)
                                 }
                             }
                         }

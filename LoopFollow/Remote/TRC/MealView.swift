@@ -12,6 +12,8 @@ import LocalAuthentication
 
 @available(iOS 16.0, *)
 struct MealView: View {
+    @ObservedObject private var receiptTracker = RemoteCommandReceiptTracker.shared
+
     @Environment(\.presentationMode) private var presentationMode
     @State private var carbs = HKQuantity(unit: .gram(), doubleValue: 0.0)
     @State private var protein = HKQuantity(unit: .gram(), doubleValue: 0.0)
@@ -686,7 +688,7 @@ struct MealView: View {
     }
 
     private var isButtonDisabled: Bool {
-        isLoading || buttonGuardrailMessage != nil
+        receiptTracker.hasPendingCommands || isLoading || buttonGuardrailMessage != nil
     }
 
     private func sendMealCommand() {

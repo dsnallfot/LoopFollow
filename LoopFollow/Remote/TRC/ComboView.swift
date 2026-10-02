@@ -183,6 +183,8 @@ struct ComboView: View {
 
 @available(iOS 16.0, *)
 private struct ComboEditorView: View {
+    @ObservedObject private var receiptTracker = RemoteCommandReceiptTracker.shared
+
     enum Mode {
         case createPreset
         case editPreset
@@ -766,7 +768,7 @@ private struct ComboEditorView: View {
     }
 
     private var isButtonDisabled: Bool {
-        isLoading || buttonGuardrailMessage != nil
+        (mode == .sendFromPreset && receiptTracker.hasPendingCommands) || isLoading || buttonGuardrailMessage != nil
     }
 
     private func savePreset() {

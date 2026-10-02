@@ -11,6 +11,8 @@ import HealthKit
 
 @available(iOS 16.0, *)
 struct TempTargetView: View {
+    @ObservedObject private var receiptTracker = RemoteCommandReceiptTracker.shared
+
     @Environment(\.presentationMode) private var presentationMode
     private let pushNotificationManager = PushNotificationManager()
 
@@ -72,6 +74,7 @@ struct TempTargetView: View {
                                 }
                             }
                             .tint(.red)
+                            .disabled(isLoading || receiptTracker.hasPendingCommands)
                         }
                         .listRowBackground(Color(.systemGray).opacity(0.15))
                     }
@@ -139,7 +142,7 @@ struct TempTargetView: View {
                             } label: {
                                 Text("Spara som förval")
                             }
-                            .disabled(isButtonDisabled)
+                            .disabled(isPresetButtonDisabled)
                             .buttonStyle(.glassProminent)
                             .padding(.trailing, -15)
                             //.font(.callout)
@@ -160,7 +163,9 @@ struct TempTargetView: View {
                                     Spacer()
                                 }
                                 .contentShape(Rectangle())
+                                .opacity(receiptTracker.hasPendingCommands ? 0.5 : 1)
                                 .onTapGesture {
+                                    guard !receiptTracker.hasPendingCommands, !isLoading else { return }
                                     alertType = .confirmCommand
                                     newHKTarget = preset.target
                                     duration = preset.duration
@@ -283,6 +288,10 @@ struct TempTargetView: View {
     }
 
     private var isButtonDisabled: Bool {
+        receiptTracker.hasPendingCommands || isPresetButtonDisabled
+    }
+
+    private var isPresetButtonDisabled: Bool {
         return newHKTarget.doubleValue(for: UserDefaultsRepository.getPreferredUnit()) == 0 ||
         duration.doubleValue(for: HKUnit.minute()) == 0 || isLoading
     }
