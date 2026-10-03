@@ -1,4 +1,5 @@
 import UIKit
+import SwiftUI
 
 extension TreatmentsTableView {
     // MARK: - Swipe to Delete (Editing Style)
@@ -197,7 +198,22 @@ extension TreatmentsTableView {
         // and editing note text for Note treatments.
         var actions: [UIContextualAction] = [deleteAction]
 
-        if treatment.eventType == "Exercise" {
+        if Storage.shared.remoteType.value == .trc,
+           treatment.eventType == "Carb Correction",
+           !(treatment.rawData["foodType"] as? String ?? "").isEmpty,
+           MealEditDraft.canEdit(treatment.timestamp) {
+            let editAction = UIContextualAction(style: .normal, title: nil) { _, _, completion in
+                guard MealEditDraft.canEdit(treatment.timestamp) else { completion(false); return }
+                let editor = UIHostingController(rootView: EditMealView(raw: treatment.rawData, date: treatment.timestamp))
+                editor.modalPresentationStyle = .pageSheet
+                self.present(editor, animated: true)
+                completion(true)
+            }
+            editAction.image = UIImage(systemName: "pencil")
+            editAction.backgroundColor = .systemBlue
+            // Trailing swipe actions are laid out right-to-left: edit sits to the left of delete.
+            actions = [deleteAction, editAction]
+        } else if treatment.eventType == "Exercise" {
             let editAction = UIContextualAction(style: .normal, title: nil) { (action, view, completionHandler) in
                 // Current duration in minutes (integer)
                 let currentDuration = Int(treatment.overrideDuration ?? 0)

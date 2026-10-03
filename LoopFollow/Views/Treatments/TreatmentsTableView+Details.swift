@@ -190,7 +190,12 @@ extension TreatmentsTableView {
 
         if treatment.eventType == "Carb Correction" {
             let foodTypeValue = treatment.rawData["foodType"] as? String ?? ""
-            let isDextro = foodTypeValue.contains("🍬")
+            let dextroFoodType = foodTypeValue.hasPrefix("✎ ")
+                ? String(foodTypeValue.dropFirst(2))
+                : foodTypeValue
+
+            let isDextro = !dextroFoodType.isEmpty &&
+                dextroFoodType.allSatisfy { $0 == "🍬" }
             let title: String
             if isDextro {
                 title = "\(timeString)\n\nDextro"

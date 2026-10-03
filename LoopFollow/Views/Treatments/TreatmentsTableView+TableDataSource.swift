@@ -49,7 +49,21 @@ extension TreatmentsTableView {
         let displayEventType: String = {
             if treatment.eventType == "Carb Correction" {
                 if let foodType = treatment.rawData["foodType"] as? String, !foodType.isEmpty {
-                    return "Kh"
+                    if let notes = treatment.rawData["notes"] as? String {
+                        let dextroNotes = notes.hasPrefix("✎ ")
+                            ? String(notes.dropFirst(2))
+                            : notes
+
+                        if !dextroNotes.isEmpty,
+                           dextroNotes.allSatisfy({ $0 == "🍬" })
+                        {
+                            return "Dextro"
+                        } else {
+                            return "Måltid"
+                        }
+                    } else {
+                        return "Måltid"
+                    }
                 } else {
                     return "Fett & Protein"
                 }
@@ -64,9 +78,9 @@ extension TreatmentsTableView {
             }
         }()
         
-        // Statussymbol för måltider (Kh) baserat på BG ca 3h efter
+        // Statussymbol för måltider (Måltid) baserat på BG ca 3h efter
         let mealStatusSymbol: String
-        if displayEventType == "Kh" {
+        if displayEventType == "Måltid" {
             mealStatusSymbol = statusSymbolForCarbMeal(at: treatment.timestamp)
         } else {
             mealStatusSymbol = ""

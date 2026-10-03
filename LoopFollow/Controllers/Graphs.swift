@@ -78,11 +78,15 @@ class TreatmentChartDataEntry: ChartDataEntry {
 // Keep the compact graph label separate from the detailed highlight popup.
 class CarbChartDataEntry: TreatmentChartDataEntry {
     var graphLabel = ""
+    var isDextro = false
+    var isFPU = false
 
     override func copy(with zone: NSZone? = nil) -> Any {
         let copy = CarbChartDataEntry(x: x, y: y, data: data)
         copy.treatmentTimestamp = treatmentTimestamp
         copy.graphLabel = graphLabel
+        copy.isDextro = isDextro
+        copy.isFPU = isFPU
         return copy
     }
 }
@@ -897,9 +901,10 @@ extension MainViewController {
             title = "Temp basal"
             actionTitle = ""
         case .carbs:
-            let isDextro = (entry.data as? String)?.contains("🍬") == true
+            let carbEntry = entry as? CarbChartDataEntry
+            let isDextro = carbEntry?.isDextro == true
             source = isDextro ? .lowTreatment : .meal
-            let isFPU = (entry.data as? String)?.hasPrefix("Fett/Protein") == true
+            let isFPU = carbEntry?.isFPU == true
             title = isDextro ? "Dextro" : (isFPU ? "Fett & Protein" : "Måltid")
             actionTitle = isDextro ? "Analys dextro" : "Analys måltid"
         case .override:
@@ -2375,7 +2380,12 @@ extension MainViewController {
 
             let rawFoodType = carbData[i].foodType ?? ""
             let foodType = rawFoodType
-            let isDextro = rawFoodType.contains("🍬")
+            let dextroFoodType = rawFoodType.hasPrefix("✎ ")
+                ? String(rawFoodType.dropFirst(2))
+                : rawFoodType
+
+            let isDextro = !dextroFoodType.isEmpty &&
+                dextroFoodType.allSatisfy { $0 == "🍬" }
 
             if !rawFoodType.isEmpty {
                 valueString += " " + rawFoodType
@@ -2414,6 +2424,8 @@ extension MainViewController {
             let glucose = findNearestBGbyTime(needle: dateTimeStamp, haystack: bgData, startingIndex: 0).sgv
             let dot = CarbChartDataEntry(x: Double(dateTimeStamp), y: glucose - 20, data: formatPillTextExtraLine(line1: (foodType.isEmpty ? "Fett/Protein" : "\(foodType)"), line2: (foodType.isEmpty ? line2FPU : line2), time: dateTimeStamp))
             dot.treatmentTimestamp = carbData[i].date
+            dot.isDextro = isDextro
+            dot.isFPU = foodType.isEmpty
             dot.graphLabel = (foodType.isEmpty ? "FPU" : foodType) + "\n" + valueStringBase + "g"
             BGChart.data?.dataSets[dataIndex].addEntry(dot)
             if UserDefaultsRepository.smallGraphTreatments.value {

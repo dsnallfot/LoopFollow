@@ -206,6 +206,58 @@ class PushNotificationManager {
         sendPushNotification(message: message, completion: completion)
     }
 
+    func sendEditMealPushNotification(
+        draft: MealEditDraft,
+        originalDate: Date,
+        originalTreatment: [String: Any],
+        completion: @escaping (Bool, String?) -> Void
+    ) {
+        let now = Date()
+
+        let limits = [
+            Storage.shared.maxCarbs.value,
+            Storage.shared.maxProtein.value,
+            Storage.shared.maxFat.value
+        ]
+        .map { $0.doubleValue(for: .gram()) }
+
+        if let error = draft.validationError(
+            originalDate: originalDate,
+            limits: limits,
+            now: now
+        ) {
+            completion(false, error)
+            return
+        }
+
+        guard let nutrients = draft.nutrients else { return }
+
+        let trimmedNotes = draft.notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        let editedNotes = "✎ " + trimmedNotes
+
+        let message = PushMessage(
+            aps: .init(
+                alert: "Remote redigera måltid\nInlagt av: \(user)"
+            ),
+            user: user,
+            commandType: .editMeal,
+            carbs: nutrients[0],
+            protein: nutrients[1],
+            fat: nutrients[2],
+            notes: editedNotes,
+            sharedSecret: sharedSecret,
+            timestamp: now.timeIntervalSince1970,
+            scheduledTime: floor(draft.date.timeIntervalSince1970),
+            originalTime: floor(originalDate.timeIntervalSince1970)
+        )
+
+        sendPushNotification(
+            message: message,
+            deletingTreatment: originalTreatment,
+            completion: completion
+        )
+    }
+
     func sendDeleteMealPushNotification(
         mealDate: Date,
         deletingTreatment: [String: Any]? = nil,

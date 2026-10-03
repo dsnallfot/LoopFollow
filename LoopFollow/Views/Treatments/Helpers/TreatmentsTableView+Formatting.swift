@@ -37,7 +37,14 @@ extension TreatmentsTableView {
     // Helper to determine symbol name and color for a given event type.
     func symbolForEventType(_ eventType: String, foodType: String? = nil, fullNote: String? = nil) -> (name: String, color: UIColor) {
         // Identifiera Dextro via foodType som innehåller 🍬
-        let isDextro = (foodType ?? "").contains("🍬")
+        let rawFoodType = foodType ?? ""
+        
+        let dextroFoodType = rawFoodType.hasPrefix("✎ ")
+            ? String(rawFoodType.dropFirst(2))
+            : rawFoodType
+
+        let isDextro = !dextroFoodType.isEmpty &&
+            dextroFoodType.allSatisfy { $0 == "🍬" }
         
         if eventType == "Carb Correction" {
             // Dextro / lågbehandling som registrerats som Carb Correction men har 🍬 i foodType

@@ -25,6 +25,7 @@ final class RemoteCommandReceiptTracker: ObservableObject {
             switch message.commandType {
             case .combo: return "Snabbval"
             case .meal: return "Måltid"
+            case .editMeal: return "Redigera måltid"
             case .bolus: return "Bolus"
             case .glucose: return "Fingerstick"
             case .startOverride: return "Override"
@@ -99,6 +100,7 @@ final class RemoteCommandReceiptTracker: ObservableObject {
             if (message.bolusAmount ?? 0) > 0 { parts.insert(.bolus) }
             if message.commandType == .combo, let name = message.overrideName, !name.isEmpty { parts.insert(.override) }
             if message.commandType == .combo, (message.glucose ?? 0) > 0 { parts.insert(.glucose) }
+        case .editMeal: parts.insert(.meal)
         case .bolus: parts.insert(.bolus)
         case .glucose: parts.insert(.glucose)
         case .startOverride: parts.insert(.override)
@@ -110,7 +112,11 @@ final class RemoteCommandReceiptTracker: ObservableObject {
         if parts.isEmpty { parts.insert(.unknown) }
         var metadata = message
         metadata.sharedSecret = ""
-        let baseline = latest[site] ?? []
+        var baseline = latest[site] ?? []
+        // The selected old record must never acknowledge its own replacement.
+        if message.commandType == .editMeal, let raw = deletingTreatment, let original = Treatment(raw) {
+            baseline.append(original)
+        }
         let deletionCandidates = (deletingTreatment.map { [$0] }?.compactMap(Treatment.init) ?? baseline).filter {
             Self.isDeletionTarget($0, for: message)
         }
