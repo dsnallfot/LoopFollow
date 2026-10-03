@@ -8,7 +8,7 @@ final class RemoteCommandReceiptTracker: ObservableObject {
     static let dismissalDelay: TimeInterval = 30
 
     enum Part: String, Hashable {
-        case meal, bolus, glucose, override, target, cancelOverride, cancelTarget, unknown
+        case meal, bolus, glucose, override, target, cancelOverride, cancelTarget, deletion, unknown
     }
 
     struct Pending: Identifiable {
@@ -18,6 +18,7 @@ final class RemoteCommandReceiptTracker: ObservableObject {
         let message: PushMessage
         let baseline: [Treatment]
         let baselineIDs: Set<String>
+        let deletionTarget: Treatment?
         var remaining: Set<Part>
 
         var title: String {
@@ -59,6 +60,11 @@ final class RemoteCommandReceiptTracker: ObservableObject {
             return nil
         }
 
+        static func parseDate(_ raw: [String: Any]) -> Date? {
+            guard let text = raw["created_at"] as? String ?? raw["timestamp"] as? String else { return nil }
+            return fractionalFormatter.date(from: text) ?? formatter.date(from: text)
+        }
+
         init?(_ raw: [String: Any]) {
             guard let type = raw["eventType"] as? String, Self.relevantTypes.contains(type),
                   let text = raw["created_at"] as? String ?? raw["timestamp"] as? String,
@@ -79,34 +85,38 @@ final class RemoteCommandReceiptTracker: ObservableObject {
     var hasPendingCommands: Bool { !pending.isEmpty }
 
     /// Main-thread check and registration are synchronous so simultaneous sends cannot pass together.
-    func beginSend(_ message: PushMessage, id: String, site: String, now: Date = Date()) -> Bool {
+    func beginSend(_ message: PushMessage, id: String, site: String, now: Date = Date(), deletingTreatment: [String: Any]? = nil) -> Bool {
         guard !hasPendingCommands else { return false }
-        track(message, id: id, site: site, now: now)
+        track(message, id: id, site: site, now: now, deletingTreatment: deletingTreatment)
         return true
     }
 
-    func track(_ message: PushMessage, id: String, site: String, now: Date = Date()) {
+    func track(_ message: PushMessage, id: String, site: String, now: Date = Date(), deletingTreatment: [String: Any]? = nil) {
         var parts: Set<Part> = []
         switch message.commandType {
         case .meal, .combo:
             if [message.carbs, message.fat, message.protein].contains(where: { ($0 ?? 0) > 0 }) { parts.insert(.meal) }
             if (message.bolusAmount ?? 0) > 0 { parts.insert(.bolus) }
             if message.commandType == .combo, let name = message.overrideName, !name.isEmpty { parts.insert(.override) }
+            if message.commandType == .combo, (message.glucose ?? 0) > 0 { parts.insert(.glucose) }
         case .bolus: parts.insert(.bolus)
         case .glucose: parts.insert(.glucose)
         case .startOverride: parts.insert(.override)
         case .tempTarget: parts.insert(.target)
         case .cancelOverride: parts.insert(.cancelOverride)
         case .cancelTempTarget: parts.insert(.cancelTarget)
-        // Absence of a treatment is not enough to prove a deletion succeeded.
-        case .deleteMeal, .deleteGlucose: parts.insert(.unknown)
+        case .deleteMeal, .deleteGlucose: parts.insert(.deletion)
         }
         if parts.isEmpty { parts.insert(.unknown) }
         var metadata = message
         metadata.sharedSecret = ""
         let baseline = latest[site] ?? []
+        let deletionCandidates = (deletingTreatment.map { [$0] }?.compactMap(Treatment.init) ?? baseline).filter {
+            Self.isDeletionTarget($0, for: message)
+        }
+        let deletionTarget = deletionCandidates.count == 1 ? deletionCandidates.first : nil
         pending.append(Pending(id: id, sentAt: now, site: site, message: metadata,
-                               baseline: baseline, baselineIDs: Set(baseline.map(\.identity)), remaining: parts))
+                               baseline: baseline, baselineIDs: Set(baseline.map(\.identity)), deletionTarget: deletionTarget, remaining: parts))
     }
 
     func rejected(id: String) {
@@ -115,6 +125,12 @@ final class RemoteCommandReceiptTracker: ObservableObject {
 
     func dismiss(id: String, now: Date = Date()) {
         pending.removeAll { $0.id == id && now.timeIntervalSince($0.sentAt) >= Self.dismissalDelay }
+    }
+
+    /// Only for an explicit destructive confirmation; does not cancel the commands in Trio.
+    /// Limit dismissal to the commands the user was warned about.
+    func dismissForExplicitOverride(ids: Set<String>) {
+        pending.removeAll { ids.contains($0.id) }
     }
 
     func observe(_ entries: [[String: Any]], site: String, requestStartedAt: Date) {
@@ -133,6 +149,37 @@ final class RemoteCommandReceiptTracker: ObservableObject {
             }
         }
         pending = updated.filter { !$0.remaining.isEmpty }
+    }
+
+    private static func isDeletionTarget(_ entry: Treatment, for message: PushMessage) -> Bool {
+        guard let timestamp = message.scheduledTime,
+              abs(entry.date.timeIntervalSince1970 - timestamp) < 1 else { return false }
+        switch message.commandType {
+        case .deleteGlucose: return entry.type == "BG Check"
+        case .deleteMeal: return entry.type == "Carb Correction"
+        default: return false
+        }
+    }
+
+    /// Only call for successful network snapshots of the full, unfiltered date window.
+    /// Local optimistic removal, cached rows and partial responses are never evidence.
+    func observeDeletions(_ entries: [[String: Any]], site: String, requestStartedAt: Date,
+                          from: Date, through: Date, responseLimit: Int) {
+        guard pending.contains(where: { $0.site == site && $0.remaining == [.deletion] }),
+              from <= through, responseLimit > 0, entries.count < responseLimit,
+              entries.allSatisfy({ Treatment.parseDate($0) != nil && $0["eventType"] is String }) else { return }
+        pending.removeAll { command in
+            guard command.remaining == [.deletion], command.site == site,
+                  requestStartedAt >= command.sentAt, let target = command.deletionTarget,
+                  (from...through).contains(target.date) else { return false }
+            return !entries.contains { raw in
+                // Check IDs on the raw response too, even when a row's type was edited.
+                if let id = raw["_id"] as? String ?? raw["id"] as? String, id == target.identity { return true }
+                // A replacement document at the same treatment time is not a confirmed removal.
+                return raw["eventType"] as? String == target.type &&
+                    abs(Treatment.parseDate(raw)!.timeIntervalSince(target.date)) < 1
+            }
+        }
     }
 
     private func matches(_ entry: Treatment, part: Part, command: Pending) -> Bool {
@@ -194,7 +241,7 @@ final class RemoteCommandReceiptTracker: ObservableObject {
                 near(entry.number("targetTop"), Double(message.target ?? 0)) &&
                 near(entry.number("targetBottom"), Double(message.target ?? 0)) &&
                 near(entry.number("duration"), Double(message.duration ?? 0))
-        case .cancelOverride, .cancelTarget, .unknown: return false
+        case .cancelOverride, .cancelTarget, .deletion, .unknown: return false
         }
     }
 }

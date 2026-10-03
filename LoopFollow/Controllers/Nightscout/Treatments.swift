@@ -77,6 +77,13 @@ extension MainViewController {
                         RemoteCommandReceiptTracker.shared.observe(
                             entries.map { $0 as [String: Any] }, site: receiptSite, requestStartedAt: now
                         )
+                        if let from = NightscoutUtils.parseDate(startTimeString),
+                           let through = NightscoutUtils.parseDate(currentTimeString) {
+                            RemoteCommandReceiptTracker.shared.observeDeletions(
+                                entries.map { $0 as [String: Any] }, site: receiptSite, requestStartedAt: now,
+                                from: from, through: through, responseLimit: estimatedCount
+                            )
+                        }
                         self.updateTreatments(entries: entries, replacingRecentSince: now.addingTimeInterval(-24 * 60 * 60))
                     }
                     

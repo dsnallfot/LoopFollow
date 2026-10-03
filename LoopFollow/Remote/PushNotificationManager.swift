@@ -208,6 +208,7 @@ class PushNotificationManager {
 
     func sendDeleteMealPushNotification(
         mealDate: Date,
+        deletingTreatment: [String: Any]? = nil,
         completion: @escaping (Bool, String?) -> Void
     ) {
         let message = PushMessage(
@@ -219,11 +220,12 @@ class PushNotificationManager {
             scheduledTime: mealDate.timeIntervalSince1970
         )
 
-        sendPushNotification(message: message, completion: completion)
+        sendPushNotification(message: message, deletingTreatment: deletingTreatment, completion: completion)
     }
 
     func sendDeleteGlucosePushNotification(
         glucoseDate: Date,
+        deletingTreatment: [String: Any]? = nil,
         completion: @escaping (Bool, String?) -> Void
     ) {
         let message = PushMessage(
@@ -235,7 +237,7 @@ class PushNotificationManager {
             scheduledTime: glucoseDate.timeIntervalSince1970
         )
 
-        sendPushNotification(message: message, completion: completion)
+        sendPushNotification(message: message, deletingTreatment: deletingTreatment, completion: completion)
     }
 
     func sendMealPushNotification(
@@ -334,6 +336,7 @@ class PushNotificationManager {
         notes: String?,
         scheduledTime: Date?,
         override: ProfileManager.TrioOverride?,
+        glucose: HKQuantity? = nil,
         completion: @escaping (Bool, String?) -> Void
     ) {
         func convertToOptionalInt(_ quantity: HKQuantity) -> Int? {
@@ -346,6 +349,22 @@ class PushNotificationManager {
             let value = quantity.doubleValue(for: .internationalUnit())
             return value > 0 ? Decimal(value) : nil
         }
+
+        let now = Date()
+        let mmolValue = glucose?.doubleValue(for: HKUnit(from: "mmol/L"))
+        if let mmolValue {
+            guard mmolValue.isFinite, (0.1...50.0).contains(mmolValue) else {
+                completion(false, "Blodsocker måste vara mellan 0,1 och 50,0 mmol/L.")
+                return
+            }
+            if let scheduledTime {
+                guard scheduledTime >= Calendar.current.startOfDay(for: now), scheduledTime <= now else {
+                    completion(false, "Välj en tid under dagens datum som inte ligger i framtiden.")
+                    return
+                }
+            }
+        }
+        let glucoseDecimal = mmolValue.map { Decimal($0 * GlucoseConversion.mmolToMgDl) }
 
         let carbsValue = convertToOptionalInt(carbs)
         let proteinValue = convertToOptionalInt(protein)
@@ -390,6 +409,10 @@ class PushNotificationManager {
             alertString += "\nOverride: \(overrideName)"
         }
 
+        if let mmolValue {
+            alertString += "\nBlodsocker: \(String(format: "%.1f", mmolValue)) mmol/L"
+        }
+
         alertString += "\nTid: \(timeString)"
         alertString += "\nInlagt av: \(user)"
 
@@ -402,12 +425,13 @@ class PushNotificationManager {
             user: user,
             commandType: .combo,
             bolusAmount: bolusAmountValue,
+            glucose: glucoseDecimal,
             carbs: carbsValue,
             protein: proteinValue,
             fat: fatValue,
             notes: notes,
             sharedSecret: sharedSecret,
-            timestamp: Date().timeIntervalSince1970,
+            timestamp: now.timeIntervalSince1970,
             overrideName: override?.name,
             scheduledTime: scheduledTimeInterval
         )
@@ -464,7 +488,7 @@ class PushNotificationManager {
         return keyLines.joined()
     }
 
-    private func sendPushNotification(message: PushMessage, completion: @escaping (Bool, String?) -> Void) {
+    private func sendPushNotification(message: PushMessage, deletingTreatment: [String: Any]? = nil, completion: @escaping (Bool, String?) -> Void) {
         // Log metadata only: the payload contains the shared secret and treatment data.
         let notificationID = UUID().uuidString.lowercased()
         let logContext = "APNs \(notificationID) [\(message.commandType.rawValue)]"
@@ -538,7 +562,7 @@ class PushNotificationManager {
 
             DispatchQueue.main.async {
                 guard RemoteCommandReceiptTracker.shared.beginSend(
-                    message, id: notificationID, site: ObservableUserDefaults.shared.url.value
+                    message, id: notificationID, site: ObservableUserDefaults.shared.url.value, deletingTreatment: deletingTreatment
                 ) else {
                     completion(false, "Vänta tills föregående kommando registrerats i Nightscout eller avfärda varningen innan du skickar ett nytt.")
                     return

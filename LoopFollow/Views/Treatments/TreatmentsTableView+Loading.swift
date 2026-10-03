@@ -123,13 +123,20 @@ extension TreatmentsTableView {
 
         let params: [String: String] = [
             "find[created_at][$gte]": iso.string(from: start),
-            "find[created_at][$lte]": iso.string(from: end)
+            "find[created_at][$lte]": iso.string(from: end),
+            "count": "5000"
         ]
 
+        let requestStartedAt = Date()
+        let receiptSite = ObservableUserDefaults.shared.url.value
         NightscoutUtils.executeDynamicRequest(eventType: .treatments, parameters: params) { result in
             DispatchQueue.main.async {
                 if case .success(let raw) = result,
                    let entries = raw as? [[String: AnyObject]] {
+                    RemoteCommandReceiptTracker.shared.observeDeletions(
+                        entries.map { $0 as [String: Any] }, site: receiptSite, requestStartedAt: requestStartedAt,
+                        from: start, through: end, responseLimit: 5000
+                    )
                     let fetched = entries
                         .compactMap { Treatment(dictionary: $0) }
                         .sorted { $0.timestamp > $1.timestamp }
@@ -152,12 +159,19 @@ extension TreatmentsTableView {
         iso.timeZone = .current
         let params: [String: String] = [
             "find[created_at][$gte]": iso.string(from: start),
-            "find[created_at][$lte]": iso.string(from: end)
+            "find[created_at][$lte]": iso.string(from: end),
+            "count": "5000"
         ]
+        let requestStartedAt = Date()
+        let receiptSite = ObservableUserDefaults.shared.url.value
         NightscoutUtils.executeDynamicRequest(eventType: .treatments, parameters: params) { result in
             DispatchQueue.main.async {
                 if case .success(let raw) = result,
                    let entries = raw as? [[String: AnyObject]] {
+                    RemoteCommandReceiptTracker.shared.observeDeletions(
+                        entries.map { $0 as [String: Any] }, site: receiptSite, requestStartedAt: requestStartedAt,
+                        from: start, through: end, responseLimit: 5000
+                    )
                     let fetched = entries.compactMap { Treatment(dictionary: $0) }
                     self.treatments = fetched.sorted { $0.timestamp > $1.timestamp }
                 }

@@ -203,6 +203,8 @@ private struct ComboEditorView: View {
     @State private var fat = HKQuantity(unit: .gram(), doubleValue: 0.0)
     @State private var bolusAmount = HKQuantity(unit: .internationalUnit(), doubleValue: 0.0)
     @State private var notes: String = ""
+    // Fingerstick values belong to this send, never to the reusable preset.
+    @State private var manualGlucose = HKQuantity(unit: HKUnit(from: "mmol/L"), doubleValue: 0)
 
     private let pushNotificationManager = PushNotificationManager()
     private let profileManager = ProfileManager.shared
@@ -219,6 +221,7 @@ private struct ComboEditorView: View {
     @FocusState private var proteinFieldIsFocused: Bool
     @FocusState private var fatFieldIsFocused: Bool
     @FocusState private var bolusFieldIsFocused: Bool
+    @FocusState private var manualGlucoseFieldIsFocused: Bool
     @State private var notesFieldIsFocused: Bool = false
 
     @State private var showAlert: Bool = false
@@ -238,6 +241,7 @@ private struct ComboEditorView: View {
         case fat
         case notes
         case bolus
+        case glucose
     }
 
     enum AlertType {
@@ -361,6 +365,27 @@ private struct ComboEditorView: View {
                     }
                     .listRowBackground(Color(.systemGray).opacity(0.15))
                     
+                    if mode == .sendFromPreset {
+                        Section {
+                            HKQuantityInputView(
+                                label: "Blodsocker",
+                                quantity: $manualGlucose,
+                                unit: HKUnit(from: "mmol/L"),
+                                maxLength: 4,
+                                minValue: HKQuantity(unit: HKUnit(from: "mmol/L"), doubleValue: 0.1),
+                                maxValue: HKQuantity(unit: HKUnit(from: "mmol/L"), doubleValue: 50.0),
+                                isFocused: $manualGlucoseFieldIsFocused,
+                                onValidationError: { message in
+                                    handleValidationError(message)
+                                },
+                                nextToolbarAction: {
+                                    focusNextComboInput(after: .glucose)
+                                }
+                            )
+                        }
+                        .listRowBackground(Color(.systemGray).opacity(0.15))
+                    }
+
                     //if mealWithFatProtein.value {
                     Section() {
                         DatePicker(
@@ -377,7 +402,9 @@ private struct ComboEditorView: View {
                         if selectedTime != nil && (bolusAmount.doubleValue(for: .internationalUnit()) > 0 || selectedOverride != nil) {
                             HStack {
                                 Image(systemName: "info.circle")
-                                Text("Tiden gäller måltiden. Overriden aktiveras och bolusen ges omgående!")
+                                Text(optionalGlucose != nil
+                                     ? "Tiden gäller måltiden och blodsockret. Overriden aktiveras och bolusen ges omgående!"
+                                     : "Tiden gäller måltiden. Overriden aktiveras och bolusen ges omgående!")
                             }
                                 .font(.caption2)
                         }
@@ -393,6 +420,7 @@ private struct ComboEditorView: View {
                             clearComboInputFocus()
 
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                guard !(showAlert && alertType == .validationError) else { return }
                                 guard hasAnyComboPayload else {
                                     handleValidationError("Du måste ange minst ett värde för kolhydrater, protein, fett, bolus eller välja en override.")
                                     return
@@ -574,6 +602,10 @@ private struct ComboEditorView: View {
                     message += "\nOverride: \(selectedOverride.name)"
                 }
 
+                if let glucose = optionalGlucose {
+                    message += String(format: "\nBlodsocker: %.1f mmol/L", glucose.doubleValue(for: HKUnit(from: "mmol/L")))
+                }
+
                 if !notes.isEmpty {
                     message += "\n\nAnteckning: \(notes)"
                 }
@@ -646,6 +678,10 @@ private struct ComboEditorView: View {
             order.append(.bolus)
         }
 
+        if mode == .sendFromPreset {
+            order.append(.glucose)
+        }
+
         return order
     }
 
@@ -656,6 +692,7 @@ private struct ComboEditorView: View {
         fatFieldIsFocused = false
         bolusFieldIsFocused = false
         notesFieldIsFocused = false
+        manualGlucoseFieldIsFocused = false
     }
 
     private func focusNextComboInput(after currentField: ComboInputField) {
@@ -682,6 +719,8 @@ private struct ComboEditorView: View {
                 notesFieldIsFocused = true
             case .bolus:
                 bolusFieldIsFocused = true
+            case .glucose:
+                manualGlucoseFieldIsFocused = true
             }
         }
     }
@@ -732,6 +771,12 @@ private struct ComboEditorView: View {
             return String(format: "⛔️ Max protein %.0f g", maxProteinValue)
         }
         return nil
+    }
+
+    private var optionalGlucose: HKQuantity? {
+        guard mode == .sendFromPreset,
+              manualGlucose.doubleValue(for: HKUnit(from: "mmol/L")) > 0 else { return nil }
+        return manualGlucose
     }
 
     private var hasMealPayload: Bool {
@@ -815,6 +860,9 @@ private struct ComboEditorView: View {
             : HKQuantity(unit: .internationalUnit(), doubleValue: 0.0)
 
         func successStatusMessage() -> String {
+            if optionalGlucose != nil {
+                return "Snabbval med blodsocker har skickats"
+            }
             switch (shouldSendBolusPayload, shouldSendOverridePayload, shouldSendMealPayload) {
             case (true, true, true):
                 return "Bolus-, override- och måltidskommando lyckades"
@@ -857,7 +905,8 @@ private struct ComboEditorView: View {
                 bolusAmount: comboBolusAmount,
                 notes: finalNotes,
                 scheduledTime: scheduledDate,
-                override: selectedOverride
+                override: selectedOverride,
+                glucose: optionalGlucose
             ) { success, errorMessage in
                 DispatchQueue.main.async {
                     if success {

@@ -13,9 +13,13 @@ extension TreatmentsTableView {
         let deleteAction = UIContextualAction(style: .destructive, title: nil) { (action, view, completionHandler) in
             // Retrieve remote type from Storage.
             let remoteType = Storage.shared.remoteType.value
+            // Trio retains only 24 hours of history. Leave five minutes for delivery,
+            // and evaluate the age when deletion is tapped, not when the row is drawn.
+            let isWithinTrioHistory = Date().timeIntervalSince(treatment.timestamp) < (23 * 60 + 55) * 60
 
             // Offer remote meal deletion via SMS or TRC, and glucose deletion via TRC.
-            if treatment.eventType == "Carb Correction",
+            if isWithinTrioHistory,
+               treatment.eventType == "Carb Correction",
                let foodType = treatment.rawData["foodType"] as? String, !foodType.isEmpty,
                remoteType == .sms {
                 let alert = UIAlertController(
@@ -58,7 +62,7 @@ extension TreatmentsTableView {
                     completionHandler(false)
                 }))
                 self.present(alert, animated: true, completion: nil)
-            } else if remoteType == .trc,
+            } else if isWithinTrioHistory, remoteType == .trc,
                       treatment.eventType == "BG Check" ||
                       (treatment.eventType == "Carb Correction" &&
                        !(treatment.rawData["foodType"] as? String ?? "").isEmpty) {
@@ -70,28 +74,38 @@ extension TreatmentsTableView {
                     preferredStyle: .alert
                 )
 
-                alert.addAction(UIAlertAction(title: "Trio & Nightscout", style: .default, handler: { _ in
-                    completionHandler(true)
-                    self.applyLocalTreatmentDeletion(treatment)
-                    let pushNotificationManager = PushNotificationManager()
-                    let completion: (Bool, String?) -> Void = { success, errorMessage in
-                        DispatchQueue.main.async {
-                            if !success {
-                                self.restoreLocalTreatment(treatment)
-                            }
-                            let resultAlert = UIAlertController(
-                                title: "Status",
-                                message: success ? "Raderingskommando skickades" : (errorMessage ?? "Raderingskommando misslyckades"),
-                                preferredStyle: .alert
-                            )
-                            resultAlert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-                            self.present(resultAlert, animated: true, completion: nil)
-                        }
+                alert.addAction(UIAlertAction(title: "Trio & Nightscout", style: .default, handler: { [weak alert] _ in
+                    guard let alert else {
+                        completionHandler(false)
+                        return
                     }
-                    if isGlucose {
-                        pushNotificationManager.sendDeleteGlucosePushNotification(glucoseDate: treatment.timestamp, completion: completion)
-                    } else {
-                        pushNotificationManager.sendDeleteMealPushNotification(mealDate: treatment.timestamp, completion: completion)
+                    alert.dismiss(animated: true) {
+                        self.confirmPendingRemoteDeletion(send: {
+                            completionHandler(true)
+                            self.applyLocalTreatmentDeletion(treatment)
+                            let pushNotificationManager = PushNotificationManager()
+                            let completion: (Bool, String?) -> Void = { success, errorMessage in
+                                DispatchQueue.main.async {
+                                    if !success {
+                                        self.restoreLocalTreatment(treatment)
+                                    }
+                                    let resultAlert = UIAlertController(
+                                        title: "Status",
+                                        message: success ? "Raderingskommando skickades" : (errorMessage ?? "Raderingskommando misslyckades"),
+                                        preferredStyle: .alert
+                                    )
+                                    resultAlert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                                    self.present(resultAlert, animated: true, completion: nil)
+                                }
+                            }
+                            if isGlucose {
+                                pushNotificationManager.sendDeleteGlucosePushNotification(glucoseDate: treatment.timestamp, deletingTreatment: treatment.rawData, completion: completion)
+                            } else {
+                                pushNotificationManager.sendDeleteMealPushNotification(mealDate: treatment.timestamp, deletingTreatment: treatment.rawData, completion: completion)
+                            }
+                        }, onCancel: {
+                            completionHandler(false)
+                        })
                     }
                 }))
 
@@ -134,6 +148,8 @@ extension TreatmentsTableView {
                     } else {
                         displayEventName = "Fett & Protein"
                     }
+                } else if treatment.eventType == "BG Check" {
+                    displayEventName = "Fingerstick"
                 } else if treatment.eventType == "Note" {
                     displayEventName = "Notering"
                 } else if treatment.eventType == "Exercise" {

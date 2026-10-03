@@ -3,6 +3,31 @@ import LocalAuthentication
 import AudioToolbox
 
 extension TreatmentsTableView {
+    /// Called after the deletion-destination alert has finished dismissing.
+    func confirmPendingRemoteDeletion(send: @escaping () -> Void, onCancel: @escaping () -> Void) {
+        let tracker = RemoteCommandReceiptTracker.shared
+        guard tracker.hasPendingCommands else {
+            send()
+            return
+        }
+
+        let pendingIDs = Set(tracker.pending.map(\.id))
+        let alert = UIAlertController(
+            title: "Remote kommando pågår",
+            message: "Ett annat remote kommando har nyss skickats och inte klarrapporterats i Nightscout ännu. Avvakta en stund innan du försöker igen.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Skicka ändå", style: .destructive) { [weak alert] _ in
+            guard let alert else { return }
+            tracker.dismissForExplicitOverride(ids: pendingIDs)
+            alert.dismiss(animated: true, completion: send)
+        })
+        alert.addAction(UIAlertAction(title: "Avbryt", style: .cancel) { _ in
+            onCancel()
+        })
+        present(alert, animated: true)
+    }
+
     // MARK: - Remote Delete for Carb Correction (Trio)
         func deleteEntryInTrio(for treatment: Treatment) {
             // Extract carbohydrates from treatment's rawData.
