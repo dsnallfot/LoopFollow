@@ -14,10 +14,14 @@ nightscout = nightscout.replace('FileManager.default\n            .urls(for: .ca
 stats = (repo / 'LoopFollow/Stats/StatsHelpers/StatsDataService.swift').read_text()
 stats = stats[:stats.index('\nclass StatsDataService {')]
 fetcher = (repo / 'LoopFollow/Stats/StatsHelpers/StatsDataFetcher.swift').read_text()
+share = (repo / 'LoopFollow/Extensions/ShareClientExtension.swift').read_text()
+share = share[share.index('public struct ShareGlucoseData:'):share.index('private var TrendTable:')]
+counts = (repo / 'LoopFollow/Views/Glucose/Statistics/GlucoseStatsViewController+DailyCounts.swift').read_text()
+counts = counts.replace('import UIKit', 'import Foundation').replace('import Charts', '')
 stubs = r'''
 import Foundation
 let testRoot = URL(fileURLWithPath: CommandLine.arguments[1])
-struct ShareGlucoseData: Codable { var sgv: Int; var date: Double; var direction: String? }
+class GlucoseStatsViewController {}
 class MainViewController {
     struct bolusGraphStruct { var value: Double; var date: Double; var sgv: Int }
     struct carbGraphStruct { var value: Double; var date: Double; var sgv: Int; var absorptionTime: Int; var foodType: String?; var fat: Double; var protein: Double }
@@ -98,6 +102,60 @@ NightscoutCache.refreshTreatmentsWindow(from: now.addingTimeInterval(-86400), to
 check(try NightscoutCache.readDay(recent).treatments.isEmpty, "empty snapshot failed to delete recent treatment")
 check(try NightscoutCache.readDay(recent).sgv.count == 1, "treatment refresh deleted glucose")
 check(try NightscoutCache.readDay(oldDate).treatments.count == 400, "recent deletion touched old day")
+
+// Decode actual Nightscout payloads, including fractional seconds and time zones.
+func decodeReading(_ sentAt: String?) throws -> ShareGlucoseData {
+    var payload: [String: Any] = ["date": 1_790_115_214_758.0, "sgv": 199]
+    if let sentAt { payload["trioSentAt"] = sentAt }
+    return try JSONDecoder().decode(ShareGlucoseData.self, from: JSONSerialization.data(withJSONObject: payload))
+}
+let uploaded = try decodeReading("2026-09-22T22:13:40.896Z")
+let offsetUpload = try decodeReading("2026-09-23T00:13:40.896+02:00")
+check(uploaded.trioSentAt == offsetUpload.trioSentAt, "upload timezone was ignored")
+check(uploaded.trioSentAt != nil, "fractional upload timestamp was lost")
+check(try decodeReading("2026-09-22T22:13:40Z").trioSentAt != nil, "whole-second upload timestamp rejected")
+check(try decodeReading(nil).trioSentAt == nil, "old payload no longer decodes")
+check(try decodeReading("invalid").sgv == 199, "bad optional timestamp discarded glucose")
+let readingTime = recent.timeIntervalSince1970.rounded() + 0.125
+let onTime = SGVJSON(date: readingTime, sgv: 100, trioSentAt: Date(timeIntervalSince1970: readingTime + 60))
+let delayed = SGVJSON(date: readingTime, sgv: 100, trioSentAt: Date(timeIntervalSince1970: readingTime + 60.001))
+check(!onTime.delayedReading && delayed.delayedReading, "strict 60-second threshold failed")
+check(SGVJSON(date: readingTime * 1000, sgv: 100, trioSentAt: delayed.trioSentAt).delayedReading, "millisecond threshold failed")
+let legacySGV = try JSONDecoder().decode(SGVJSON.self, from: Data("{\"date\":1000,\"sgv\":100}".utf8))
+check(legacySGV.trioSentAt == nil && !legacySGV.delayedReading, "legacy cache not treated as real-time")
+let roundTrip = try JSONDecoder().decode(SGVJSON.self, from: JSONEncoder().encode(delayed))
+check(roundTrip == delayed, "cache round trip lost upload metadata")
+NightscoutCache.mergeSGVBatch([delayed])
+NightscoutCache.mergeSGVBatch([SGVJSON(date: readingTime.rounded(), sgv: 101)])
+let preserved = try NightscoutCache.readDay(recent).sgv.first { $0.date.rounded() == readingTime.rounded() }!
+check(preserved.sgv == 101 && preserved.trioSentAt == delayed.trioSentAt && preserved.delayedReading, "Dexcom overwrite lost precision/upload time")
+let enriched = SGVJSON.includingUploadTimes([SGVJSON(date: readingTime.rounded(), sgv: 101)], from: [delayed])
+check(enriched.count == 1 && enriched[0].delayedReading && enriched[0].sgv == 101, "upload enrichment lost delay or changed value")
+let bucketStart = floor(readingTime / 240) * 240
+let duplicateEarly = SGVJSON(date: bucketStart + 1, sgv: 100)
+let duplicateLate = SGVJSON(date: bucketStart + 2, sgv: 100, trioSentAt: Date(timeIntervalSince1970: bucketStart + 100))
+let daily = GlucoseStatsViewController()
+let samples = [duplicateEarly, duplicateLate, SGVJSON(date: bucketStart + 300, sgv: 101)]
+check(daily.countsByDayFromSGVJSON(samples, bucketSeconds: 240).values.reduce(0, +) == 2, "all-values count changed")
+check(daily.countsByDayFromSGVJSON(samples, bucketSeconds: 240, realtimeOnly: true).values.reduce(0, +) == 1, "late newest duplicate counted as real-time")
+// A backfill batch shares one upload time, but each reading has its own delay.
+let batchUploadTime = bucketStart + 1200
+let backfillBatch = (0..<5).map { index in
+    SGVJSON(date: bucketStart + Double(index) * 300, sgv: 100,
+            trioSentAt: Date(timeIntervalSince1970: batchUploadTime))
+}
+check(backfillBatch.filter { $0.delayedReading }.count == 4, "backfill classified as one upload instead of separate readings")
+check(daily.countsByDayFromSGVJSON(backfillBatch, bucketSeconds: 240, realtimeOnly: true).values.reduce(0, +) == 1, "fresh tail of backfill was not counted")
+let fullDay: [SGVJSON] = (0..<288).map { (index: Int) -> SGVJSON in
+    let timestamp = Double(index) * 300
+    let delay: Double = index < 28 ? 61 : 6
+    return SGVJSON(date: timestamp, sgv: 100,
+                   trioSentAt: Date(timeIntervalSince1970: timestamp + delay))
+}
+check(daily.countsByDayFromSGVJSON(fullDay, bucketSeconds: 240).values.reduce(0, +) == 288, "full day denominator baseline changed")
+check(daily.countsByDayFromSGVJSON(fullDay, bucketSeconds: 240, realtimeOnly: true).values.reduce(0, +) == 260, "daily real-time numerator includes delays")
+print("PASS upload decoding, legacy compatibility, strict delay boundary, metadata preservation and real-time daily counts")
+
 // Concurrent BG and treatment transactions on the same day must preserve both.
 DispatchQueue.concurrentPerform(iterations: 80) { i in
     let sampleTime = oldDate.addingTimeInterval(Double(i) * 300)
@@ -222,7 +280,7 @@ tests = tests.replace('check(try ', 'try check(try ')
 with tempfile.TemporaryDirectory(prefix='loopfollow-cache-tests-') as directory:
     temp = Path(directory)
     source = temp / 'main.swift'
-    source.write_text(stubs + '\n' + nightscout + '\n' + stats + '\n' + fetcher + '\n' + tests)
+    source.write_text(stubs + '\n' + share + '\n' + counts + '\n' + nightscout + '\n' + stats + '\n' + fetcher + '\n' + tests)
     binary = temp / 'cache-tests'
     subprocess.run(['xcrun', 'swiftc', '-swift-version', '5', '-module-cache-path', str(temp / 'modules'), str(source), '-o', str(binary)], check=True)
     subprocess.run([str(binary), str(temp / 'data')], check=True)
