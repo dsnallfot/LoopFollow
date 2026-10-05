@@ -229,13 +229,14 @@ class CompositeRenderer: LineChartRenderer {
     }
 
     override func drawExtras(context: CGContext) {
+        // Draw the background band first, then render circles/accessibility once.
+        inRangeBandRenderer.drawOverlay(context: context)
         super.drawExtras(context: context)
-        inRangeBandRenderer.drawExtras(context: context)
-        tempTargetRenderer.drawExtras(context: context)
-        bgCheckRenderer.drawExtras(context: context)
-        trainingSessionRenderer.drawExtras(context: context)
+        tempTargetRenderer.drawOverlay(context: context)
+        bgCheckRenderer.drawOverlay(context: context)
+        trainingSessionRenderer.drawOverlay(context: context)
         // Daniel: Do not draw those triangles for smbs //
-        triangleRenderer.drawExtras(context: context)
+        triangleRenderer.drawOverlay(context: context)
         drawDelayedGlucoseArrows(context: context)
         drawOverrideLabels(context: context)
         viewportDidDraw?()
@@ -267,9 +268,12 @@ class CompositeRenderer: LineChartRenderer {
             context.restoreGState()
         }
 
+        let visibleStart = provider.lowestVisibleX
+        let visibleEnd = provider.highestVisibleX
         for index in 0..<overrides.entryCount {
             guard let entry = overrides.entryForIndex(index) as? OverrideChartDataEntry,
-                  !entry.graphLabel.isEmpty, entry.xEnd > entry.x else { continue }
+                  !entry.graphLabel.isEmpty, entry.xEnd > entry.x,
+                  entry.xEnd >= visibleStart, entry.x <= visibleEnd else { continue }
             let start = transformer.pixelForValues(x: entry.x, y: entry.y * animator.phaseY)
             let end = transformer.pixelForValues(x: entry.xEnd, y: entry.yBottom * animator.phaseY)
             let bar = CGRect(x: min(start.x, end.x), y: min(start.y, end.y),
@@ -344,8 +348,7 @@ class TriangleRenderer: LineChartRenderer {
         super.init(dataProvider: dataProvider!, animator: animator!, viewPortHandler: viewPortHandler!)
     }
     
-    override func drawExtras(context: CGContext) {
-        super.drawExtras(context: context)
+    func drawOverlay(context: CGContext) {
         
         guard let dataProvider = dataProvider else { return }
         
@@ -357,7 +360,8 @@ class TriangleRenderer: LineChartRenderer {
                 guard let e = lineDataSet.entryForIndex(j) else { continue }
                 
                 let pt = trans.pixelForValues(x: e.x, y: e.y * phaseY)
-                
+                guard viewPortHandler.contentRect.insetBy(dx: -6, dy: -6).contains(pt) else { continue }
+
                 context.saveGState()
                 context.beginPath()
                 context.move(to: CGPoint(x: pt.x, y: pt.y - 6))
@@ -452,8 +456,7 @@ class TempTargetRenderer: LineChartRenderer {
         super.init(dataProvider: dataProvider!, animator: animator!, viewPortHandler: viewPortHandler!)
     }
 
-    override func drawExtras(context: CGContext) {
-        super.drawExtras(context: context)
+    func drawOverlay(context: CGContext) {
 
         guard let dataProvider = dataProvider else { return }
 
@@ -499,14 +502,14 @@ class OverviewChartRenderer: TempTargetRenderer {
 
     override func drawExtras(context: CGContext) {
         super.drawExtras(context: context)
+        drawOverlay(context: context)
         viewportDidDraw?()
     }
 }
 
 class InRangeBandRenderer: LineChartRenderer {
 
-    override func drawExtras(context: CGContext) {
-        super.drawExtras(context: context)
+    func drawOverlay(context: CGContext) {
 
         guard let dataProvider = dataProvider else { return }
 
@@ -559,8 +562,7 @@ class BGCheckRenderer: LineChartRenderer {
         super.init(dataProvider: dataProvider!, animator: animator!, viewPortHandler: viewPortHandler!)
     }
 
-    override func drawExtras(context: CGContext) {
-        super.drawExtras(context: context)
+    func drawOverlay(context: CGContext) {
 
         guard let dataProvider = dataProvider else { return }
         guard (dataProvider.lineData?.dataSets.count ?? 0) > bgCheckDataSetIndex,
@@ -621,8 +623,7 @@ class TrainingSessionRenderer: LineChartRenderer {
         super.init(dataProvider: dataProvider!, animator: animator!, viewPortHandler: viewPortHandler!)
     }
 
-    override func drawExtras(context: CGContext) {
-        super.drawExtras(context: context)
+    func drawOverlay(context: CGContext) {
 
         guard let dataProvider = dataProvider else { return }
         guard (dataProvider.lineData?.dataSets.count ?? 0) > trainingDataSetIndex,
