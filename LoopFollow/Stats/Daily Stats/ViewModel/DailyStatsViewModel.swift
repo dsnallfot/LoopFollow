@@ -16,9 +16,15 @@ final class DailyStatsViewModel: ObservableObject {
     /// True när vi filtrerar på pumpbytesdagar i stället för veckodagar.
     @Published var usePumpChangeDays: Bool = false
     
+    /// True när vi endast vill visa dagar utan pumpbyte.
+    @Published var useNonPumpChangeDays: Bool = false
+
     /// True när vi filtrerar på sensorbytesdagar i stället för veckodagar.
     @Published var useSensorChangeDays: Bool = false
     
+    /// True när vi endast vill visa dagar utan sensorbyte.
+    @Published var useNonSensorChangeDays: Bool = false
+
     /// True när vi endast vill visa sjukdagar.
     @Published var useSickDays: Bool = false
 

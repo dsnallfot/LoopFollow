@@ -11,11 +11,11 @@ extension DailyStatsView {
                 showWeekdayFilter = true
             } label: {
                 let (symbolName, symbolColor): (String, Color) = {
-                    if viewModel.usePumpChangeDays {
+                    if viewModel.usePumpChangeDays || viewModel.useNonPumpChangeDays {
                         // Pumpbytesdagar-filter aktivt
                         return ("fuelpump", .blue)
                     }
-                    if viewModel.useSensorChangeDays {
+                    if viewModel.useSensorChangeDays || viewModel.useNonSensorChangeDays {
                         // Sensorbytesdagar-filter aktivt
                         return ("sensor.tag.radiowaves.forward", .blue)
                     }
@@ -47,6 +47,15 @@ extension DailyStatsView {
 
                 Image(systemName: symbolName)
                     .foregroundColor(symbolColor)
+                    .overlay(alignment: .bottomTrailing) {
+                        if viewModel.useNonPumpChangeDays || viewModel.useNonSensorChangeDays {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.system(size: 10))
+                                .symbolRenderingMode(.palette)
+                                .foregroundStyle(.white, .blue)
+                                .offset(x: 5, y: 4)
+                        }
+                    }
             }
         }
 

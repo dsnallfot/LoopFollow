@@ -77,7 +77,7 @@ extension DailyStatsViewModel {
     }
 
     /// Rader som ligger i scope och matchar det aktuella filtret.
-    /// Antingen veckodagar (default) eller specifika pumpbytesdagar.
+    /// Antingen veckodagar (default) eller ett specialfilter.
     var filteredRowsForDisplay: [DailyStatRow] {
         let base = rowsWithSufficientGlucose
         let calendar = Calendar.current
@@ -94,6 +94,15 @@ extension DailyStatsViewModel {
             }
         }
 
+        // Dagar utan pumpbyte
+        if useNonPumpChangeDays {
+            let changeDays = pumpChangeDays
+            return base.filter { row in
+                let day = calendar.startOfDay(for: row.date)
+                return !changeDays.contains(day)
+            }
+        }
+
         // 2) Sensorbytesfilter aktivt
         if useSensorChangeDays {
             let sensorDays = sensorChangeDays
@@ -106,6 +115,15 @@ extension DailyStatsViewModel {
             }
         }
         
+        // Dagar utan sensorbyte
+        if useNonSensorChangeDays {
+            let changeDays = sensorChangeDays
+            return base.filter { row in
+                let day = calendar.startOfDay(for: row.date)
+                return !changeDays.contains(day)
+            }
+        }
+
         // 3) Sjukdagsfilter aktivt
         if useSickDays {
             let sickDays = sickDays
@@ -138,9 +156,9 @@ extension DailyStatsViewModel {
         }
     }
     
-    /// True om något filter är aktivt (veckodagar != alla eller pumpbytesdagar).
+    /// True om något veckodagsfilter eller specialfilter är aktivt.
     var isWeekdayFilterActive: Bool {
-        usePumpChangeDays || useSensorChangeDays || useSickDays || useNonSickDays || selectedWeekdays != allWeekdaysSet
+        usePumpChangeDays || useNonPumpChangeDays || useSensorChangeDays || useNonSensorChangeDays || useSickDays || useNonSickDays || selectedWeekdays != allWeekdaysSet
     }
 
     private func rowHasAnyGlucoseCount(_ row: DailyStatRow) -> Bool {

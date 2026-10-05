@@ -101,7 +101,7 @@ extension TreatmentsTableView {
             } else if let noteText = fullNote, noteText.contains("Trio startades om") {
                 return ("repeat.circle.fill", .label.withAlphaComponent(0.5))
             } else {
-                return ("circle.fill", .label.withAlphaComponent(0.5))
+                return ("info.circle.fill", .label.withAlphaComponent(0.5))
             }
         case "Site Change", "Insulin Change", "Sensor Start", "Sensor Change", "Sensorbyte", "Sensorstart":
             return ("repeat.circle.fill", .systemTeal.withAlphaComponent(0.75))

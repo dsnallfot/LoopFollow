@@ -69,9 +69,17 @@ struct DailyStatsView: View {
                                 get: { viewModel.usePumpChangeDays },
                                 set: { viewModel.usePumpChangeDays = $0 }
                             ),
+                            useNonPumpChangeDays: Binding(
+                                get: { viewModel.useNonPumpChangeDays },
+                                set: { viewModel.useNonPumpChangeDays = $0 }
+                            ),
                             useSensorChangeDays: Binding(
                                 get: { viewModel.useSensorChangeDays },
                                 set: { viewModel.useSensorChangeDays = $0 }
+                            ),
+                            useNonSensorChangeDays: Binding(
+                                get: { viewModel.useNonSensorChangeDays },
+                                set: { viewModel.useNonSensorChangeDays = $0 }
                             ),
                             useSickDays: Binding(
                                 get: { viewModel.useSickDays },
