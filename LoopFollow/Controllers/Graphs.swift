@@ -75,6 +75,22 @@ class TreatmentChartDataEntry: ChartDataEntry {
     }
 }
 
+// One entry per override carries its title and bounds, separate from the tap popup.
+class OverrideChartDataEntry: TreatmentChartDataEntry {
+    var graphLabel = ""
+    var xEnd: Double = 0
+    var yBottom: Double = 0
+
+    override func copy(with zone: NSZone? = nil) -> Any {
+        let copy = OverrideChartDataEntry(x: x, y: y, data: data)
+        copy.treatmentTimestamp = treatmentTimestamp
+        copy.graphLabel = graphLabel
+        copy.xEnd = xEnd
+        copy.yBottom = yBottom
+        return copy
+    }
+}
+
 // Keep the compact graph label separate from the detailed highlight popup.
 class CarbChartDataEntry: TreatmentChartDataEntry {
     var graphLabel = ""
@@ -221,7 +237,52 @@ class CompositeRenderer: LineChartRenderer {
         // Daniel: Do not draw those triangles for smbs //
         triangleRenderer.drawExtras(context: context)
         drawDelayedGlucoseArrows(context: context)
+        drawOverrideLabels(context: context)
         viewportDidDraw?()
+    }
+
+    private func drawOverrideLabels(context: CGContext) {
+        guard let provider = dataProvider,
+              let data = provider.lineData,
+              data.dataSetCount > GraphDataIndex.override.rawValue,
+              let overrides = data.dataSets[GraphDataIndex.override.rawValue] as? LineChartDataSet,
+              overrides.isVisible, overrides.isDrawFilledEnabled else { return }
+
+        let transformer = provider.getTransformer(forAxis: overrides.axisDependency)
+        let font = UIFont.systemFont(ofSize: 10, weight: .medium)
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        paragraph.lineBreakMode = .byTruncatingTail
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: UIColor.white,
+            .paragraphStyle: paragraph
+        ]
+
+        context.saveGState()
+        context.clip(to: viewPortHandler.contentRect)
+        UIGraphicsPushContext(context)
+        defer {
+            UIGraphicsPopContext()
+            context.restoreGState()
+        }
+
+        for index in 0..<overrides.entryCount {
+            guard let entry = overrides.entryForIndex(index) as? OverrideChartDataEntry,
+                  !entry.graphLabel.isEmpty, entry.xEnd > entry.x else { continue }
+            let start = transformer.pixelForValues(x: entry.x, y: entry.y * animator.phaseY)
+            let end = transformer.pixelForValues(x: entry.xEnd, y: entry.yBottom * animator.phaseY)
+            let bar = CGRect(x: min(start.x, end.x), y: min(start.y, end.y),
+                             width: abs(end.x - start.x), height: abs(end.y - start.y))
+            let visibleBar = bar.intersection(viewPortHandler.contentRect)
+            // Center in the visible portion, and omit text on very short overrides.
+            guard !visibleBar.isNull, visibleBar.width >= 24,
+                  visibleBar.height >= ceil(font.lineHeight) else { continue }
+            let labelRect = CGRect(x: visibleBar.minX + 4,
+                                   y: visibleBar.midY - ceil(font.lineHeight) / 2,
+                                   width: visibleBar.width - 8, height: ceil(font.lineHeight))
+            (entry.graphLabel as NSString).draw(in: labelRect, withAttributes: attributes)
+        }
     }
 
     /// Only the main chart uses this renderer. Draw in screen coordinates so the
@@ -3195,8 +3256,14 @@ extension MainViewController {
             }
             
             // Start dot: at yTop.
-            let startDot = TreatmentChartDataEntry(x: Double(thisItem.date + 1), y: yTop, data: labelText)
+            let startDot = OverrideChartDataEntry(x: Double(thisItem.date + 1), y: yTop, data: labelText)
             startDot.treatmentTimestamp = thisItem.date
+            startDot.graphLabel = (thisItem.notes ?? "")
+                .components(separatedBy: .whitespacesAndNewlines)
+                .filter { !$0.isEmpty }
+                .joined(separator: " ")
+            startDot.xEnd = Double(thisItem.endDate - 2)
+            startDot.yBottom = yBottom
             chart.addEntry(startDot)
             if UserDefaultsRepository.smallGraphTreatments.value {
                 BGChartFull.data?.dataSets[dataIndex].addEntry(startDot)
