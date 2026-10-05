@@ -218,6 +218,7 @@ struct DexcomSensorErrorOutageCacheItem: Codable, Equatable {
             !($0.notes?.localizedCaseInsensitiveContains("värms upp") ?? false) &&
             !($0.notes?.localizedCaseInsensitiveContains("löpt ut") ?? false) &&
             !($0.notes?.localizedCaseInsensitiveContains("stoppades") ?? false) &&
+            !($0.notes?.localizedCaseInsensitiveContains("återställd") ?? false) &&
             $0.created_at <= now
         }.sorted { $0.created_at < $1.created_at }
         var result: [Self] = []

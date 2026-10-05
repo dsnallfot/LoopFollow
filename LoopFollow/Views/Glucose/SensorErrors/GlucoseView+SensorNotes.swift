@@ -74,6 +74,8 @@ extension GlucoseView {
                 .localizedCaseInsensitiveContains("löpt ut") ?? false) &&
             !(($0.rawData["notes"] as? String)?
                 .localizedCaseInsensitiveContains("stoppades") ?? false) &&
+            !(($0.rawData["notes"] as? String)?
+                .localizedCaseInsensitiveContains("återställd") ?? false) &&
             // Must be after last successful BG (if known)
             (start == nil || $0.timestamp >= start!) &&
             // And must be before recovery (or end bound)
@@ -124,7 +126,9 @@ extension GlucoseView {
             !(($0.rawData["notes"] as? String)?
                 .localizedCaseInsensitiveContains("löpt ut") ?? false) &&
             !(($0.rawData["notes"] as? String)?
-                .localizedCaseInsensitiveContains("stoppades") ?? false)
+                .localizedCaseInsensitiveContains("stoppades") ?? false) &&
+            !(($0.rawData["notes"] as? String)?
+                .localizedCaseInsensitiveContains("återställd") ?? false)
         }
 
         guard !candidates.isEmpty else { return nil }
