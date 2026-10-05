@@ -92,6 +92,8 @@ extension TreatmentsTableView {
                 return ("exclamationmark.triangle.fill", .systemYellow.withAlphaComponent(0.85))
             } else if let noteText = fullNote, noteText.contains("⛔️") {
                 return ("exclamationmark.triangle.fill", .systemRed.withAlphaComponent(0.85))
+            } else if let noteText = fullNote, noteText.contains("✅") {
+                return ("checkmark.square.fill", .systemGreen.withAlphaComponent(0.85))
             } else if let noteText = fullNote, noteText.contains("Meta Quest spel startades") || noteText.contains("Träning startades") {
                 return ("play.circle.fill", .systemGreen.withAlphaComponent(0.75))
             } else if let noteText = fullNote, noteText.contains("Meta Quest spel avslutades") || noteText.contains("Träning avslutades") {

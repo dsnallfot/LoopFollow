@@ -304,7 +304,9 @@ class TriangleRenderer: LineChartRenderer {
                 context.addLine(to: CGPoint(x: pt.x + 6, y: pt.y + 6))
                 context.closePath()
                 
-                context.setFillColor(lineDataSet.circleColors.first!.cgColor)
+                let color = lineDataSet.circleColors.indices.contains(j)
+                    ? lineDataSet.circleColors[j] : .systemYellow
+                context.setFillColor(color.cgColor)
                 context.fillPath()
                 
                 context.restoreGState()
@@ -2656,9 +2658,13 @@ extension MainViewController {
     }
     
     func updateWarningGraph() {
-        var dataIndex = 20
-        BGChart.lineData?.dataSets[dataIndex].clear()
-        BGChartFull.lineData?.dataSets[dataIndex].clear()
+        let dataIndex = GraphDataIndex.warningEvent.rawValue
+        guard let mainChart = BGChart.lineData?.dataSets[dataIndex] as? LineChartDataSet,
+              let smallChart = BGChartFull.lineData?.dataSets[dataIndex] as? LineChartDataSet else { return }
+        mainChart.clear()
+        smallChart.clear()
+        mainChart.circleColors.removeAll()
+        smallChart.circleColors.removeAll()
         let thisData = warningGraphData
         for i in 0..<thisData.count{
             
@@ -2666,10 +2672,25 @@ extension MainViewController {
             let graphHours = 24 * UserDefaultsRepository.downloadDays.value
             if thisData[i].date < dateTimeUtils.getTimeIntervalNHoursAgo(N: graphHours) { continue }
             
-            let value = ChartDataEntry(x: Double(thisData[i].date), y: Double(thisData[i].sgv), data: formatPillTextNotes(line1: thisData[i].note, time: thisData[i].date))
-            BGChart.data?.dataSets[dataIndex].addEntry(value)
+            // Match the condition order used by the treatments list.
+            let note = thisData[i].note
+            let color: UIColor
+            if note.contains("⚠️") {
+                color = .systemYellow
+            } else if note.contains("⛔️") {
+                color = .systemRed
+            } else if note.contains("✅") {
+                color = .systemGreen
+            } else {
+                color = .systemYellow
+            }
+
+            let value = ChartDataEntry(x: Double(thisData[i].date), y: Double(thisData[i].sgv), data: formatPillTextNotes(line1: note, time: thisData[i].date))
+            mainChart.addEntry(value)
+            mainChart.circleColors.append(color)
             if UserDefaultsRepository.smallGraphTreatments.value {
-                BGChartFull.data?.dataSets[dataIndex].addEntry(value)
+                smallChart.addEntry(value)
+                smallChart.circleColors.append(color.withAlphaComponent(0.65))
             }
         }
         

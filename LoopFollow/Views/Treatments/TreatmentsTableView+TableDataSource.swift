@@ -143,6 +143,7 @@ extension TreatmentsTableView {
                 let suspendPattern = "PumpSuspend"
                 let warningPattern = "⚠️ "
                 let urgentPattern = "⛔️ "
+                let allClearPattern = "✅ "
                 var modifiedNote = note
 
                 // Replace "PumpResume" with "Pump startades".
@@ -166,6 +167,12 @@ extension TreatmentsTableView {
                 if let urgentRegex = try? NSRegularExpression(pattern: urgentPattern, options: []) {
                     let range = NSRange(location: 0, length: modifiedNote.utf16.count)
                     modifiedNote = urgentRegex.stringByReplacingMatches(in: modifiedNote, options: [], range: range, withTemplate: "")
+                }
+                
+                // Replace "✅ " with "".
+                if let allClearRegex = try? NSRegularExpression(pattern: allClearPattern, options: []) {
+                    let range = NSRange(location: 0, length: modifiedNote.utf16.count)
+                    modifiedNote = allClearRegex.stringByReplacingMatches(in: modifiedNote, options: [], range: range, withTemplate: "")
                 }
 
                 let preview = previewNoteText(for: modifiedNote)
