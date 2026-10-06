@@ -755,7 +755,7 @@ extension MainViewController {
     func buildEventsForMealAnalysis() -> [Event] {
         var events: [Event] = []
 
-        // Poddbyten
+        // Pumpbyten
         for pumpChange in pumpChangeGraphData {
             var seconds = Double(pumpChange.date)
 
