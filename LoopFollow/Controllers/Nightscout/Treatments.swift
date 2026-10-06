@@ -217,7 +217,7 @@ extension MainViewController {
                 resumePump.append(entry)
             case "Pump Site Change", "Site Change", "Pumpbyte":
                 if let createdAt = entry["created_at"] as? String {
-                    let newEntry = cageData(created_at: createdAt)
+                    let newEntry = cageData(created_at: createdAt, notes: entry["notes"] as? String)
                     pumpSiteChange.append(newEntry)
                 }
             case "Sensor Start", "Sensor Change", "Sensorbyte", "Sensorstart":

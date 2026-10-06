@@ -38,10 +38,16 @@ extension MainViewController {
                     let dot = DataStructs.timestampOnlyStruct(date: Double(dateTimeStamp), sgv: Int(18))
                     pumpChangeGraphData.append(dot)
                     
-                    let newEntry = PumpChangeHistoryEntry(date: dateTimeStamp, notes: nil, noteDate: nil)
+                    let newEntry = PumpChangeHistoryEntry(date: dateTimeStamp, notes: nil, noteDate: nil, pumpModel: entry.notes)
                     
-                    // Prevent duplicates before saving
-                    if !pumpChangeHistory.contains(where: { $0.date == newEntry.date }) {
+                    if let index = pumpChangeHistory.firstIndex(where: { $0.date == newEntry.date }) {
+                        // Enrich existing entries without overwriting their linked failure notes
+                        // or historical model when the server has no model to offer.
+                        if let model = entry.notes?.trimmingCharacters(in: .whitespacesAndNewlines),
+                           !model.isEmpty {
+                            pumpChangeHistory[index].pumpModel = model
+                        }
+                    } else {
                         pumpChangeHistory.append(newEntry)
                     }
                 }

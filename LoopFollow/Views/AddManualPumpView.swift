@@ -66,9 +66,8 @@ class AddManualPumpViewController: ThemedViewController {
     }
 
     @objc private func saveTapped() {
-        let entry = PumpChangeHistoryEntry(
-            date: datePicker.date.timeIntervalSince1970
-        )
+        var entry = editingOriginal ?? PumpChangeHistoryEntry(date: datePicker.date.timeIntervalSince1970)
+        entry.date = datePicker.date.timeIntervalSince1970
 
         if let idx = editingIndex {
             delegate?.didUpdateManualPumpChange(entry: entry, at: idx)

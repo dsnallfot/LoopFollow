@@ -242,6 +242,7 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
     /// Enkel intern modell för CAge / Site Change från Nightscout.
     private struct PumpCageData: Codable {
         let created_at: String
+        let notes: String?
     }
 
     private func fetchInitialPumpChangesIfNeeded() {
@@ -277,7 +278,7 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
                 var merged = Storage.shared.pumpChangeHistory
                 for c in cageEntries {
                     guard let date = NightscoutUtils.parseDate(c.created_at) else { continue }
-                    let entry = PumpChangeHistoryEntry(date: date.timeIntervalSince1970, notes: nil, noteDate: nil)
+                    let entry = PumpChangeHistoryEntry(date: date.timeIntervalSince1970, notes: nil, noteDate: nil, pumpModel: c.notes)
                     if !merged.contains(where: { $0.date == entry.date }) {
                         merged.append(entry)
                     }
@@ -515,7 +516,7 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
         let composed = NSMutableAttributedString()
         composed.append(NSAttributedString(string: dateString, attributes: attrsBase))
         composed.append(NSAttributedString(string: " \(sessionInfo.text)\n", attributes: sessionAttrs))
-        composed.append(NSAttributedString(string: "Omnipod Dash startades", attributes: noteBase))
+        composed.append(NSAttributedString(string: "\(entry.pumpModel) startades", attributes: noteBase))
 
         cell.textLabel?.numberOfLines = 0
         cell.textLabel?.attributedText = composed
@@ -556,7 +557,38 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
         }
     }
 
-    // MARK: - Swipe actions (Redigera / Radera)
+    private func presentNoteEditor(for entry: PumpChangeHistoryEntry) {
+        let alert = UIAlertController(
+            title: "Notering",
+            message: "Skriv en notering för pumpbytet. Texten ”Kritiskt poddfel” visar ⛔️ i historiken. Töm fältet för att ta bort noteringen.",
+            preferredStyle: .alert
+        )
+        alert.addTextField { textField in
+            textField.placeholder = "Notering för pumpbytet"
+            textField.text = entry.notes
+            textField.autocapitalizationType = .sentences
+            textField.clearButtonMode = .whileEditing
+        }
+        alert.addAction(UIAlertAction(title: "Avbryt", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Spara", style: .default) { _ in
+            let note = alert.textFields?.first?.text?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+            // Read the latest stored entry so other metadata is preserved while editing.
+            var stored = Storage.shared.pumpChangeHistory
+            guard let index = stored.firstIndex(where: { $0.date == entry.date }) else { return }
+            stored[index].notes = note.isEmpty ? nil : note
+            if note.isEmpty {
+                stored[index].noteDate = nil
+            }
+            // Keep an existing event timestamp; a manual note has no known failure time.
+            Storage.shared.pumpChangeHistory = stored
+            NotificationCenter.default.post(name: .pumpChangeHistoryUpdated, object: nil)
+        })
+        present(alert, animated: true)
+    }
+
+    // MARK: - Swipe actions (Notering / Redigera / Radera)
 
     func tableView(_ tableView: UITableView,
                    trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath)
@@ -586,7 +618,14 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
 
         editAction.backgroundColor = .systemBlue
 
-        let config = UISwipeActionsConfiguration(actions: [deleteAction, editAction])
+        let noteAction = UIContextualAction(style: .normal, title: "Notering") { [weak self] _, _, completion in
+            completion(true)
+            self?.presentNoteEditor(for: entry)
+        }
+        noteAction.backgroundColor = .systemOrange
+        noteAction.image = UIImage(systemName: "note.text")
+
+        let config = UISwipeActionsConfiguration(actions: [deleteAction, editAction, noteAction])
         config.performsFirstActionWithFullSwipe = false
         return config
     }

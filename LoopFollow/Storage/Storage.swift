@@ -274,9 +274,32 @@ struct PumpChangeHistoryEntry: Codable, Equatable {
     /// Optional Unix timestamp (seconds since 1970) for when the linked note occurred.
     var noteDate: TimeInterval?
 
-    static func == (lhs: PumpChangeHistoryEntry, rhs: PumpChangeHistoryEntry) -> Bool {
-        return lhs.date == rhs.date && lhs.notes == rhs.notes && lhs.noteDate == rhs.noteDate
+    /// Pump model from the Site Change notes, separate from session/failure notes.
+    var pumpModel: String
+
+    init(date: TimeInterval, notes: String? = nil, noteDate: TimeInterval? = nil, pumpModel: String? = nil) {
+        self.date = date
+        self.notes = notes
+        self.noteDate = noteDate
+        let model = pumpModel?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        self.pumpModel = model.isEmpty ? "Pump" : model
     }
+
+    private enum CodingKeys: String, CodingKey {
+        case date, notes, noteDate, pumpModel
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            date: try container.decode(TimeInterval.self, forKey: .date),
+            notes: try container.decodeIfPresent(String.self, forKey: .notes),
+            noteDate: try container.decodeIfPresent(TimeInterval.self, forKey: .noteDate),
+            // Older locally saved/exported entries predate pump model tracking.
+            pumpModel: try container.decodeIfPresent(String.self, forKey: .pumpModel) ?? "Omnipod"
+        )
+    }
+
 }
 
 struct AlarmHistoryEntry: Codable, Equatable {
