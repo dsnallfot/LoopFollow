@@ -894,7 +894,7 @@ extension MainViewController {
             end = adjustedStart + 60 * 180
             segment = 2
         case .pumpChange:
-            title = "Analys podd"
+            title = "Analys pump"
             adjustedStart = start - 60 * 180
             end = start + 60 * 180
             segment = 3
@@ -981,8 +981,8 @@ extension MainViewController {
             actionTitle = "Analys stick"
         case .pump:
             source = .pumpChange
-            title = "Poddbyte"
-            actionTitle = "Analysera Poddbyte"
+            title = "Pumpbyte"
+            actionTitle = "Analysera Pumpbyte"
         case .sensorStart:
             source = .sensorChange
             title = "Sensorbyte"

@@ -184,7 +184,7 @@ extension MealAnalysisView {
             ChartDataEntry(
                 x: event.date.timeIntervalSince(startTime) / 3600.0,
                 y: 2.0,
-                data: String("Poddbyte")
+                data: String("Pumpbyte")
             )
         }
         let siteChangeDots = ScatterChartDataSet(entries: siteChangeEntries, label: "")

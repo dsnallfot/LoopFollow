@@ -35,7 +35,7 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Poddar"
+        title = "Pumpar"
 
         setupNavigationBar()
         setupTableView()
@@ -347,7 +347,7 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
     }
 
     private func presentPumpAnalysis(for entry: PumpChangeHistoryEntry, centeredAt analysisDate: Date, indexPath: IndexPath) {
-        let modalTitle = "Analys podd"
+        let modalTitle = "Analys pump"
 
         // Analysera 3h före och 3h efter vald tidpunkt.
         let startDate = analysisDate.addingTimeInterval(-3 * 60 * 60)
@@ -453,13 +453,13 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "Analys poddstart", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "Analys pumpstart", style: .default) { [weak self] _ in
             self?.presentPumpAnalysis(for: entry, centeredAt: entryDate, indexPath: indexPath)
         })
 
         if let noteDate = entry.noteDate {
             let podEndDate = Date(timeIntervalSince1970: noteDate)
-            alert.addAction(UIAlertAction(title: "Analys poddslut", style: .default) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: "Analys pumpslut", style: .default) { [weak self] _ in
                 self?.presentPumpAnalysis(for: entry, centeredAt: podEndDate, indexPath: indexPath)
             })
         }
@@ -704,7 +704,7 @@ final class PumpSessionStatsViewController: ThemedTableViewController {
         tableView.backgroundColor = .clear
         tableView.isOpaque = false
         tableView.layer.backgroundColor = UIColor.clear.cgColor
-        title = "Sessionstid poddar"
+        title = "Sessionstid pumpar"
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             title: "Klar",
             style: .plain,
@@ -939,7 +939,7 @@ final class PumpSessionStatsViewController: ThemedTableViewController {
             let row = CountRow(rawValue: indexPath.row)!
             switch row {
             case .all:
-                cell.textLabel?.text = "Alla poddar"
+                cell.textLabel?.text = "Alla pumpar"
                 cell.detailTextLabel?.text = "\(buckets.total) st (100%)"
                 cell.detailTextLabel?.textColor = .label
             case .lt1:
@@ -967,7 +967,7 @@ final class PumpSessionStatsViewController: ThemedTableViewController {
             let row = AvgRow(rawValue: indexPath.row)!
             switch row {
             case .all:
-                cell.textLabel?.text = "Alla poddar"
+                cell.textLabel?.text = "Alla pumpar"
                 cell.detailTextLabel?.text = avgText(count: buckets.total, totalHours: buckets.hrs_total)
                 cell.detailTextLabel?.textColor = .label
             case .allExclLt1:

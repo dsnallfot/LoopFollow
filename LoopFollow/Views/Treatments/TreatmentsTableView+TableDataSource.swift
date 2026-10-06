@@ -68,7 +68,7 @@ extension TreatmentsTableView {
                     return "Fett & Protein"
                 }
             } else if treatment.eventType == "Site Change" {
-                return "Poddbyte"
+                return "Pumpbyte"
             } else if treatment.eventType == "Insulin Change" {
                 return "Nytt insulin"
             } else if treatment.eventType == "Sensor Start" {

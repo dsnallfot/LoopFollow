@@ -107,17 +107,17 @@ extension TreatmentsTableView {
         }
         
         if treatment.eventType == "Site Change" {
-            let title = "\(timeString)\n\nPoddbyte"
+            let title = "\(timeString)\n\nPumpbyte"
             var message = ""
             if let enteredBy = treatment.rawData["enteredBy"] as? String {
                 message = "Inlagt av: \(enteredBy)"
             }
             let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "Analysera Poddbyte", style: .default, handler: { _ in
+            alert.addAction(UIAlertAction(title: "Analysera Pumpbyte", style: .default, handler: { _ in
                 let events = self.buildEventsArray()
                 let analysisStart = treatment.timestamp.addingTimeInterval(-10800) // minus 3h
                 let analysisEnd = treatment.timestamp.addingTimeInterval(10800) // end 3h after start
-                let analysisVC = MealAnalysisView(events: events, initialStart: analysisStart, initialEnd: analysisEnd, modalWithTimestamp: true, modalTitleString: "Analys podd", preSelectedSegment: 3)
+                let analysisVC = MealAnalysisView(events: events, initialStart: analysisStart, initialEnd: analysisEnd, modalWithTimestamp: true, modalTitleString: "Analys pump", preSelectedSegment: 3)
                 let nav = UINavigationController(rootViewController: analysisVC)
                 nav.modalPresentationStyle = .formSheet
                 self.present(nav, animated: true)

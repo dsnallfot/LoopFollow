@@ -156,7 +156,7 @@ extension TreatmentsTableView {
                 } else if treatment.eventType == "Exercise" {
                     displayEventName = "Override"
                 } else if treatment.eventType == "Site Change" {
-                    displayEventName = "Poddbyte"
+                    displayEventName = "Pumpbyte"
                 } else {
                     displayEventName = treatment.eventType
                 }

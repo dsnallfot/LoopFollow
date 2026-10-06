@@ -170,7 +170,7 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
         guard let sectionKind = Section(rawValue: section) else { return 0 }
         switch sectionKind {
         case .historyStats:
-            // Statistik, Behandlingar, Fingerstick & dextro, Glukos & sensorfel, Poddar, Sensorer
+            // Statistik, Behandlingar, Fingerstick & dextro, Glukos & sensorfel, Pumpar, Sensorer
             return 6
         case .trioSettings:
             // Algoritminställningar, Hälsodata & profil, Oref-status, Inställningslogg, Trio systemprestanda
@@ -225,7 +225,7 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
             case 1: cell.textLabel?.text = "Behandlingar"
             case 2: cell.textLabel?.text = "Fingerstick & dextro"
             case 3: cell.textLabel?.text = "Glukos & sensorfel"
-            case 4: cell.textLabel?.text = "Poddar"
+            case 4: cell.textLabel?.text = "Pumpar"
             case 5: cell.textLabel?.text = "Sensorer"
             default: break
             }
@@ -398,9 +398,9 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
                 navigationController?.pushViewController(glucoseVC, animated: true)
 
             case 4:
-                // Poddar
+                // Pumpar
                 let pumpHistoryVC = PumpHistoryViewController()
-                pumpHistoryVC.title = "Poddar"
+                pumpHistoryVC.title = "Pumpar"
                 pumpHistoryVC.hidesBottomBarWhenPushed = false
                 navigationController?.pushViewController(pumpHistoryVC, animated: true)
 
