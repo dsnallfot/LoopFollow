@@ -40,11 +40,14 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         return sb
     }()
 
-    private let openedAt = Date() // snapshot when modal opened
+    private var analysisDate = Date() // shared cutoff for the list and detail analysis
     
     // Dexcom sensorfel outages (persisted cache, refreshed incrementally)
     private var dexcomOutagesCache: [DexcomSensorErrorOutageCacheItem] = []
-    private var isRefreshingDexcomOutagesCache: Bool = false
+    private var dexcomOutagesRefreshTask: Task<Void, Never>?
+    private var isPresentingSensorErrors = false
+    private var needsAnotherSensorRefresh = false
+    private var sourceTreatmentCount = 0
 
     private let topSearchContainer: UIView = {
         let v = UIView()
@@ -86,8 +89,29 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         tableView.backgroundColor = .clear
         tableView.backgroundView = nil
         tableView.isOpaque = false
-        loadSensorHistory()
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(refreshSensorHistory), for: .valueChanged)
+        tableView.refreshControl = refreshControl
+        for name in [Notification.Name.treatmentsUpdated,
+                     Notification.Name("TreatmentsCacheUpdated"),
+                     UIApplication.didBecomeActiveNotification] {
+            NotificationCenter.default.addObserver(self, selector: #selector(refreshSensorHistory), name: name, object: nil)
+        }
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func refreshSensorHistory() {
+        needsAnotherSensorRefresh = true
+        refreshDexcomOutagesCacheIfNeeded()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         loadDexcomOutagesCacheAndRefreshIfNeeded()
+        loadSensorHistory()
     }
 
     private func installPinnedSearchBar() {
@@ -335,7 +359,7 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         let endDate: Date
         let isOngoing = (index == 0)
         if isOngoing {
-            endDate = openedAt
+            endDate = analysisDate
         } else {
             // The previous sensor remained in use until Trio started using the newer sensor.
             let newer = sensorHistory[index - 1]
@@ -366,7 +390,7 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         if !isOngoing && totalHours < 24 { snippet += " ⛔️" }
 
         // Append warning if this sensor session has identified Dexcom sensorfel
-        let errorWindow = current.sensorUsageWindow(in: sensorHistory, now: openedAt)
+        let errorWindow = current.sensorUsageWindow(in: sensorHistory, now: analysisDate)
         if dexcomOutagesCache.contains(where: { errorWindow.contains($0.sensorErrorTimestamp) }) {
             snippet += " ⚠️"
         }
@@ -385,47 +409,53 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
     }
 
     private func refreshDexcomOutagesCacheIfNeeded() {
-        guard !isRefreshingDexcomOutagesCache else { return }
-        isRefreshingDexcomOutagesCache = true
+        guard dexcomOutagesRefreshTask == nil else { return }
 
-        Task {
-            defer { self.isRefreshingDexcomOutagesCache = false }
+        dexcomOutagesRefreshTask = Task { @MainActor in
+            defer { self.dexcomOutagesRefreshTask = nil }
 
-            let cal = Calendar.current
-            let now = Date()
+            repeat {
+                self.needsAnotherSensorRefresh = false
+                let cal = Calendar.current
+                let now = Date()
 
-            // Keep up to 90 days (same as GlucoseView sensorfel retention)
-            let hardFloor = cal.date(byAdding: .day, value: -91, to: now) ?? now.addingTimeInterval(-91 * 86400)
+                // Keep up to 90 days (same as GlucoseView sensorfel retention)
+                let hardFloor = cal.date(byAdding: .day, value: -91, to: now) ?? now.addingTimeInterval(-91 * 86400)
 
-            // Use the same full local window as the sensor-error list.
-            let (allSGV, allTreatments) = await NightscoutCache.loadWindow(from: hardFloor.addingTimeInterval(-60), to: now)
-            let newItems = self.buildDexcomOutageItems(allSGV: allSGV, allTreatments: allTreatments.filter { $0.eventType != "Note" || $0.created_at >= hardFloor }, now: now)
-                .filter { $0.noteTimestamp >= hardFloor.timeIntervalSince1970 }
-            let sourceTimestamps = Set(allTreatments.filter { $0.eventType == "Note" }.map { $0.created_at.timeIntervalSince1970 })
+                // Use the same full local window as the sensor-error list.
+                let (allSGV, allTreatments) = await NightscoutCache.loadWindow(from: hardFloor.addingTimeInterval(-60), to: now)
+                let newItems = self.buildDexcomOutageItems(allSGV: allSGV, allTreatments: allTreatments.filter { $0.eventType != "Note" || $0.created_at >= hardFloor }, now: now)
+                    .filter { $0.noteTimestamp >= hardFloor.timeIntervalSince1970 }
+                let sourceTimestamps = Set(allTreatments.filter { $0.eventType == "Note" }.map { $0.created_at.timeIntervalSince1970 })
 
-            await MainActor.run {
-                // Merge by noteTimestamp (latest computed wins)
-                var mergedByNote: [TimeInterval: DexcomSensorErrorOutageCacheItem] = [:]
+                await MainActor.run {
+                    // Merge by noteTimestamp (latest computed wins)
+                    var mergedByNote: [TimeInterval: DexcomSensorErrorOutageCacheItem] = [:]
 
-                // Existing persisted cache, but drop anything older than hardFloor
-                for item in Storage.shared.dexcomSensorErrorOutagesCache {
-                    if item.noteTimestamp >= hardFloor.timeIntervalSince1970 && !sourceTimestamps.contains(item.noteTimestamp) {
+                    // Existing persisted cache, but drop anything older than hardFloor
+                    for item in Storage.shared.dexcomSensorErrorOutagesCache {
+                        if item.noteTimestamp >= hardFloor.timeIntervalSince1970 && !sourceTimestamps.contains(item.noteTimestamp) {
+                            mergedByNote[item.noteTimestamp] = item
+                        }
+                    }
+
+                    // Overwrite/insert from new window
+                    for item in newItems {
                         mergedByNote[item.noteTimestamp] = item
                     }
+
+                    let merged = mergedByNote.values.sorted { $0.noteTimestamp > $1.noteTimestamp }
+
+                    self.sourceTreatmentCount = allTreatments.count
+                    self.analysisDate = now
+                    self.dexcomOutagesCache = merged
+                    Storage.shared.dexcomSensorErrorOutagesCache = merged
+                    Storage.shared.dexcomSensorErrorOutagesRefreshedAt = now
+                    // Session boundaries can change while this view remains on screen.
+                    self.loadSensorHistory()
                 }
-
-                // Overwrite/insert from new window
-                for item in newItems {
-                    mergedByNote[item.noteTimestamp] = item
-                }
-
-                let merged = mergedByNote.values.sorted { $0.noteTimestamp > $1.noteTimestamp }
-
-                self.dexcomOutagesCache = merged
-                Storage.shared.dexcomSensorErrorOutagesCache = merged
-                Storage.shared.dexcomSensorErrorOutagesRefreshedAt = now
-                self.tableView.reloadData()
-            }
+            } while self.needsAnotherSensorRefresh
+            self.tableView.refreshControl?.endRefreshing()
         }
     }
 
@@ -530,7 +560,8 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
     private func showSensorErrorAlert(
         indexPath: IndexPath,
         sensorName: String?,
-        message: String
+        message: String,
+        diagnosticMessage: String? = nil
     ) {
         let suffix: String
         if let sensorName = sensorName, !sensorName.isEmpty {
@@ -540,6 +571,12 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         }
 
         let alert = UIAlertController(title: "⚠️ Sensorfel\(suffix)", message: message, preferredStyle: .alert)
+
+        if let diagnosticMessage {
+            alert.addAction(UIAlertAction(title: "Visa underlag", style: .default) { [weak self] _ in
+                self?.showSensorErrorAlert(indexPath: indexPath, sensorName: sensorName, message: diagnosticMessage)
+            })
+        }
 
         alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { [weak self] _ in
             guard let self = self else { return }
@@ -563,11 +600,47 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        // Ensure refresh is in flight so next tap is even more up-to-date
+        guard !isPresentingSensorErrors else { return }
+        let entry = currentHistory()[indexPath.row]
+        isPresentingSensorErrors = true
         refreshDexcomOutagesCacheIfNeeded()
 
-        let entry = currentHistory()[indexPath.row]
+        Task { @MainActor in
+            defer { self.isPresentingSensorErrors = false }
+            // A first tap can arrive while the initial cache rebuild is still running.
+            // Wait for that same rebuild before calculating the alert.
+            await self.dexcomOutagesRefreshTask?.value
+            guard self.viewIfLoaded?.window != nil, self.presentedViewController == nil else { return }
+            self.presentSensorErrors(for: entry, indexPath: indexPath)
+        }
+    }
 
+    private func sensorErrorDiagnostics(for entry: SensorStartHistoryEntry) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        func stamp(_ timestamp: TimeInterval) -> String {
+            formatter.string(from: Date(timeIntervalSince1970: timestamp))
+        }
+        let window = entry.sensorUsageWindow(in: sensorHistory, now: analysisDate)
+        let sinceActivation = dexcomOutagesCache.filter {
+            $0.noteTimestamp >= entry.date && $0.noteTimestamp < analysisDate.timeIntervalSince1970
+        }
+        var lines = [
+            "Uppdaterad: \(formatter.string(from: analysisDate))",
+            "Behandlingar i lokal cache: \(sourceTreatmentCount)",
+            "Sensorfel i lokal cache: \(dexcomOutagesCache.count)",
+            "Aktiverad: \(stamp(entry.date))",
+            "Sessionens fel räknas från: \(stamp(window.lowerBound))",
+            "Till: \(stamp(window.upperBound))",
+            "Felnoteringar sedan aktivering: \(sinceActivation.count)"
+        ]
+        for item in sinceActivation.prefix(5) {
+            lines.append("Fel: \(stamp(item.noteTimestamp))\nKopplas med tid: \(stamp(item.sensorErrorTimestamp))")
+        }
+        return lines.joined(separator: "\n\n")
+    }
+
+    private func presentSensorErrors(for entry: SensorStartHistoryEntry, indexPath: IndexPath) {
         // Use master list (sorted desc) to define the session window
         guard let masterIndex = sensorHistory.firstIndex(where: { $0.date == entry.date && $0.note == entry.note }) else {
             let message = buildSensorErrorMessage(
@@ -585,7 +658,7 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         }
 
         let sessionStart = Date(timeIntervalSince1970: sensorHistory[masterIndex].date)
-        let errorWindow = sensorHistory[masterIndex].sensorUsageWindow(in: sensorHistory, now: Date())
+        let errorWindow = sensorHistory[masterIndex].sensorUsageWindow(in: sensorHistory, now: analysisDate)
         let sessionEnd = Date(timeIntervalSince1970: errorWindow.upperBound)
 
         // Ownership follows when Trio used each sensor; activation remains the day-count origin.
@@ -610,7 +683,8 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
                 showSensorErrorAlert(
                     indexPath: indexPath,
                     sensorName: parsedSensorName(fromNote: entry.note),
-                    message: message
+                    message: message,
+                    diagnosticMessage: sensorErrorDiagnostics(for: sensorHistory[masterIndex])
                 )
             }
             return
@@ -810,6 +884,7 @@ extension SensorHistoryViewController: UIDocumentPickerDelegate {
 
                 DispatchQueue.main.async {
                     var storedHistory = Storage.shared.sensorStartNotes
+                    let previousHistory = storedHistory
 
                     for entry in importedHistory {
                         if let idx = storedHistory.firstIndex(where: { $0.date == entry.date && $0.note == entry.note }) {
@@ -819,7 +894,7 @@ extension SensorHistoryViewController: UIDocumentPickerDelegate {
                                 updated.sensorErrors = summary
                                 updated.sensorErrorsCalculationVersion = entry.sensorErrorsCalculationVersion
                             }
-                            updated.trioSentAt = entry.trioSentAt ?? updated.trioSentAt
+                            updated.retainEarliestTrioSentAt(entry.trioSentAt)
                             storedHistory[idx] = updated
                         } else {
                             // Ny entry – ta med allt (inkl sensorErrors)
@@ -827,6 +902,16 @@ extension SensorHistoryViewController: UIDocumentPickerDelegate {
                         }
                     }
 
+                    // Repairing a boundary also changes the preceding sensor's error ownership.
+                    let now = Date()
+                    for index in storedHistory.indices {
+                        let current = storedHistory[index]
+                        if let previous = previousHistory.first(where: { $0.date == current.date }),
+                           previous.sensorUsageWindow(in: previousHistory, now: now) != current.sensorUsageWindow(in: storedHistory, now: now) {
+                            storedHistory[index].sensorErrors = nil
+                            storedHistory[index].sensorErrorsCalculationVersion = nil
+                        }
+                    }
                     Storage.shared.sensorStartNotes = storedHistory
                     self.loadSensorHistory() // Reload UI
 

@@ -112,10 +112,19 @@ struct SensorStartHistoryEntry: Codable, Equatable {
     /// Optional, persisted summary of sensor error analysis (text shown in alert)
     var sensorErrors: String?
     var sensorErrorsCalculationVersion: Int?
-    /// When Trio began using this sensor; activation/lifetime still uses `date`.
+    /// Earliest observed Trio upload; approximates usage start, not activation.
+    /// Reuploads must never move this boundary forward.
     var trioSentAt: Date?
 
     var usageStartTimestamp: TimeInterval { trioSentAt?.timeIntervalSince1970 ?? date }
+
+    mutating func retainEarliestTrioSentAt(_ candidate: Date?) {
+        guard let candidate else { return }
+        if trioSentAt == nil || candidate < trioSentAt! {
+            trioSentAt = candidate
+        }
+    }
+
 
     func sensorUsageWindow(in history: [SensorStartHistoryEntry], now: Date) -> Range<TimeInterval> {
         let start = usageStartTimestamp

@@ -133,6 +133,10 @@ extension TreatmentsTableView {
             DispatchQueue.main.async {
                 if case .success(let raw) = result,
                    let entries = raw as? [[String: AnyObject]] {
+                    // The sensor history and other views read this shared cache, even when
+                    // the treatment log had to fetch the day directly from Nightscout.
+                    // Merge because a response capped at 5000 may be incomplete.
+                    NightscoutCache.upsertTreatments(from: entries.map { $0 as [String: Any] })
                     RemoteCommandReceiptTracker.shared.observeDeletions(
                         entries.map { $0 as [String: Any] }, site: receiptSite, requestStartedAt: requestStartedAt,
                         from: start, through: end, responseLimit: 5000
@@ -168,6 +172,10 @@ extension TreatmentsTableView {
             DispatchQueue.main.async {
                 if case .success(let raw) = result,
                    let entries = raw as? [[String: AnyObject]] {
+                    // The sensor history and other views read this shared cache, even when
+                    // the treatment log had to fetch the day directly from Nightscout.
+                    // Merge because a response capped at 5000 may be incomplete.
+                    NightscoutCache.upsertTreatments(from: entries.map { $0 as [String: Any] })
                     RemoteCommandReceiptTracker.shared.observeDeletions(
                         entries.map { $0 as [String: Any] }, site: receiptSite, requestStartedAt: requestStartedAt,
                         from: start, through: end, responseLimit: 5000

@@ -45,9 +45,9 @@ extension MainViewController {
 
                     // Prevent duplicates before saving
                     if let index = sensorStartHistory.firstIndex(where: { $0.date == newEntry.date }) {
-                        if let sentAt = newEntry.trioSentAt, sensorStartHistory[index].trioSentAt != sentAt {
-                            sensorStartHistory[index].trioSentAt = sentAt
-                        }
+                        // Nightscout may return a later upload of the same Sensor Start.
+                        // Keep the earliest known boundary so existing errors stay in this session.
+                        sensorStartHistory[index].retainEarliestTrioSentAt(newEntry.trioSentAt)
                     } else {
                         sensorStartHistory.append(newEntry)
                     }
