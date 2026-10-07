@@ -54,6 +54,13 @@ class ContactSettingsViewModel: ObservableObject {
              }
          }
     
+    @Published var contactIobCob: Bool {
+             didSet {
+                 storage.contactIobCob.value = contactIobCob
+                 triggerRefresh()
+             }
+         }
+    
     @Published var watchCommunicationEnabled: Bool {
         didSet {
             storage.watchCommunicationEnabled.value = watchCommunicationEnabled
@@ -86,6 +93,7 @@ class ContactSettingsViewModel: ObservableObject {
         self.contactTrend = storage.contactTrend.value
         self.contactDelta = storage.contactDelta.value
         self.contactFifteenMinutes = storage.contactFifteenMinutes.value
+        self.contactIobCob = storage.contactIobCob.value
         self.watchCommunicationEnabled = storage.watchCommunicationEnabled.value
         self.bgComplicationEnabled = appStorage.bgComplicationEnabled.value
 
@@ -100,6 +108,9 @@ class ContactSettingsViewModel: ObservableObject {
         
         storage.contactFifteenMinutes.$value
             .assign(to: &$contactFifteenMinutes)
+        
+        storage.contactIobCob.$value
+            .assign(to: &$contactIobCob)
         
         storage.watchCommunicationEnabled.$value
             .assign(to: &$watchCommunicationEnabled)

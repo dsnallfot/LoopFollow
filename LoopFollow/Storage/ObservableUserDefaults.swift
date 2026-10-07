@@ -22,6 +22,7 @@ class ObservableUserDefaults {
     var contactTrend = ObservableUserDefaultsValue<Bool>(key: "contactTrend", default: false)
     var contactDelta = ObservableUserDefaultsValue<Bool>(key: "contactDelta", default: false)
     var contactFifteenMinutes = ObservableUserDefaultsValue<Bool>(key: "contactFifteenMinutes", default: false)
+    var contactIobCob = ObservableUserDefaultsValue<Bool>(key: "contactIobCob", default: false)
 
     private init() {}
 }

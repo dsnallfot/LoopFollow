@@ -183,7 +183,7 @@ class WatchSettingsViewController: ThemedViewController, UITableViewDataSource, 
         guard let sectionKind = Section(rawValue: section) else { return nil }
         switch sectionKind {
         case .calendarIntegration:
-            return "Add the Apple calendar complication to your Apple Watch face or Carplay to see BG readings. Create a new calendar called 'Follow' and modify the calendar settings in the iPhone Watch/Carplay App to only display the Follow calendar on your watch or car. It is important to use a new calendar because this will delete other events on the same calendar. Edit Line 1 and Line 2 to be displayed using variables below that will be replaced by the values. Other text entered will not be replaced."
+            return "Lägg till Apples kalenderkomplikation på urtavlan på din Apple Watch eller i CarPlay för att se BG-värden. Skapa en ny kalender som heter ”Follow” och ändra kalenderinställningarna i iPhones Watch-/CarPlay-app så att endast Follow-kalendern visas på klockan eller i bilen. Det är viktigt att använda en ny kalender eftersom andra händelser i samma kalender kommer att raderas. Redigera Rad 1 och Rad 2 med variablerna nedan. Variablerna ersätts automatiskt med aktuella värden. Annan text visas oförändrad."
         case .variables:
             return nil
         }

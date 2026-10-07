@@ -44,7 +44,7 @@ class ContactImageUpdater: NSObject {
                 LogManager.shared.log(category: .contact, message: "Access to contacts is not authorized.")
                 return
             }
-
+            
             let bundleDisplayName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "LoopFollow"
             
             // Update the main contact image with `bgValue` and `extra` (box3 = true)
@@ -53,20 +53,22 @@ class ContactImageUpdater: NSObject {
                 contactName: "\(bundleDisplayName) - BG",
                 box3: true
             )
-            
-            // Update the secondary contact image with `extra2` (box3 = false)
-            self.updateOrCreateContactImage(
-                imageData: self.generateContactImage(bgValue: extra2, extra: extra3, stale: stale, box3: false, lastBGTime: lastBGTime)?.pngData(),
-                contactName: "\(bundleDisplayName) - 15min",
-                box3: false
+            if ObservableUserDefaults.shared.contactFifteenMinutes.value {
+                // Update the secondary contact image with `extra2 - fifteenminute trend` (box3 = false)
+                self.updateOrCreateContactImage(
+                    imageData: self.generateContactImage(bgValue: extra2, extra: extra3, stale: stale, box3: false, lastBGTime: lastBGTime)?.pngData(),
+                    contactName: "\(bundleDisplayName) - 15min",
+                    box3: false
+                )
+            }
+            if ObservableUserDefaults.shared.contactIobCob.value {
+                // Update the third contact image with `iob & cob` (box3 = false)
+                self.updateOrCreateContactImage(
+                    imageData: self.generateContactImage(bgValue: iob, extra: cob, stale: stale, box3: false, lastBGTime: lastBGTime)?.pngData(),
+                    contactName: "\(bundleDisplayName) - IOB COB",
+                    box3: false
             )
-            
-            // Update the third contact image with `iob & cob` (box3 = false)
-            self.updateOrCreateContactImage(
-                imageData: self.generateContactImage(bgValue: iob, extra: cob, stale: stale, box3: false, lastBGTime: lastBGTime)?.pngData(),
-                contactName: "\(bundleDisplayName) - IOB COB",
-                box3: false
-            )
+        }
         }
     }
     

@@ -69,7 +69,7 @@ struct ContactSettingsView: View {
                                     viewModel.contactDelta = false
                                 }
                             }
-
+                        
                         Toggle("Visa delta", isOn: $viewModel.contactDelta)
                             .toggleStyle(SwitchToggleStyle())
                             .onChange(of: viewModel.contactDelta) { isDeltaEnabled in
@@ -77,8 +77,13 @@ struct ContactSettingsView: View {
                                     viewModel.contactTrend = false
                                 }
                             }
-
-                        Toggle("Visa också 10m delta", isOn: $viewModel.contactFifteenMinutes)
+                    }
+                    .listRowBackground(Color(UIColor.systemGray).opacity(0.15))
+                    Section(header: Text("Extra kontakter")) {
+                        Toggle("10 min delta kontakt", isOn: $viewModel.contactFifteenMinutes)
+                            .toggleStyle(SwitchToggleStyle())
+                        
+                        Toggle("IOB COB kontakt", isOn: $viewModel.contactIobCob)
                             .toggleStyle(SwitchToggleStyle())
                     }
                     .listRowBackground(Color(UIColor.systemGray).opacity(0.15))
