@@ -45,12 +45,12 @@ struct ContactSettingsView: View {
                 .listRowBackground(Color(UIColor.systemGray).opacity(0.15))
                 
                 Section(header: Text("Kontaktintegration")) {
-                    Text("Lägg till kontakter som heter '\(viewModel.contactName)' till din Apple Watch för att visa aktuellt BG och andra värden i realtid. Se till att ge appen full access till dina kontakter på telefonen när du tillfrågas.")
+                    Text("Lägg till kontakter som heter '\(viewModel.contactName)', '\(viewModel.contactName15Min)' och '\(viewModel.contactNameIobCob)' till din Apple Watch för att visa aktuellt BG och andra värden i realtid. Se till att ge appen full access till dina kontakter på telefonen när du tillfrågas.")
                         .font(.footnote)
                         .foregroundColor(.secondary)
                         .padding(.vertical, 4)
 
-                    Toggle("Aktivera kontakter", isOn: $viewModel.contactEnabled)
+                    Toggle("Aktivera BG kontakt", isOn: $viewModel.contactEnabled)
                         .toggleStyle(SwitchToggleStyle())
                         .onChange(of: viewModel.contactEnabled) { isEnabled in
                             if isEnabled {
@@ -61,7 +61,7 @@ struct ContactSettingsView: View {
                 .listRowBackground(Color(UIColor.systemGray).opacity(0.15))
 
                 if viewModel.contactEnabled {
-                    Section(header: Text("Extra information")) {
+                    Section(header: Text("Extra information på BG kontakt")) {
                         Toggle("Visa trend", isOn: $viewModel.contactTrend)
                             .toggleStyle(SwitchToggleStyle())
                             .onChange(of: viewModel.contactTrend) { isTrendEnabled in
@@ -79,7 +79,7 @@ struct ContactSettingsView: View {
                             }
                     }
                     .listRowBackground(Color(UIColor.systemGray).opacity(0.15))
-                    Section(header: Text("Extra kontakter")) {
+                    Section(header: Text("Lägg till extra kontakter")) {
                         Toggle("10 min delta kontakt", isOn: $viewModel.contactFifteenMinutes)
                             .toggleStyle(SwitchToggleStyle())
                         

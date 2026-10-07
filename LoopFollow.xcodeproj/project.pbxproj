@@ -346,7 +346,7 @@
 		DDCF979424C0D380002C9752 /* UIViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCF979324C0D380002C9752 /* UIViewExtension.swift */; };
 		DDCF979624C1443C002C9752 /* GeneralSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCF979524C1443C002C9752 /* GeneralSettingsViewController.swift */; };
 		DDCF979824C1489C002C9752 /* GraphSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCF979724C1489C002C9752 /* GraphSettingsViewController.swift */; };
-		DDCF979A24C14DB4002C9752 /* WatchSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCF979924C14DB4002C9752 /* WatchSettingsViewController.swift */; };
+		DDCF979A24C14DB4002C9752 /* CalendarSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCF979924C14DB4002C9752 /* CalendarSettingsViewController.swift */; };
 		DDCF979E24C2382A002C9752 /* AppStateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCF979D24C2382A002C9752 /* AppStateController.swift */; };
 		DDCFCAF22B17273200BE5751 /* LoopFollowDisplayNameConfig.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = DDCFCAF12B17273200BE5751 /* LoopFollowDisplayNameConfig.xcconfig */; };
 		DDD10EFF2C510C3C00D76A8E /* ObservableUserDefaultsValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDD10EFE2C510C3C00D76A8E /* ObservableUserDefaultsValue.swift */; };
@@ -938,7 +938,7 @@
 		DDCF979324C0D380002C9752 /* UIViewExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIViewExtension.swift; sourceTree = "<group>"; };
 		DDCF979524C1443C002C9752 /* GeneralSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsViewController.swift; sourceTree = "<group>"; };
 		DDCF979724C1489C002C9752 /* GraphSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphSettingsViewController.swift; sourceTree = "<group>"; };
-		DDCF979924C14DB4002C9752 /* WatchSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSettingsViewController.swift; sourceTree = "<group>"; };
+		DDCF979924C14DB4002C9752 /* CalendarSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarSettingsViewController.swift; sourceTree = "<group>"; };
 		DDCF979D24C2382A002C9752 /* AppStateController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateController.swift; sourceTree = "<group>"; };
 		DDCFCAF12B17273200BE5751 /* LoopFollowDisplayNameConfig.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = LoopFollowDisplayNameConfig.xcconfig; sourceTree = "<group>"; };
 		DDD10EFE2C510C3C00D76A8E /* ObservableUserDefaultsValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObservableUserDefaultsValue.swift; sourceTree = "<group>"; };
@@ -2537,7 +2537,7 @@
 				FC97881D2485969B00A7906C /* NightScoutViewController.swift */,
 				FCFEECA1248857A600402A7F /* SettingsViewController.swift */,
 				FC7CE59E248D8D23001F83B8 /* SnoozeViewController.swift */,
-				DDCF979924C14DB4002C9752 /* WatchSettingsViewController.swift */,
+				DDCF979924C14DB4002C9752 /* CalendarSettingsViewController.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -3221,7 +3221,7 @@
 				6551A843304AEAF0002094F6 /* ManualGlucoseView.swift in Sources */,
 				FCD2A27D24C9D044009F7B7B /* Globals.swift in Sources */,
 				DD0C0C642C45A59400DBADDF /* HKUnit+Extensions.swift in Sources */,
-				DDCF979A24C14DB4002C9752 /* WatchSettingsViewController.swift in Sources */,
+				DDCF979A24C14DB4002C9752 /* CalendarSettingsViewController.swift in Sources */,
 				DD493AE52ACF2383009A6922 /* Treatments.swift in Sources */,
 				65304F852ED3A39A00B457AC /* EnableMuteAllIntent.swift in Sources */,
 				DD50C7552D0862770057AE6F /* ContactImageUpdater.swift in Sources */,

@@ -1,5 +1,5 @@
 //
-//  WatchSettingsViewController.swift
+//  CalendarSettingsViewController.swift
 //  LoopFollow
 //
 //  Created by Jose Paredes on 7/16/20.
@@ -11,7 +11,7 @@ import UIKit
 import EventKit
 import EventKitUI
 
-class WatchSettingsViewController: ThemedViewController, UITableViewDataSource, UITableViewDelegate {
+class CalendarSettingsViewController: ThemedViewController, UITableViewDataSource, UITableViewDelegate {
     
     var appStateController: AppStateController?
     
@@ -38,19 +38,6 @@ class WatchSettingsViewController: ThemedViewController, UITableViewDataSource, 
         case watchLine2
     }
     
-    private enum VariableRow: String, CaseIterable {
-        case BG
-        case DIRECTION
-        case DELTA
-        case IOB
-        case COB
-        case BASAL
-        case LOOP
-        case OVERRIDE
-        case MINAGO
-        case MIN15
-    }
-    
     private var calendars: [CalendarInfo] = []
     private var hasCalendarAccess: Bool = false
     private var isNightscoutEnabled: Bool = true
@@ -69,8 +56,8 @@ class WatchSettingsViewController: ThemedViewController, UITableViewDataSource, 
         return rows
     }
     
-    private var variableRows: [VariableRow] {
-        let all = VariableRow.allCases
+    private var variableRows: [CalendarLineVariable] {
+        let all = CalendarLineVariable.allCases
         guard !all.isEmpty else { return [] }
         
         if isNightscoutEnabled {
@@ -91,7 +78,7 @@ class WatchSettingsViewController: ThemedViewController, UITableViewDataSource, 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        title = "Kalendertrick"
+        title = "Kalender"
         
         if UserDefaultsRepository.forceDarkMode.value {
             overrideUserInterfaceStyle = .dark
@@ -183,7 +170,7 @@ class WatchSettingsViewController: ThemedViewController, UITableViewDataSource, 
         guard let sectionKind = Section(rawValue: section) else { return nil }
         switch sectionKind {
         case .calendarIntegration:
-            return "Lägg till Apples kalenderkomplikation på urtavlan på din Apple Watch eller i CarPlay för att se BG-värden. Skapa en ny kalender som heter ”Follow” och ändra kalenderinställningarna i iPhones Watch-/CarPlay-app så att endast Follow-kalendern visas på klockan eller i bilen. Det är viktigt att använda en ny kalender eftersom andra händelser i samma kalender kommer att raderas. Redigera Rad 1 och Rad 2 med variablerna nedan. Variablerna ersätts automatiskt med aktuella värden. Annan text visas oförändrad."
+            return "Lägg till Apples kalenderkomplikation på urtavlan på din Apple Watch eller i CarPlay för att se BG-värden. Skapa en ny kalender som heter ”Follow” och ändra kalenderinställningarna i iPhones Watch-/CarPlay-app så att endast Follow-kalendern visas på klockan eller i bilen. Det är viktigt att använda en ny kalender eftersom andra händelser i samma kalender kommer att raderas. Tryck på Linje 1 eller Linje 2 för att välja värden, ordna dem och lägga till separatorer. Värdena ersätts automatiskt med aktuella diabetesdata."
         case .variables:
             return nil
         }
@@ -248,7 +235,8 @@ class WatchSettingsViewController: ThemedViewController, UITableViewDataSource, 
                 cell.accessoryType = .disclosureIndicator
                 cell.selectionStyle = .default
                 let value = UserDefaultsRepository.watchLine1.value ?? ""
-                cell.detailTextLabel?.text = value.isEmpty ? " " : value
+                cell.detailTextLabel?.text = CalendarLineVariable.display(value)
+                cell.detailTextLabel?.numberOfLines = 0
                 return cell
                 
             case .watchLine2:
@@ -258,7 +246,8 @@ class WatchSettingsViewController: ThemedViewController, UITableViewDataSource, 
                 cell.accessoryType = .disclosureIndicator
                 cell.selectionStyle = .default
                 let value = UserDefaultsRepository.watchLine2.value ?? ""
-                cell.detailTextLabel?.text = value.isEmpty ? " " : value
+                cell.detailTextLabel?.text = CalendarLineVariable.display(value)
+                cell.detailTextLabel?.numberOfLines = 0
                 return cell
             }
             
@@ -269,29 +258,9 @@ class WatchSettingsViewController: ThemedViewController, UITableViewDataSource, 
             cell.selectionStyle = .none
             cell.accessoryType = .none
             
-            switch rowKind {
-            case .BG:
-                cell.textLabel?.text = "%BG% : Blood Glucose Reading"
-            case .DIRECTION:
-                cell.textLabel?.text = "%DIRECTION% : Dexcom Trend Arrow"
-            case .DELTA:
-                cell.textLabel?.text = "%DELTA% : +/- From Last Reading"
-            case .IOB:
-                cell.textLabel?.text = "%IOB% : Insulin on Board"
-            case .COB:
-                cell.textLabel?.text = "%COB% : Carbs on Board"
-            case .BASAL:
-                cell.textLabel?.text = "%BASAL% : Current Basal u/hr"
-            case .LOOP:
-                cell.textLabel?.text = "%LOOP% : Loop Status Symbol"
-            case .OVERRIDE:
-                cell.textLabel?.text = "%OVERRIDE% : Active Override %"
-            case .MINAGO:
-                cell.textLabel?.text = "%MINAGO% : Only displays for old readings"
-            case .MIN15:
-                cell.textLabel?.text = "%15MIN% : Display 15min trend"
-            }
-            
+            cell.textLabel?.text = "\(rowKind.title): \(rowKind.explanation)"
+            cell.textLabel?.numberOfLines = 0
+
             return cell
         }
     }
@@ -329,7 +298,7 @@ class WatchSettingsViewController: ThemedViewController, UITableViewDataSource, 
                                         currentValue: UserDefaultsRepository.watchLine1.value ?? "") { newValue in
                     UserDefaultsRepository.watchLine1.value = newValue
                     if let cell = tableView.cellForRow(at: indexPath) {
-                        cell.detailTextLabel?.text = newValue.isEmpty ? " " : newValue
+                        cell.detailTextLabel?.text = CalendarLineVariable.display(newValue)
                     }
                 }
             case .watchLine2:
@@ -337,7 +306,7 @@ class WatchSettingsViewController: ThemedViewController, UITableViewDataSource, 
                                         currentValue: UserDefaultsRepository.watchLine2.value ?? "") { newValue in
                     UserDefaultsRepository.watchLine2.value = newValue
                     if let cell = tableView.cellForRow(at: indexPath) {
-                        cell.detailTextLabel?.text = newValue.isEmpty ? " " : newValue
+                        cell.detailTextLabel?.text = CalendarLineVariable.display(newValue)
                     }
                 }
             default:
@@ -411,18 +380,227 @@ class WatchSettingsViewController: ThemedViewController, UITableViewDataSource, 
     private func presentWatchLineEditor(title: String,
                                         currentValue: String,
                                         onSave: @escaping (String) -> Void) {
-        let alert = UIAlertController(title: title, message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.text = currentValue
-            textField.placeholder = title
+        let editor = CalendarLineEditor(title: title, value: currentValue,
+                                        variables: variableRows, onSave: onSave)
+        let navigation = UINavigationController(rootViewController: editor)
+        navigation.overrideUserInterfaceStyle = overrideUserInterfaceStyle
+        present(navigation, animated: true)
+    }
+}
+
+// Keep the stored placeholders compatible with existing calendars and settings.
+private enum CalendarLineVariable: String, CaseIterable {
+    case BG, DIRECTION, DELTA, IOB, COB, BASAL, LOOP, OVERRIDE, MINAGO, MIN15
+
+    var placeholder: String { "%\(self == .MIN15 ? "15MIN" : rawValue)%" }
+
+    var title: String {
+        switch self {
+        case .BG, .IOB, .COB: return rawValue
+        case .MINAGO: return "MinAgo"
+        case .MIN15: return "15Min"
+        default: return rawValue.capitalized
         }
-        
-        alert.addAction(UIAlertAction(title: "Avbryt", style: .cancel, handler: nil))
-        alert.addAction(UIAlertAction(title: "Spara", style: .default, handler: { _ in
-            let newValue = alert.textFields?.first?.text ?? ""
-            onSave(newValue)
-        }))
-        
-        present(alert, animated: true, completion: nil)
+    }
+
+    var explanation: String {
+        switch self {
+        case .BG: return "Glukosvärde"
+        case .DIRECTION: return "Trendpil"
+        case .DELTA: return "Förändring sedan föregående värde"
+        case .IOB: return "Aktivt insulin"
+        case .COB: return "Aktiva kolhydrater"
+        case .BASAL: return "Aktuell basal, E/h"
+        case .LOOP: return "Loopstatus"
+        case .OVERRIDE: return "Aktiv override i procent"
+        case .MINAGO: return "Tid sedan mätning, visas endast vid gamla värden"
+        case .MIN15: return "Beräknad glukostrend om 15 minuter"
+        }
+    }
+
+    static func display(_ value: String) -> String {
+        guard !value.isEmpty else { return "Tom rad" }
+        return allCases.reduce(value) { $0.replacingOccurrences(of: $1.placeholder, with: $1.title) }
+    }
+}
+
+/// A draft preserves the original string exactly until the user changes its contents.
+/// Literal text from older formats stays visible and can be moved or removed too.
+private struct CalendarLineDraft {
+    let original: String
+    var parts: [String]
+    var modified = false
+
+    init(_ value: String) {
+        original = value
+        let tokens = CalendarLineVariable.allCases.map { NSRegularExpression.escapedPattern(for: $0.placeholder) }
+        let pattern = tokens.joined(separator: "|") + "|•"
+        let expression = try! NSRegularExpression(pattern: pattern)
+        let source = value as NSString
+        var result: [String] = []
+        var offset = 0
+        for match in expression.matches(in: value, range: NSRange(location: 0, length: source.length)) {
+            let literal = source.substring(with: NSRange(location: offset, length: match.range.location - offset))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !literal.isEmpty { result.append(literal) }
+            result.append(source.substring(with: match.range))
+            offset = NSMaxRange(match.range)
+        }
+        let remaining = source.substring(from: offset).trimmingCharacters(in: .whitespacesAndNewlines)
+        if !remaining.isEmpty { result.append(remaining) }
+        parts = result
+    }
+
+    var value: String { modified ? parts.joined(separator: " ") : original }
+}
+
+private final class CalendarLineEditor: UITableViewController {
+    private var draft: CalendarLineDraft
+    private let variables: [CalendarLineVariable]
+    private let onSave: (String) -> Void
+
+    init(title: String, value: String, variables: [CalendarLineVariable], onSave: @escaping (String) -> Void) {
+        draft = CalendarLineDraft(value)
+        self.variables = variables
+        self.onSave = onSave
+        super.init(style: .insetGrouped)
+        self.title = title
+        isModalInPresentation = true
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Avbryt", style: .plain, target: self, action: #selector(cancel))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Spara", style: .done, target: self, action: #selector(save))
+        tableView.allowsSelectionDuringEditing = true
+        tableView.setEditing(true, animated: false)
+        updateBackgroundForCurrentMode()
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if previousTraitCollection?.userInterfaceStyle != traitCollection.userInterfaceStyle {
+            updateBackgroundForCurrentMode()
+        }
+    }
+
+    private func updateBackgroundForCurrentMode() {
+        tableView.backgroundColor = .systemBackground
+        if traitCollection.userInterfaceStyle == .dark {
+            // A table background stays fixed while the editable rows scroll.
+            tableView.backgroundView = GradientView(colors: ThemedViewController.themeGradientColors())
+        } else {
+            tableView.backgroundView = nil
+        }
+    }
+
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell,
+                            forRowAt indexPath: IndexPath) {
+        var background = UIBackgroundConfiguration.listGroupedCell()
+        background.backgroundColor = UIColor.systemGray.withAlphaComponent(0.15)
+        cell.backgroundConfiguration = background
+    }
+
+    @objc private func cancel() { dismiss(animated: true) }
+    @objc private func save() {
+        onSave(draft.value)
+        dismiss(animated: true)
+    }
+
+    override func numberOfSections(in tableView: UITableView) -> Int { 3 }
+
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        switch section {
+        case 0: return 1
+        case 1: return draft.parts.count
+        default: return variables.count + 1
+        }
+    }
+
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        ["Förhandsvisning", "Valda delar", "Lägg till"][section]
+    }
+
+    override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        switch section {
+        case 0: return "Namnen ersätts med aktuella värden i kalendern."
+        case 1: return "Dra i handtagen för att ändra ordning. Tryck på minus för att ta bort. Mellan delarna används blanksteg."
+        default: return "Tryck på ett värde för att lägga till det sist i raden. Lägg till • där du vill ha en separator och dra den till rätt plats."
+        }
+    }
+
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
+        cell.textLabel?.numberOfLines = 0
+        cell.detailTextLabel?.numberOfLines = 0
+        cell.selectionStyle = .none
+        switch indexPath.section {
+        case 0:
+            cell.textLabel?.text = CalendarLineVariable.display(draft.value)
+            cell.textLabel?.font = .preferredFont(forTextStyle: .headline)
+        case 1:
+            cell.textLabel?.text = CalendarLineVariable.display(draft.parts[indexPath.row])
+            cell.showsReorderControl = true
+        default:
+            cell.selectionStyle = .default
+            cell.imageView?.image = UIImage(systemName: "plus.circle.fill")
+            cell.imageView?.tintColor = .systemGreen
+            if indexPath.row < variables.count {
+                let variable = variables[indexPath.row]
+                cell.textLabel?.text = variable.title
+                cell.detailTextLabel?.text = variable.explanation
+            } else {
+                cell.textLabel?.text = "• Separator"
+            }
+        }
+        cell.textLabel?.adjustsFontForContentSizeCategory = true
+        cell.detailTextLabel?.adjustsFontForContentSizeCategory = true
+        return cell
+    }
+
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        guard indexPath.section == 2 else { return }
+        draft.parts.append(indexPath.row < variables.count ? variables[indexPath.row].placeholder : "•")
+        changed()
+    }
+
+    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        indexPath.section == 1
+    }
+
+    override func tableView(_ tableView: UITableView, shouldIndentWhileEditingRowAt indexPath: IndexPath) -> Bool {
+        indexPath.section == 1
+    }
+
+    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+        indexPath.section == 1
+    }
+
+    override func tableView(_ tableView: UITableView, targetIndexPathForMoveFromRowAt source: IndexPath,
+                            toProposedIndexPath destination: IndexPath) -> IndexPath {
+        guard destination.section != 1 else { return destination }
+        return IndexPath(row: destination.section < 1 ? 0 : draft.parts.count - 1, section: 1)
+    }
+
+    override func tableView(_ tableView: UITableView, moveRowAt source: IndexPath, to destination: IndexPath) {
+        let part = draft.parts.remove(at: source.row)
+        draft.parts.insert(part, at: destination.row)
+        draft.modified = true
+        tableView.reloadSections(IndexSet(integer: 0), with: .none)
+    }
+
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle,
+                            forRowAt indexPath: IndexPath) {
+        guard editingStyle == .delete, indexPath.section == 1 else { return }
+        draft.parts.remove(at: indexPath.row)
+        changed()
+    }
+
+    private func changed() {
+        draft.modified = true
+        tableView.reloadData()
     }
 }

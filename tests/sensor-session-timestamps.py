@@ -31,6 +31,16 @@ checks = r'''
 func date(_ seconds: Double) -> Date { Date(timeIntervalSince1970: seconds) }
 let old = SensorStartHistoryEntry(date: 0, note: "old", trioSentAt: date(100))
 let new = SensorStartHistoryEntry(date: 7200, note: "new", trioSentAt: date(18000.275))
+var reuploaded = new
+reuploaded.retainEarliestTrioSentAt(date(29000))
+precondition(reuploaded.trioSentAt == new.trioSentAt, "Reupload must not move usage start past sensor errors")
+reuploaded.retainEarliestTrioSentAt(nil)
+precondition(reuploaded.trioSentAt == new.trioSentAt)
+reuploaded.retainEarliestTrioSentAt(date(17000))
+precondition(reuploaded.trioSentAt == date(17000), "An earlier timestamp can repair an overwritten boundary")
+var firstUpload = SensorStartHistoryEntry(date: 7200, note: "first")
+firstUpload.retainEarliestTrioSentAt(date(18000.275))
+precondition(firstUpload.trioSentAt == new.trioSentAt)
 let history = [new, old]
 let now = date(30000)
 let oldWindow = old.sensorUsageWindow(in: history, now: now)

@@ -19,6 +19,14 @@ class ContactSettingsViewModel: ObservableObject {
     var contactName: String {
         "\(Bundle.main.displayName) - BG"
     }
+    
+    var contactNameIobCob: String {
+        "\(Bundle.main.displayName) - IOB COB"
+    }
+    
+    var contactName15Min: String {
+        "\(Bundle.main.displayName) - 15min"
+    }
 
     @Published var contactEnabled: Bool {
         didSet {

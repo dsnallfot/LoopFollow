@@ -1691,25 +1691,10 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
         var eventEndDate = eventStartDate.addingTimeInterval(60 * 10)
         var  eventTitle = UserDefaultsRepository.watchLine1.value
         var  eventLocation = UserDefaultsRepository.watchLine2.value
-        //if (UserDefaultsRepository.watchLine2.value.count > 1) {
-            //eventLocation += UserDefaultsRepository.watchLine2.value
-        //<}
-        // Replace commas in bgUnits result with periods
+        // Every variable can be used on either calendar line.
         let bgDisplayUnits = Localizer.toDisplayUnits(String(self.bgData[self.bgData.count - 1].sgv)).replacingOccurrences(of: ",", with: ".")
-        eventTitle = eventTitle.replacingOccurrences(of: "%BG%", with: bgDisplayUnits)
-        eventTitle = eventTitle.replacingOccurrences(of: "%DIRECTION%", with: direction)
-        // Replace commas in deltaString with periods
         let deltaStringWithoutCommas = deltaString.replacingOccurrences(of: ",", with: ".")
-        eventTitle = eventTitle.replacingOccurrences(of: "%DELTA%", with: deltaStringWithoutCommas)
-        if self.currentOverride != 1.0 {
-            let val = Int( self.currentOverride*100)
-            // let overrideText = String(format:"%f1", self.currentOverride*100)
-            let text = String(val) + "%"
-            eventLocation = eventLocation.replacingOccurrences(of: "%OVERRIDE%", with: text)
-        } else {
-            eventLocation = eventLocation.replacingOccurrences(of: "%OVERRIDE%", with: "")
-        }
-        eventLocation = eventLocation.replacingOccurrences(of: "%LOOP%", with: self.latestLoopStatusString)
+        let overrideText = self.currentOverride != 1.0 ? String(Int(self.currentOverride * 100)) + "%" : ""
         var minAgo = ""
         if deltaTime > 9 {
             // write old BG reading and continue pushing out end date to show last entry
@@ -1724,22 +1709,35 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
             // Use the calculated 'fifteenMinString' as needed
         let fifteenMinValue = Double(fifteenMinString) ?? 0.0
 
+        let fifteenMinText: String
         if fifteenMinValue < 3.9 {
-            eventLocation = eventLocation.replacingOccurrences(of: "%15MIN%", with: "🆘 " + fifteenMinString)
+            fifteenMinText = "🆘 " + fifteenMinString
         } else if fifteenMinValue > 7.8 {
-            eventLocation = eventLocation.replacingOccurrences(of: "%15MIN%", with: "⚠️ " + fifteenMinString)
+            fifteenMinText = "⚠️ " + fifteenMinString
         } else {
-            eventLocation = eventLocation.replacingOccurrences(of: "%15MIN%", with: "✅ " + fifteenMinString)
+            fifteenMinText = "✅ " + fifteenMinString
         }
         var basal = "~"
         if self.latestBasal != "" {
             basal = self.latestBasal
         }
-        eventTitle = eventTitle.replacingOccurrences(of: "%MINAGO%", with: minAgo)
-        eventLocation = eventLocation.replacingOccurrences(of: "%IOB%", with: latestIOB?.formattedValue() ?? "0")
-        eventLocation = eventLocation.replacingOccurrences(of: "%COB%", with: latestCOB?.formattedValue() ?? "0")
-        eventLocation = eventLocation.replacingOccurrences(of: "%BASAL%", with: basal)
-        
+        let calendarValues: [String: String] = [
+            "%BG%": bgDisplayUnits,
+            "%DIRECTION%": direction,
+            "%DELTA%": deltaStringWithoutCommas,
+            "%IOB%": latestIOB?.formattedValue() ?? "0",
+            "%COB%": latestCOB?.formattedValue() ?? "0",
+            "%BASAL%": basal,
+            "%LOOP%": self.latestLoopStatusString,
+            "%OVERRIDE%": overrideText,
+            "%MINAGO%": minAgo,
+            "%15MIN%": fifteenMinText
+        ]
+        for (placeholder, value) in calendarValues {
+            eventTitle = eventTitle.replacingOccurrences(of: placeholder, with: value)
+            eventLocation = eventLocation.replacingOccurrences(of: placeholder, with: value)
+        }
+
         // Delete Events from last 2 hours and 2 hours in future
         var deleteStartDate = Date().addingTimeInterval(-60*60*2)
         var deleteEndDate = Date().addingTimeInterval(60*60*2)

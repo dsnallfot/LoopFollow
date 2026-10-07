@@ -181,7 +181,7 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
         case .appSettings:
             return appSettingsRows.count
         case .integrations:
-            // Bakgrundsaktivitet, Sensorbyten synk, Fjärrkommandon inställningar, Kalendertrick, Apple Watch
+            // Bakgrundsaktivitet, Sensorbyten synk, Fjärrkommandon inställningar, Kalender, Apple Watch
             return 5
         case .systemLog:
             // Se dagens logg, Dela logg
@@ -292,7 +292,7 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
             case 0: cell.textLabel?.text = "Bakgrundsaktivitet"
             case 1: cell.textLabel?.text = "Sensorbyten synk"
             case 2: cell.textLabel?.text = "Fjärrkommandon"
-            case 3: cell.textLabel?.text = "Kalendertrick"
+            case 3: cell.textLabel?.text = "Kalender"
             case 4: cell.textLabel?.text = "Apple Watch"
             default: break
             }
@@ -527,8 +527,8 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
                 let controller = makeRemoteSettingsViewController()
                 navigationController?.pushViewController(controller, animated: true)
             case 3:
-                // Kalendertrick
-                let controller = WatchSettingsViewController()
+                // Kalender
+                let controller = CalendarSettingsViewController()
                 controller.appStateController = appStateController
                 navigationController?.pushViewController(controller, animated: true)
             case 4:
