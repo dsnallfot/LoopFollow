@@ -20,6 +20,13 @@ extension TreatmentsTableView {
         updateDuplicateIndicator()
     }
 
+    func replaceLocalTreatment(_ treatment: Treatment, with document: [String: Any]?) {
+        applyLocalTreatmentDeletion(treatment)
+        if let document, let replacement = Treatment(dictionary: document as [String: AnyObject]) {
+            restoreLocalTreatment(replacement)
+        }
+    }
+
     func restoreLocalTreatment(_ treatment: Treatment) {
         NightscoutCache.upsertTreatment(from: treatment.rawData)
         if let index = daySectionIndex(for: treatment.timestamp) {

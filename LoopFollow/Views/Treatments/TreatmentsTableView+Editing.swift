@@ -139,7 +139,6 @@ extension TreatmentsTableView {
                 iso.timeZone = TimeZone(secondsFromGMT: 0)
 
                 let createdAtString = iso.string(from: updatedDate)
-                let originalTimestamp = treatment.timestamp
 
                 doc["glucose"] = updatedGlucose
                 doc["created_at"] = createdAtString
@@ -164,27 +163,7 @@ extension TreatmentsTableView {
                                 )
 
                                 DispatchQueue.main.async {
-                                    let oldDayStart = Calendar.current.startOfDay(for: originalTimestamp)
-                                    let newDayStart = Calendar.current.startOfDay(for: updatedDate)
-
-                                    if let index = self.treatments.firstIndex(where: { $0.documentId == treatment.documentId }) {
-                                        let removed = self.treatments.remove(at: index)
-                                        self.removeTreatmentFromCache(removed)
-
-                                        if let createdDoc = createdDoc,
-                                           let newTreatment = Treatment(dictionary: createdDoc as [String: AnyObject]) {
-                                            self.treatments.insert(newTreatment, at: index)
-                                            NightscoutCache.upsertTreatment(from: createdDoc)
-                                        }
-                                    } else if let createdDoc = createdDoc,
-                                              let newTreatment = Treatment(dictionary: createdDoc as [String: AnyObject]) {
-                                        self.treatments.insert(newTreatment, at: 0)
-                                        NightscoutCache.upsertTreatment(from: createdDoc)
-                                    }
-
-                                    if oldDayStart != newDayStart {
-                                        self.refreshTableKeepingSelectionIfNeeded()
-                                    }
+                                    self.replaceLocalTreatment(treatment, with: createdDoc)
 
                                     self.tableView.reloadData()
                                     self.updateDuplicateIndicator()
@@ -235,7 +214,6 @@ extension TreatmentsTableView {
 
                 let createdAtString = iso.string(from: updatedDate)
                 //let millis = Int(updatedDate.timeIntervalSince1970 * 1000)
-                let originalTimestamp = treatment.timestamp
 
                 doc["notes"] = updatedNotes
                 doc["created_at"] = createdAtString
@@ -260,27 +238,7 @@ extension TreatmentsTableView {
                                 )
 
                                 DispatchQueue.main.async {
-                                    let oldDayStart = Calendar.current.startOfDay(for: originalTimestamp)
-                                    let newDayStart = Calendar.current.startOfDay(for: updatedDate)
-
-                                    if let index = self.treatments.firstIndex(where: { $0.documentId == treatment.documentId }) {
-                                        let removed = self.treatments.remove(at: index)
-                                        self.removeTreatmentFromCache(removed)
-
-                                        if let createdDoc = createdDoc,
-                                           let newTreatment = Treatment(dictionary: createdDoc as [String: AnyObject]) {
-                                            self.treatments.insert(newTreatment, at: index)
-                                            NightscoutCache.upsertTreatment(from: createdDoc)
-                                        }
-                                    } else if let createdDoc = createdDoc,
-                                              let newTreatment = Treatment(dictionary: createdDoc as [String: AnyObject]) {
-                                        self.treatments.insert(newTreatment, at: 0)
-                                        NightscoutCache.upsertTreatment(from: createdDoc)
-                                    }
-
-                                    if oldDayStart != newDayStart {
-                                        self.refreshTableKeepingSelectionIfNeeded()
-                                    }
+                                    self.replaceLocalTreatment(treatment, with: createdDoc)
 
                                     self.tableView.reloadData()
                                     self.updateDuplicateIndicator()

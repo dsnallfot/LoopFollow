@@ -20,11 +20,7 @@ struct Treatment {
     
     /// Failable initializer that creates a Treatment from a dictionary.
     init?(dictionary: [String: AnyObject]) {
-        // Capture the _id (if available)
-        self.documentId = dictionary["_id"] as? String
-        
         guard let eventType = dictionary["eventType"] as? String else { return nil }
-        self.eventType = eventType
         
         // Parse date from "timestamp" or "created_at".
         var dateString: String?
@@ -34,8 +30,41 @@ struct Treatment {
             dateString = ts
         }
         guard let ds = dateString, let date = NightscoutUtils.parseDate(ds) else { return nil }
-        self.timestamp = date
-        
+        self.init(dictionary: dictionary, eventType: eventType, timestamp: date)
+    }
+
+    init(cached: TreatmentJSON, dateFormatter: ISO8601DateFormatter) {
+        // Keep rawData compatible with existing detail/edit/delete actions.
+        let dictionary: [String: AnyObject] = [
+            "_id": cached._id as AnyObject,
+            "eventType": cached.eventType as AnyObject,
+            "created_at": dateFormatter.string(from: cached.created_at) as AnyObject,
+            "enteredBy": cached.enteredBy as AnyObject,
+            "rate": cached.rate as AnyObject,
+            "absolute": cached.absolute as AnyObject,
+            "insulin": cached.insulin as AnyObject,
+            "carbs": cached.carbs as AnyObject,
+            "fat": cached.fat as AnyObject,
+            "protein": cached.protein as AnyObject,
+            "amount": cached.amount as AnyObject,
+            "foodType": cached.foodType as AnyObject,
+            "notes": cached.notes as AnyObject,
+            "glucose": cached.glucose as AnyObject,
+            "units": cached.units as AnyObject,
+            "duration": cached.tempBasalDuration as AnyObject
+        ]
+        self.init(dictionary: dictionary, eventType: cached.eventType, timestamp: cached.created_at)
+    }
+
+    var category: TreatmentCategory {
+        TreatmentCategory(eventType: eventType, foodType: rawData["foodType"] as? String,
+                          notes: rawData["notes"] as? String)
+    }
+
+    private init(dictionary: [String: AnyObject], eventType: String, timestamp: Date) {
+        self.documentId = dictionary["_id"] as? String
+        self.eventType = eventType
+        self.timestamp = timestamp
         self.rawData = dictionary
         
         // Fetch the note if the event type is Sensor Start

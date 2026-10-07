@@ -276,26 +276,7 @@ extension TreatmentsTableView {
                                             let createdDoc = try await NightscoutUtils.executePostRequestRaw(eventType: .treatments, body: doc)
 
                                             DispatchQueue.main.async {
-                                                // Ta bort den gamla raden lokalt; den nya raden kommer ha ett nytt _id
-                                                if let index = self.treatments.firstIndex(where: { $0.documentId == treatment.documentId }) {
-                                                    let removed = self.treatments.remove(at: index)
-                                                    self.removeTreatmentFromCache(removed)
-
-                                                    // Om Nightscout svarade med det nya dokumentet, lägg in det direkt i listan
-                                                    // och uppdatera cache-filen för rätt dag.
-                                                    if let createdDoc = createdDoc,
-                                                       let newTreatment = Treatment(dictionary: createdDoc as [String : AnyObject]) {
-                                                        self.treatments.insert(newTreatment, at: index)
-                                                        NightscoutCache.upsertTreatment(from: createdDoc)
-                                                    }
-                                                } else {
-                                                    // Hittade inte den gamla raden, försök ändå lägga in den nya överst.
-                                                    if let createdDoc = createdDoc,
-                                                       let newTreatment = Treatment(dictionary: createdDoc as [String : AnyObject]) {
-                                                        self.treatments.insert(newTreatment, at: 0)
-                                                        NightscoutCache.upsertTreatment(from: createdDoc)
-                                                    }
-                                                }
+                                                self.replaceLocalTreatment(treatment, with: createdDoc)
 
                                                 self.tableView.reloadData()
                                                 self.updateDuplicateIndicator()

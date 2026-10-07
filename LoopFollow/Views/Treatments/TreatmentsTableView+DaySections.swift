@@ -2,7 +2,8 @@ import UIKit
 
 extension TreatmentsTableView {
     var filteredDaySections: [TreatmentDaySection] {
-        daySections.compactMap { section in
+        if isCategorySearchActive { return searchSections }
+        return daySections.compactMap { section in
             let filtered: [Treatment]
 
             switch segmentedControl.selectedSegmentIndex {
@@ -133,6 +134,11 @@ extension TreatmentsTableView {
             self.tableView.reloadData()
             self.updateDuplicateIndicator()
 
+            // An in-flight normal load may finish while search owns the table.
+            guard !self.isCategorySearchActive else {
+                self.hideRefreshIndicator()
+                return
+            }
             if cal.isDate(anchorDay, inSameDayAs: Date()) && !self.hasAutoScrolledToTodayLatest {
                 self.scrollToLatestNonFutureTreatmentForTodayIfNeeded()
             } else if let sectionIndex = self.filteredSectionIndex(for: anchorDay),
@@ -257,6 +263,10 @@ extension TreatmentsTableView {
     }
 
     func maybeLoadOlderDaysIfNeeded() {
+        if isCategorySearchActive {
+            maybeLoadNextSearchPage()
+            return
+        }
         guard !isLoadingOlderDays,
               let lastVisible = tableView.indexPathsForVisibleRows?.max(),
               !filteredDaySections.isEmpty else { return }
@@ -271,7 +281,7 @@ extension TreatmentsTableView {
     }
     
     func syncSelectedDateFromVisibleSection() {
-        guard !filteredDaySections.isEmpty else { return }
+        guard !isCategorySearchActive, !filteredDaySections.isEmpty else { return }
         let visibleRows = tableView.indexPathsForVisibleRows ?? []
 
         guard let topVisible = visibleRows.min(by: {
@@ -317,6 +327,7 @@ extension TreatmentsTableView {
     }
     
     @objc func handleTreatmentsCacheUpdated(_ notification: Notification) {
+        if isCategorySearchActive { scheduleCategorySearchRefresh() }
         guard let updatedDayStart = notification.userInfo?["dayStart"] as? Date else { return }
         let cal = Calendar.current
         let selectedDayStart = cal.startOfDay(for: selectedDate)
@@ -327,6 +338,9 @@ extension TreatmentsTableView {
     }
 
     @objc func handleGlobalTreatmentsUpdated(_ notification: Notification) {
+        if isCategorySearchActive {
+            scheduleCategorySearchRefresh()
+        }
         loadSingleDaySection(for: selectedDate, reloadTable: true)
     }
     

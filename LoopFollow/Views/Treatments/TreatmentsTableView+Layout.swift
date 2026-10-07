@@ -170,6 +170,7 @@ extension TreatmentsTableView {
     }
     
     @objc func filterChanged() {
+        if isCategorySearchActive { runCategorySearch(); return }
         let previouslyVisibleDate = selectedDate
 
         tableView.reloadData()
@@ -239,9 +240,14 @@ extension TreatmentsTableView {
             headerStack.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -8)
         ])
 
-        // TableView below the headerStack
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 8),
+            categorySearchBar.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 2),
+            categorySearchBar.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor),
+            categorySearchBar.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor),
+            searchStatusLabel.topAnchor.constraint(equalTo: categorySearchBar.bottomAnchor),
+            searchStatusLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 16),
+            searchStatusLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -16),
+            tableView.topAnchor.constraint(equalTo: searchStatusLabel.bottomAnchor, constant: 6),
             tableView.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)

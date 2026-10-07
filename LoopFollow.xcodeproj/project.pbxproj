@@ -247,6 +247,8 @@
 		BBC9FF1E4E252193732D05B6 /* UserProfileEntry+Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 306CA1FAA339A5D79F0D2895 /* UserProfileEntry+Identity.swift */; };
 		BC7625BB7F5EC9C0D70B369E /* GlucoseView+Rows.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7823BEBED538CE06011989B /* GlucoseView+Rows.swift */; };
 		BC896253DB8B392672B04AF2 /* TreatmentsTableView+Editing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8671A9C09529A71103A1475 /* TreatmentsTableView+Editing.swift */; };
+		C0DECA7E0000000000000002 /* TreatmentSearchIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DECA7E0000000000000001 /* TreatmentSearchIndex.swift */; };
+		C0DECA7E0000000000000004 /* TreatmentsTableView+Search.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DECA7E0000000000000003 /* TreatmentsTableView+Search.swift */; };
 		C14A7B39B987B3BF797606FD /* Event.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9523BA68258AE41CECB855AF /* Event.swift */; };
 		C2F8A8564083001BD09030D1 /* ProfileSchedulesLastChangedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26F7E68C3F42706CE073896C /* ProfileSchedulesLastChangedStore.swift */; };
 		C3446EA976E973B0869E85D4 /* ProfileSchedulesViewModel+Training.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C5D5477BB56173E654517CE /* ProfileSchedulesViewModel+Training.swift */; };
@@ -825,6 +827,8 @@
 		BD61BE5DDD6729B583C9EC81 /* TreatmentsTableView+TableDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+TableDataSource.swift"; sourceTree = "<group>"; };
 		BF09BF07EFBE145565A7B9D8 /* MealAnalysisView+TimeSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealAnalysisView+TimeSelection.swift"; sourceTree = "<group>"; };
 		BFCF778244ABD4355B5A53C7 /* LowTreatmentsStatsViewController+Options.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LowTreatmentsStatsViewController+Options.swift"; sourceTree = "<group>"; };
+		C0DECA7E0000000000000001 /* TreatmentSearchIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TreatmentSearchIndex.swift; sourceTree = "<group>"; };
+		C0DECA7E0000000000000003 /* TreatmentsTableView+Search.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Search.swift"; sourceTree = "<group>"; };
 		C1167C087E528BDF0C617C5E /* GlucoseView+Loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseView+Loading.swift"; sourceTree = "<group>"; };
 		C1D13CC9B604B2BF8FB2CE1B /* GlucoseStatsViewController+Loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+Loading.swift"; sourceTree = "<group>"; };
 		C2DCA1E77CF99769624DE2E2 /* GlucoseStatsViewController+GlucoseChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatsViewController+GlucoseChart.swift"; sourceTree = "<group>"; };
@@ -1312,6 +1316,7 @@
 			isa = PBXGroup;
 			children = (
 				79870C6C5B83AAAA5F6F2E7F /* Treatment.swift */,
+				C0DECA7E0000000000000001 /* TreatmentSearchIndex.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -2197,6 +2202,7 @@
 				1118C5CF74013EA3C338153C /* README.md */,
 				659AC6822D7C59430069FC7C /* TreatmentsTableView.swift */,
 				44E8FC485BCB8810EF0CD051 /* TreatmentsTableView+DaySections.swift */,
+				C0DECA7E0000000000000003 /* TreatmentsTableView+Search.swift */,
 				2A500F4F6AB47DBE78413A79 /* TreatmentsTableView+Layout.swift */,
 				E02D491EB21672CEFD2CCC87 /* TreatmentsTableView+MealAnalysis.swift */,
 				E693F1368395461C0F864304 /* TreatmentsTableView+Refresh.swift */,
@@ -3039,6 +3045,8 @@
 				659AC6832D7C594D0069FC7C /* TreatmentsTableView.swift in Sources */,
 				AC467F7B2581883A7F8F1A61 /* Value1TableViewCell.swift in Sources */,
 				C4DE963965C1AB527EF740FA /* Treatment.swift in Sources */,
+				C0DECA7E0000000000000004 /* TreatmentsTableView+Search.swift in Sources */,
+				C0DECA7E0000000000000002 /* TreatmentSearchIndex.swift in Sources */,
 				E3CB891CCA6B79B63F93E4DC /* TreatmentsTableView+DaySections.swift in Sources */,
 				495017119790C94D5EA9B054 /* TreatmentsTableView+Layout.swift in Sources */,
 				3F8FC7F4AEA3E9A940A8E239 /* TreatmentsTableView+MealAnalysis.swift in Sources */,

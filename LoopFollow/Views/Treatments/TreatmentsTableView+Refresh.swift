@@ -71,6 +71,11 @@ extension TreatmentsTableView {
         // Show local loading indicator immediately so the user sees that work has started
         showRefreshIndicator()
 
+        if isCategorySearchActive {
+            scheduleCategorySearchRefresh()
+            return
+        }
+
         // Reset picker to today and allow a new auto-scroll to latest for today.
         selectedDate = Date()
         hasAutoScrolledToTodayLatest = false
@@ -135,7 +140,11 @@ extension TreatmentsTableView {
                         NightscoutCache.upsertTreatments(from: entries.map { $0 as [String: Any] })
                         
                         // Ladda om aktuell dag från cache (om användaren står på en dag inom fönstret).
-                        self.loadTreatments(for: self.selectedDate)
+                        if self.isCategorySearchActive {
+                            self.scheduleCategorySearchRefresh()
+                        } else {
+                            self.loadTreatments(for: self.selectedDate)
+                        }
                         
                         // Visa en liten bekräftelse-overlay
                         self.showDateSyncOverlay(message: "Cache återfylld med \(entries.count) behandlingar")

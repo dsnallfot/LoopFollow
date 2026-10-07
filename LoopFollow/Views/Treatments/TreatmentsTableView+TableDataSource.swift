@@ -46,38 +46,8 @@ extension TreatmentsTableView {
         }
         
         // Determine display event type with special handling for Carb Correction.
-        let displayEventType: String = {
-            if treatment.eventType == "Carb Correction" {
-                if let foodType = treatment.rawData["foodType"] as? String, !foodType.isEmpty {
-                    if let notes = treatment.rawData["notes"] as? String {
-                        let dextroNotes = notes.hasPrefix("✎ ")
-                            ? String(notes.dropFirst(2))
-                            : notes
+        let displayEventType = treatment.category.title
 
-                        if !dextroNotes.isEmpty,
-                           dextroNotes.allSatisfy({ $0 == "🍬" })
-                        {
-                            return "Dextro"
-                        } else {
-                            return "Måltid"
-                        }
-                    } else {
-                        return "Måltid"
-                    }
-                } else {
-                    return "Fett & Protein"
-                }
-            } else if treatment.eventType == "Site Change" {
-                return "Pumpbyte"
-            } else if treatment.eventType == "Insulin Change" {
-                return "Nytt insulin"
-            } else if treatment.eventType == "Sensor Start" {
-                return "Sensorbyte"
-            } else {
-                return treatment.eventType
-            }
-        }()
-        
         // Statussymbol för måltider (Måltid) baserat på BG ca 3h efter
         let mealStatusSymbol: String
         if displayEventType == "Måltid" {
@@ -291,11 +261,17 @@ extension TreatmentsTableView {
         cell.selectedBackgroundView = selected
         
         // Check for duplicates: only count duplicates that have the same timestamp and event type (excluding "Note").
-        let duplicateCount = filteredTreatments.filter {
-            $0.timestamp == treatment.timestamp &&
-            $0.eventType == treatment.eventType &&
-            $0.eventType != "Note"
-        }.count
+        let duplicateCount: Int
+        if isCategorySearchActive {
+            duplicateCount = searchDuplicateCounts[TreatmentDuplicateKey(
+                timestamp: treatment.timestamp, eventType: treatment.eventType), default: 0]
+        } else {
+            duplicateCount = filteredTreatments.filter {
+                $0.timestamp == treatment.timestamp &&
+                $0.eventType == treatment.eventType &&
+                $0.eventType != "Note"
+            }.count
+        }
         
         if treatment.eventType == "Exercise", let duration = treatment.overrideDuration {
             let exerciseEndTime = treatment.timestamp.addingTimeInterval(duration * 60)

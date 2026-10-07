@@ -41,6 +41,8 @@ class TableSpy {
 class TreatmentsTableView {
     struct TreatmentDaySection { let date: Date; var treatments: [Treatment] }
     var daySections: [TreatmentDaySection] = []
+    var searchSections: [TreatmentDaySection] = []
+    var isCategorySearchActive = false
     let segmentedControl = Segment()
     let tableView = TableSpy()
 '''
@@ -93,6 +95,15 @@ view.tableView.rows = []
 view.tableView.destination = nil
 view.duplicateIndicatorTapped()
 precondition(view.tableView.destination == nil, "Ignore stale table bounds")
+// A submitted search owns an already-filtered snapshot, independent of browsing days.
+view.isCategorySearchActive = true
+view.segmentedControl.selectedSegmentIndex = 2
+let searched = treatment(10, "Sensor Start")
+view.searchSections = [section([searched, searched])]
+expect(IndexPath(row: 0, section: 0), "Search snapshot supplies table and duplicate destination")
+view.searchSections = []
+expect(nil, "Empty search must not fall back to normal browsing rows")
+view.isCategorySearchActive = false
 print("Treatment duplicate navigation passed: all four filters, older days, hidden sections, deletion, notes and stale bounds")
 '''
 with tempfile.TemporaryDirectory(prefix='treatment-duplicates-') as directory:

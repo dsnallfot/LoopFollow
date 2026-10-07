@@ -13,6 +13,28 @@ class TreatmentsTableView: ThemedViewController, UITableViewDataSource, UITableV
     var treatments: [Treatment] = []
     var pendingShortcutDeletion: Treatment?
 
+    let categorySearchBar = UISearchBar()
+    let searchStatusLabel = UILabel()
+    let searchStore = TreatmentSearchStore()
+    var searchQuery: String?
+    var isCategorySearchActive: Bool { searchQuery != nil }
+    var searchSections: [TreatmentDaySection] = []
+    var searchMatches: [TreatmentJSON] = []
+    var searchDisplayedCount = 0
+    var searchUnavailableDays = 0
+    var searchDayCount = 0
+    var searchGeneration: UInt64 = 0
+    var searchWork: DispatchWorkItem?
+    var searchPageWork: DispatchWorkItem?
+    var searchRefreshWork: DispatchWorkItem?
+    var isLoadingSearchPage = false
+    var searchReturnPosition: (offset: CGPoint, date: Date, segment: Int)?
+    struct TreatmentDuplicateKey: Hashable {
+        let timestamp: Date
+        let eventType: String
+    }
+    var searchDuplicateCounts: [TreatmentDuplicateKey: Int] = [:]
+
     struct TreatmentDaySection {
         let date: Date
         var treatments: [Treatment]
@@ -70,6 +92,7 @@ class TreatmentsTableView: ThemedViewController, UITableViewDataSource, UITableV
         setupNavigationBar()
         setupSegmentedControl()
         setupTableView()
+        setupCategorySearch()
         // Add “Valt datum” picker
         view.addSubview(datePicker)
         datePicker.addTarget(self, action: #selector(dateChanged(_:)), for: .valueChanged)
@@ -139,6 +162,9 @@ class TreatmentsTableView: ThemedViewController, UITableViewDataSource, UITableV
     }
     
     deinit {
+        searchWork?.cancel()
+        searchPageWork?.cancel()
+        searchRefreshWork?.cancel()
         NotificationCenter.default.removeObserver(self)
     }
     

@@ -155,6 +155,25 @@ final class NightscoutCache {
     // Protect the entire read/merge/write transaction, including BG vs treatments.
     private static let diskLock = NSRecursiveLock()
 
+    /// Changes only after a successful treatment write, not every glucose update.
+    static let treatmentsDidChange = Notification.Name("TreatmentSearchCacheChanged")
+    private static var searchRevision: UInt64 = 0
+
+    static var treatmentSearchRevision: UInt64 {
+        diskLock.lock()
+        defer { diskLock.unlock() }
+        return searchRevision
+    }
+
+    /// Search does not need to decode or normalize glucose data.
+    static func readTreatmentsForSearch(_ date: Date) throws -> [TreatmentJSON] {
+        struct TreatmentsPayload: Decodable { let treatments: [TreatmentJSON] }
+        diskLock.lock()
+        defer { diskLock.unlock() }
+        return try JSONDecoder().decode(TreatmentsPayload.self,
+            from: Data(contentsOf: fileURL(for: date))).treatments
+    }
+
 
     // Number of days to keep in cache (x * 24 hours back from now)
     static var retentionDays = 91
@@ -213,9 +232,16 @@ final class NightscoutCache {
                 $0.created_at == $1.created_at ? $0._id < $1._id : $0.created_at < $1.created_at
             }
         )
-        if let existing = try? readDay(date), existing == payload { return }
+        let existing = try? readDay(date)
+        if existing == payload { return }
         let data = try JSONEncoder().encode(payload)
         try data.write(to: fileURL(for: date), options: .atomic)
+        if existing?.treatments != payload.treatments {
+            searchRevision &+= 1
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: treatmentsDidChange, object: nil)
+            }
+        }
     }
 
     /// Delete cached files older than `retentionDays` calendar days.
