@@ -1218,7 +1218,7 @@ extension MainViewController {
         let maxBasal = UserDefaultsRepository.minBasalScale.value
         let lineBasal = LineChartDataSet(entries:chartEntry, label: "")
         lineBasal.setDrawHighlightIndicators(false)
-        lineBasal.setColor(NSUIColor.systemBlue, alpha: 0.3)
+        lineBasal.setColor(NSUIColor.systemBlue, alpha: 0.5)
         lineBasal.lineWidth = 0
         lineBasal.drawFilledEnabled = true
         lineBasal.fillColor = NSUIColor.systemBlue
@@ -1233,7 +1233,7 @@ extension MainViewController {
         let chartEntryBolus = [ChartDataEntry]()
         let lineBolus = LineChartDataSet(entries:chartEntryBolus, label: "")
         lineBolus.circleRadius = CGFloat(globalVariables.dotBolus)
-        lineBolus.circleColors = [NSUIColor.systemBlue.withAlphaComponent(0.75)]
+        lineBolus.circleColors = [NSUIColor.systemBlue.withAlphaComponent(1.0)]
         lineBolus.drawCircleHoleEnabled = false
         lineBolus.setDrawHighlightIndicators(false)
         lineBolus.setColor(NSUIColor.systemBlue, alpha: 1.0)
@@ -1259,10 +1259,10 @@ extension MainViewController {
         let chartEntryCarbs = [ChartDataEntry]()
         let lineCarbs = LineChartDataSet(entries:chartEntryCarbs, label: "")
         lineCarbs.circleRadius = CGFloat(globalVariables.dotCarb)
-        lineCarbs.circleColors = [NSUIColor.systemOrange.withAlphaComponent(0.75)]
+        lineCarbs.circleColors = [NSUIColor.systemOrange.withAlphaComponent(1.0)]
         lineCarbs.drawCircleHoleEnabled = false
         lineCarbs.setDrawHighlightIndicators(false)
-        lineCarbs.setColor(NSUIColor.systemBlue, alpha: 1.0)
+        lineCarbs.setColor(NSUIColor.systemOrange, alpha: 1.0)
         lineCarbs.lineWidth = 0
         lineCarbs.axisDependency = YAxis.AxisDependency.right
         lineCarbs.valueFormatter = ChartYDataValueFormatter()
@@ -1285,7 +1285,7 @@ extension MainViewController {
         let chartBasalScheduledEntry = [ChartDataEntry]()
         let lineBasalScheduled = LineChartDataSet(entries:chartBasalScheduledEntry, label: "")
         lineBasalScheduled.setDrawHighlightIndicators(false)
-        lineBasalScheduled.setColor(NSUIColor.systemBlue, alpha: 0.8)
+        lineBasalScheduled.setColor(NSUIColor.systemBlue, alpha: 0.9)
         lineBasalScheduled.lineWidth = 2
         lineBasalScheduled.drawFilledEnabled = false
         lineBasalScheduled.drawCirclesEnabled = false
@@ -1528,7 +1528,7 @@ extension MainViewController {
         let chartEntrySmb = [ChartDataEntry]()
         let lineSmb = LineChartDataSet(entries: chartEntrySmb, label: "")
         lineSmb.circleRadius = CGFloat(globalVariables.dotBolus)
-        lineSmb.circleColors = [NSUIColor.systemBlue.withAlphaComponent(0.75)]
+        lineSmb.circleColors = [NSUIColor.systemBlue.withAlphaComponent(1.0)]
         lineSmb.drawCircleHoleEnabled = true
         lineSmb.setDrawHighlightIndicators(false)
         lineSmb.setColor(NSUIColor.systemBlue, alpha: 1.0)
@@ -1595,7 +1595,7 @@ extension MainViewController {
         basalPulseSet.drawCirclesEnabled = true
         basalPulseSet.drawCircleHoleEnabled = false
         basalPulseSet.circleRadius = 3.5
-        basalPulseSet.circleColors = [NSUIColor.systemBlue.withAlphaComponent(0.6)]
+        basalPulseSet.circleColors = [NSUIColor.systemBlue.withAlphaComponent(0.8)]
         basalPulseSet.lineWidth = 0
         basalPulseSet.drawValuesEnabled = false
         basalPulseSet.highlightEnabled = false
@@ -1767,7 +1767,7 @@ extension MainViewController {
         if UserDefaultsRepository.show30MinLine.value {
             let ul2 = ChartLimitLine()
             ul2.limit = Double(dateTimeUtils.getNowTimeIntervalUTC().advanced(by: -30 * 60))
-            ul2.lineColor = NSUIColor.systemBlue.withAlphaComponent(0.5)
+            ul2.lineColor = NSUIColor.systemBlue.withAlphaComponent(0.6)
             ul2.lineWidth = 1.5
             ul2.lineDashLengths = [1, 1]
             BGChart.xAxis.addLimitLine(ul2)
@@ -1777,7 +1777,7 @@ extension MainViewController {
             for i in 1..<7 {
                 let ul = ChartLimitLine()
                 ul.limit = Double(dateTimeUtils.getNowTimeIntervalUTC() - Double(i * 60 * 60))
-                ul.lineColor = NSUIColor.systemGray.withAlphaComponent(0.5)
+                ul.lineColor = NSUIColor.systemGray.withAlphaComponent(0.6)
                 let dash = 10.0 - Double(i)
                 let space = 5.0 + Double(i)
                 ul.lineDashLengths = [CGFloat(dash), CGFloat(space)]
@@ -2387,14 +2387,14 @@ extension MainViewController {
             
             let nowTime = dateTimeUtils.getNowTimeIntervalUTC()
             let diffTimeHours = (nowTime - dateTimeStamp) / 60 / 60
-            if diffTimeHours <= 1 {
+            //if diffTimeHours <= 1 {
                 colors.append(lightBlue.withAlphaComponent(1.0))
-            } else if diffTimeHours > 6 {
+            /*} else if diffTimeHours > 6 {
                 colors.append(lightBlue.withAlphaComponent(0.25))
             } else {
                 let thisAlpha = 1.0 - (0.15 * diffTimeHours)
                 colors.append(lightBlue.withAlphaComponent(CGFloat(thisAlpha)))
-            }
+            }*/
             
             if bolusShift {
                 dateTimeStamp = dateTimeStamp - 150
@@ -2468,7 +2468,7 @@ extension MainViewController {
             // Check condition: if foodType is empty we are most likely dealing with FPUs.
             // Dextro (🍬) markeras separat.
             if rawFoodType.isEmpty {
-                colors.append(NSUIColor.systemBrown.withAlphaComponent(0.35))
+                colors.append(NSUIColor.systemBrown.withAlphaComponent(0.6))
             } else if isDextro {
                 colors.append(NSUIColor.white)
             } else {
@@ -2883,7 +2883,7 @@ extension MainViewController {
         var maxBasal = UserDefaultsRepository.minBasalScale.value
         let lineBasal = LineChartDataSet(entries:chartEntry, label: "")
         lineBasal.setDrawHighlightIndicators(false)
-        lineBasal.setColor(NSUIColor.systemBlue, alpha: 0.4)
+        lineBasal.setColor(NSUIColor.systemBlue, alpha: 0.5)
         lineBasal.lineWidth = 0
         lineBasal.drawFilledEnabled = true
         lineBasal.fillColor = NSUIColor.systemBlue
@@ -2898,7 +2898,7 @@ extension MainViewController {
         var chartEntryBolus = [ChartDataEntry]()
         let lineBolus = LineChartDataSet(entries:chartEntryBolus, label: "")
         lineBolus.circleRadius = 2
-        lineBolus.circleColors = [NSUIColor.systemBlue.withAlphaComponent(0.75)]
+        lineBolus.circleColors = [NSUIColor.systemBlue.withAlphaComponent(1.0)]
         lineBolus.drawCircleHoleEnabled = false
         lineBolus.setDrawHighlightIndicators(false)
         lineBolus.setColor(NSUIColor.systemBlue, alpha: 1.0)
@@ -2919,10 +2919,10 @@ extension MainViewController {
         var chartEntryCarbs = [ChartDataEntry]()
         let lineCarbs = LineChartDataSet(entries:chartEntryCarbs, label: "")
         lineCarbs.circleRadius = 2
-        lineCarbs.circleColors = [NSUIColor.systemOrange.withAlphaComponent(0.75)]
+        lineCarbs.circleColors = [NSUIColor.systemOrange.withAlphaComponent(1.0)]
         lineCarbs.drawCircleHoleEnabled = false
         lineCarbs.setDrawHighlightIndicators(false)
-        lineCarbs.setColor(NSUIColor.systemBlue, alpha: 1.0)
+        lineCarbs.setColor(NSUIColor.systemOrange, alpha: 1.0)
         lineCarbs.lineWidth = 0
         lineCarbs.axisDependency = YAxis.AxisDependency.right
         lineCarbs.valueFormatter = ChartYDataValueFormatter()
@@ -2940,7 +2940,7 @@ extension MainViewController {
         var chartBasalScheduledEntry = [ChartDataEntry]()
         let lineBasalScheduled = LineChartDataSet(entries:chartBasalScheduledEntry, label: "")
         lineBasalScheduled.setDrawHighlightIndicators(false)
-        lineBasalScheduled.setColor(NSUIColor.systemBlue, alpha: 0.8)
+        lineBasalScheduled.setColor(NSUIColor.systemBlue, alpha: 0.9)
         lineBasalScheduled.lineWidth = 0.5
         lineBasalScheduled.drawFilledEnabled = false
         lineBasalScheduled.drawCirclesEnabled = false
@@ -3139,7 +3139,7 @@ extension MainViewController {
         var chartEntrySmb = [ChartDataEntry]()
         let lineSmb = LineChartDataSet(entries:chartEntrySmb, label: "")
         lineSmb.circleRadius = 2
-        lineSmb.circleColors = [NSUIColor.systemBlue.withAlphaComponent(0.75)]
+        lineSmb.circleColors = [NSUIColor.systemBlue.withAlphaComponent(1.0)]
         lineSmb.drawCircleHoleEnabled = false
         lineSmb.setDrawHighlightIndicators(false)
         lineSmb.setColor(NSUIColor.systemBlue, alpha: 1.0)
