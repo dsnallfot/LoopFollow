@@ -31,7 +31,10 @@ extension MealAnalysisView {
         let textLabel = UILabel()
         textLabel.font = boldText
             ? .preferredFont(forTextStyle: .body).withTraits(traits: .traitBold)
-            : .preferredFont(forTextStyle: .body)
+            : .preferredFont(forTextStyle: .caption1)
+        if !boldText {
+            valueLabel.font = .preferredFont(forTextStyle: .caption1)
+        }
         textLabel.text = text
         let spacer = UIView()
         let row = UIStackView(arrangedSubviews: [icon, textLabel, spacer, valueLabel])
@@ -50,7 +53,10 @@ extension MealAnalysisView {
                              text: String,
                              valueLabel: UILabel,
                              boldText: Bool = false,
-                             unit: String) -> UIStackView {
+                             unit: String,
+                             iconName: String? = nil,
+                             iconView: UIImageView? = nil,
+                             secondary: Bool = false) -> UIStackView {
         let textLabel = externalTextLabel ?? UILabel()
         textLabel.text = text
         textLabel.font = boldText
@@ -64,9 +70,24 @@ extension MealAnalysisView {
         row.spacing = 5
         valueLabel.setContentHuggingPriority(.required, for: .horizontal)
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        textLabel.textColor = .label
-        valueLabel.textColor = .label
+        let color: UIColor = secondary ? .secondaryLabel : .label
+        textLabel.textColor = color
+        valueLabel.textColor = color
         valueLabel.font = .preferredFont(forTextStyle: .caption1)
+        if let iconName {
+            let configuration = UIImage.SymbolConfiguration(font: textLabel.font)
+            let icon = iconView ?? UIImageView()
+            icon.image = UIImage(systemName: iconName, withConfiguration: configuration)
+            icon.tintColor = color
+            icon.contentMode = .center
+            icon.translatesAutoresizingMaskIntoConstraints = false
+            // Shared icon column aligns circle and triangle rows regardless of symbol width.
+            icon.widthAnchor.constraint(equalToConstant: UIFontMetrics(forTextStyle: .caption1).scaledValue(for: 16)).isActive = true
+            icon.setContentHuggingPriority(.required, for: .horizontal)
+            icon.setContentCompressionResistancePriority(.required, for: .horizontal)
+            row.insertArrangedSubview(icon, at: 0)
+            row.alignment = .center
+        }
         return row
     }
 }

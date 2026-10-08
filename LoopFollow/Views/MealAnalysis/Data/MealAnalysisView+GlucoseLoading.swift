@@ -21,10 +21,10 @@ extension MealAnalysisView {
         let cal = Calendar.current
         var merged: [TimeInterval: BGEntry] = [:]
 
-        for e in existing {
+        for e in existing where !e.isGapFill {
             merged[e.date.timeIntervalSince1970] = e
         }
-        for e in new {
+        for e in new where !e.isGapFill {
             merged[e.date.timeIntervalSince1970] = e
         }
 
@@ -48,7 +48,7 @@ extension MealAnalysisView {
                     if missing > 0 {
                         for k in 1...missing {
                             let d = curr.date.addingTimeInterval(Double(k)*300)
-                            let filler = BGEntry(date: d, mmol: curr.mmol)
+                            let filler = BGEntry(date: d, mmol: curr.mmol, isGapFill: true)
                             out.append(filler)
                         }
                     }

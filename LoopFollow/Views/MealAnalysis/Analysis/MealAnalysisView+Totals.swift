@@ -1,6 +1,10 @@
 import UIKit
 
 extension MealAnalysisView {
+    var netMealInsulin: Double {
+        (smbTotal + bolusTotal + basalTotal) - profileBasalTotal
+    }
+
     private func scheduledBasal(from start: Date, to end: Date) -> Double {
         let schedule = ProfileManager.shared.basalSchedule  // array of .timeAsSeconds + value
         guard !schedule.isEmpty else { return 0 }
@@ -172,7 +176,7 @@ extension MealAnalysisView {
         let rawBasal = scheduledBasal(from: startTime, to: endTime)
         profileBasalTotal = floor(rawBasal / 0.05) * 0.05
         // Net insulin for meal = delivered insulin - scheduled profile basal
-        let netInsulin = (smbTotal + bolusTotal + basalTotal) - profileBasalTotal
+        let netInsulin = netMealInsulin
         // Derived statistics
         let realCR = netInsulin > 0.04 ? carbsTotal / netInsulin : 0
         let manualBolusPct = netInsulin > 0.04 ? (bolusTotal / netInsulin) * 100 : 0

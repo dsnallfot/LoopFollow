@@ -39,6 +39,7 @@ class MealAnalysisView: ThemedViewController, ChartViewDelegate {
     let modalTitleString: String
     let showsDoneButton: Bool
     let preSelectedSegment: Int?
+    let openedFromMeal: Bool
 
     init(
         events: [Event],
@@ -48,7 +49,8 @@ class MealAnalysisView: ThemedViewController, ChartViewDelegate {
         modalWithTimestamp: Bool = true,
         modalTitleString: String = "",
         showsDoneButton: Bool = true,
-        preSelectedSegment: Int? = 0
+        preSelectedSegment: Int? = 0,
+        openedFromMeal: Bool = false
     ) {
         self.events = events
         self.treatments = treatments
@@ -58,6 +60,7 @@ class MealAnalysisView: ThemedViewController, ChartViewDelegate {
         self.modalTitleString = modalTitleString
         self.showsDoneButton = showsDoneButton
         self.preSelectedSegment = preSelectedSegment
+        self.openedFromMeal = openedFromMeal
 
         let now = Date()
         let calendar = Calendar.current
@@ -182,7 +185,38 @@ class MealAnalysisView: ThemedViewController, ChartViewDelegate {
     let manualBolusValueLabel     = MealAnalysisView.makeValueLabel()
     let smbTempValueLabel         = MealAnalysisView.makeValueLabel()
     let changeBGTitleLabel        = UILabel()
+    let changeBGStatusIcon        = UIImageView()
     let changeBGValueLabel        = MealAnalysisView.makeValueLabel()
+    let insulinDifferenceValueLabel = MealAnalysisView.makeValueLabel()
+    let theoreticalCRValueLabel = MealAnalysisView.makeValueLabel()
+    lazy var theoreticalCRRow: UIStackView = {
+        let titleLabel = UILabel()
+        titleLabel.numberOfLines = 0
+        let row = makeStatRow(textLabel: titleLabel,
+                              text: "Teoretisk insulinkvot denna måltid",
+                              valueLabel: theoreticalCRValueLabel,
+                              unit: " g/E",
+                              iconName: "triangle",
+                              secondary: true)
+        row.alignment = .center
+        theoreticalCRValueLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        row.isHidden = true
+        return row
+    }()
+    lazy var insulinDifferenceRow: UIStackView = {
+        let row = makeStatRow(text: "Insulindifferens 3h efter måltid",
+                              valueLabel: insulinDifferenceValueLabel,
+                              unit: " E",
+                              iconName: "triangle",
+                              secondary: true)
+        row.isHidden = true
+        row.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(showInsulinDifferenceExplanation)))
+        row.isAccessibilityElement = true
+        row.accessibilityTraits = .button
+        row.accessibilityLabel = "Insulindifferens 3h efter måltid"
+        row.accessibilityHint = "Visa hur uppskattningen beräknas"
+        return row
+    }()
     private let inRangeValueLabel         = MealAnalysisView.makeValueLabel()
     let manualVsAutomatedLabel    = MealAnalysisView.makeValueLabel()
     var inRange: Double = 0.0

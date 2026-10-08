@@ -75,7 +75,7 @@ extension MealAnalysisView {
                     secondary: true),
             makeRow(iconName: "calendar",
                     iconColor: UIColor.systemBlue.withAlphaComponent(0.45),
-                    text: "minus Profilbasal",
+                    text: "minus schemalagd profilbasal",
                     valueLabel: profileBasalValueLabel,
                     secondary: true)
         ])
@@ -100,7 +100,11 @@ extension MealAnalysisView {
             makeStatRow(textLabel: changeBGTitleLabel,
                         text: "Glukosförändring under vald tid",
                         valueLabel: changeBGValueLabel,
-                        unit: " mmol/L")
+                        unit: " mmol/L",
+                        iconName: "circle.fill",
+                        iconView: changeBGStatusIcon),
+            insulinDifferenceRow,
+            theoreticalCRRow
         ])
         statsStackBelow.axis = .vertical
         statsStackBelow.spacing = 5

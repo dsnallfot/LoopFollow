@@ -230,7 +230,7 @@ extension TreatmentsTableView {
                 let analysisEnd = treatment.timestamp.addingTimeInterval(10770) // end 180 min after start - använder nil tillsvidare
                 let analysisStartDextro = treatment.timestamp.addingTimeInterval(-1200) // minus 20 min
                 let analysisEndDextro = treatment.timestamp.addingTimeInterval(9600) // end 180 min after start - använder nil tillsvidare
-                let analysisVC = MealAnalysisView(events: events, initialStart: isDextro ? analysisStartDextro : analysisStart, initialEnd: isDextro ? analysisEndDextro : analysisEnd, modalWithTimestamp: true, modalTitleString: isDextro ? "Analys dextro" : "Analys måltid", preSelectedSegment: 2)
+                let analysisVC = MealAnalysisView(events: events, initialStart: isDextro ? analysisStartDextro : analysisStart, initialEnd: isDextro ? analysisEndDextro : analysisEnd, modalWithTimestamp: true, modalTitleString: isDextro ? "Analys dextro" : "Analys måltid", preSelectedSegment: 2, openedFromMeal: !isDextro)
                 let nav = UINavigationController(rootViewController: analysisVC)
                 nav.modalPresentationStyle = .formSheet
                 self.present(nav, animated: true)

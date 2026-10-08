@@ -916,7 +916,8 @@ extension MainViewController {
             initialEnd: end,
             modalWithTimestamp: true,
             modalTitleString: title,
-            preSelectedSegment: segment
+            preSelectedSegment: segment,
+            openedFromMeal: source == .meal
         )
         let nav = UINavigationController(rootViewController: analysisVC)
         nav.modalPresentationStyle = .formSheet

@@ -1,4 +1,5 @@
 import UIKit
+import HealthKit
 
 extension MealAnalysisView {
     private func nearestBG(to date: Date) -> Double? {
@@ -6,6 +7,7 @@ extension MealAnalysisView {
     }
     
     func updateBGLabels() {
+        updateInsulinDifference()
         let startBG = nearestBG(to: startTime)
         let endBG   = nearestBG(to: endTime)
         // format as "X.X → Y.Y mmol/L"
@@ -17,22 +19,22 @@ extension MealAnalysisView {
         : "--"
 
         // Statuscirkel baserat på slut-BG relativt användarens gränser (konvertera till mg/dL)
-        let statusSymbol: String
+        let statusColor: UIColor
         if let endBG = endBG {
             let endMgdl = endBG * 18.0182
             let lowMgdl = Double(UserDefaultsRepository.lowLine.value)
             let highMgdl = Double(UserDefaultsRepository.highLine.value)
             if endMgdl > highMgdl {
-                statusSymbol = "🟣"
+                statusColor = .systemPurple
             } else if endMgdl < lowMgdl {
-                statusSymbol = "🔴"
+                statusColor = .systemRed
             } else {
-                statusSymbol = "🟢"
+                statusColor = .systemGreen
             }
         } else {
-            statusSymbol = "⚪️"
+            statusColor = .systemGray
         }
-        changeBGTitleLabel.text = " \(statusSymbol)  Glukosförändring under vald tid"
+        changeBGStatusIcon.tintColor = statusColor
 
         changeBGValueLabel.text = "\(startText) → \(endText) mmol/L"
         // ——— NEW: compute percentages below, within, and above target ———
@@ -95,5 +97,33 @@ extension MealAnalysisView {
 
         // Redraw chart
         refreshBGChart()
+    }
+
+    private func updateInsulinDifference() {
+        let index = durationControl.selectedSegmentIndex
+        let isThreeHours = index >= 0 && index < durationControl.numberOfSegments
+            && durationControl.titleForSegment(at: index) == "3h"
+        insulinDifferenceRow.isHidden = !(openedFromMeal && isThreeHours)
+        theoreticalCRRow.isHidden = insulinDifferenceRow.isHidden
+        let units = insulinDifferenceRow.isHidden ? nil : MealInsulinDifference.units(
+            start: startTime, end: endTime, entries: bgEntries,
+            isf: ProfileManager.shared.currentISF()?.doubleValue(for: .millimolesPerLiter)
+        )
+        insulinDifferenceValueLabel.text = units.map { MealInsulinDifference.formatted($0) } ?? "-- E"
+        insulinDifferenceRow.accessibilityValue = insulinDifferenceValueLabel.text
+        let theoreticalCR = MealInsulinDifference.theoreticalCarbRatio(
+            carbs: carbsTotal, netInsulin: netMealInsulin, difference: units
+        )
+        theoreticalCRValueLabel.text = theoreticalCR.map { String(format: "%.0f g/E", $0) } ?? "-- g/E"
+    }
+
+    @objc func showInsulinDifferenceExplanation() {
+        let alert = UIAlertController(
+            title: "Uppskattad insulindifferens",
+            message: "(Slutglukos − startglukos) / aktuell profil-ISF. Målet som beräkningarna utgår från är ett oförändrat glukos mellan måltidsstart och efter 3 timmar. Plus betyder teoretiskt underskott, minus överskott.\n\nDetta är en förenklad indikativ efterhandsanalys, inte en dosrekommendation eller en uppmätt ISF. Den tar inte hänsyn till kvarvarande aktivt insulin, fortsatt kolhydratupptag eller andra orsaker till glukosförändringen. Aktuell ISF används även för äldre måltider.\n\n-- visas om tre timmar inte har gått, uppmätta glukosvärden saknas inom fem minuter från start/slut eller ISF saknas.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 }
