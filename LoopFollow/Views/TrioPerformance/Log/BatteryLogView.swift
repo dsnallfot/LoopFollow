@@ -259,6 +259,8 @@ final class BatteryLogViewController: ThemedViewController, UITableViewDataSourc
         cell.contentView.backgroundColor = .clear
         cell.selectionStyle = .none
         cell.textLabel?.font = .systemFont(ofSize: 17)
+        cell.textLabel?.attributedText = nil
+        cell.textLabel?.accessibilityLabel = nil
 
         // No raw data at all
         if entries.isEmpty {
@@ -279,8 +281,8 @@ final class BatteryLogViewController: ThemedViewController, UITableViewDataSourc
         switch row {
         case .battery(let e):
             let timeStr = timeFormatter.string(from: e.date)
-            let charging = e.isCharging ? "⚡" : ""
-            cell.textLabel?.text = String(format: "%.0f%% %@", e.percent, charging)
+            InfoData(name: "Batteristatus", value: String(format: "%.0f%%", e.percent),
+                     symbol: e.isCharging ? .charging : nil).applyValue(to: cell.textLabel)
             cell.detailTextLabel?.text = timeStr
             cell.detailTextLabel?.font = UIFont.monospacedDigitSystemFont(ofSize: 17, weight: .regular)
             cell.backgroundColor = .clear

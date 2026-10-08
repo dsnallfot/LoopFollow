@@ -14,6 +14,7 @@ struct LoadingButtonView: View {
     var isLoading: Bool
     var action: () -> Void
     var isDisabled: Bool = false
+    var showsWarning: Bool = false
 
     var body: some View {
         Section {
@@ -30,10 +31,17 @@ struct LoadingButtonView: View {
                         Button(action: {
                             action()
                         }) {
-                            Text(buttonText)
-                                .frame(maxWidth: .infinity)
-                                .font(.title3)
-                                .fontWeight(.semibold)
+                            HStack {
+                                if showsWarning {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(.red)
+                                        .accessibilityHidden(true)
+                                }
+                                Text(buttonText)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .font(.title3)
+                            .fontWeight(.semibold)
                         }
                         .buttonStyle(.glassProminent)
                         .controlSize(.large)

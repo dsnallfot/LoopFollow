@@ -18,6 +18,7 @@ extension GlucoseView {
     }
 
     func updateStatsLabel() {
+        statsLabel.accessibilityLabel = nil
         if dataMode == .sensorErrors {
             statsLabel.text = "Sensorfel: \(sensorErrorRows.count) st"
             return
@@ -56,12 +57,12 @@ extension GlucoseView {
         }
 
         let pct = expectedCountAdjusted > 0 ? Int(round(Double(actualCount) / Double(expectedCountAdjusted) * 100.0)) : 0
-        var emoji = " 🔴"
+        var symbol: InfoStatusSymbol = .red
         if pct > 95 {
-            emoji = " 🟢"
+            symbol = .green
         } else if pct > 90 {
-            emoji = " 🟡"
+            symbol = .yellow
         }
-        statsLabel.text = "CGM-värden:  \(actualCount)/\(expectedCount)  \(pct)%" + emoji
+        InfoData(name: "CGM-värden", value: "CGM-värden:  \(actualCount)/\(expectedCount)  \(pct)%", symbol: symbol).applyValue(to: statsLabel)
     }
 }

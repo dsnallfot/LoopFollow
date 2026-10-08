@@ -68,7 +68,8 @@ struct BolusView: View {
                             }
                         }
                     },
-                    isDisabled: isButtonDisabled
+                    isDisabled: isButtonDisabled,
+                    showsWarning: buttonGuardrailMessage != nil
                 )
                 .id("\(primaryButtonTitle)-\(isButtonDisabled)-\(isLoading)")
             }
@@ -135,7 +136,7 @@ struct BolusView: View {
         let maxBolusValue = maxBolus.value.doubleValue(for: .internationalUnit())
 
         if bolusValue > maxBolusValue {
-            return String(format: "⛔️ Max bolus %.1f E", maxBolusValue)
+            return String(format: "Max bolus %.1f E", maxBolusValue)
         }
         return nil
     }

@@ -21,6 +21,72 @@ struct PumpSessionBuckets {
     var hrs_total: Int { hrs_lt1h + hrs_h1to50 + hrs_h50to70 + hrs_gt70 }
 }
 
+enum PumpSessionFilter: Int, CaseIterable {
+    case all, omnipod, medtrum
+
+    var title: String {
+        switch self {
+        case .all: return "Alla"
+        case .omnipod: return "Omnipod"
+        case .medtrum: return "Medtrum"
+        }
+    }
+
+    var pumpsTitle: String { title + " pumpar" }
+
+    func includes(_ entry: PumpChangeHistoryEntry) -> Bool {
+        // Site Change notes are stored in pumpModel; session/failure notes are separate.
+        let model = entry.pumpModel.trimmingCharacters(in: .whitespacesAndNewlines)
+        switch self {
+        case .all: return true
+        case .omnipod:
+            return model.isEmpty || model.caseInsensitiveCompare("Pump") == .orderedSame
+                || model.localizedCaseInsensitiveContains("omnipod")
+        case .medtrum:
+            return model.localizedCaseInsensitiveContains("medtrum")
+        }
+    }
+}
+
+extension PumpSessionBuckets {
+    static func compute(from history: [PumpChangeHistoryEntry], filter: PumpSessionFilter = .all) -> PumpSessionBuckets {
+        var buckets = PumpSessionBuckets()
+
+        // Vi behöver minst två byten för att kunna definiera en avslutad pumppass-session
+        guard history.count > 1 else { return buckets }
+
+        // history förväntas vara sorterad DESC (0 = nyast)
+        for i in 1..<history.count {
+            guard filter.includes(history[i]) else { continue }
+            let start = Date(timeIntervalSince1970: history[i].date)
+            let end = Date(timeIntervalSince1970: history[i - 1].date)
+            var interval = end.timeIntervalSince(start)
+            if interval < 0 { interval = 0 }
+            let hours = Int(interval / 3600)
+            let clamped = min(hours, 80) // klipp vid 80h (72h + 8h grace)
+
+            switch hours {
+            case ..<1:
+                buckets.lt1h += 1
+                buckets.hrs_lt1h += clamped
+            case 1..<50:
+                buckets.h1to50 += 1
+                buckets.hrs_h1to50 += clamped
+            case 50..<70:
+                buckets.h50to70 += 1
+                buckets.hrs_h50to70 += clamped
+            default:
+                buckets.gt70 += 1
+                buckets.hrs_gt70 += clamped
+            }
+        }
+
+        return buckets
+    }
+
+}
+
+
 class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UITableViewDelegate, UIDocumentPickerDelegate {
 
     private var pumpHistory: [PumpChangeHistoryEntry] = []
@@ -162,8 +228,7 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
         let history = Storage.shared.pumpChangeHistory.sorted { $0.date > $1.date }
         guard !history.isEmpty else { return }
 
-        let buckets = computePumpSessionBuckets(from: history)
-        let statsVC = PumpSessionStatsViewController(buckets: buckets, history: history)
+        let statsVC = PumpSessionStatsViewController(history: history)
         let nav = UINavigationController(rootViewController: statsVC)
 
         // Ensure the modal container doesn't paint an opaque gray background.
@@ -293,40 +358,6 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
 
     // MARK: - Helpers – sessionstid
 
-    private func computePumpSessionBuckets(from history: [PumpChangeHistoryEntry]) -> PumpSessionBuckets {
-        var buckets = PumpSessionBuckets()
-
-        // Vi behöver minst två byten för att kunna definiera en avslutad pumppass-session
-        guard history.count > 1 else { return buckets }
-
-        // history förväntas vara sorterad DESC (0 = nyast)
-        for i in 1..<history.count {
-            let start = Date(timeIntervalSince1970: history[i].date)
-            let end = Date(timeIntervalSince1970: history[i - 1].date)
-            var interval = end.timeIntervalSince(start)
-            if interval < 0 { interval = 0 }
-            let hours = Int(interval / 3600)
-            let clamped = min(hours, 80) // klipp vid 80h (72h + 8h grace)
-
-            switch hours {
-            case ..<1:
-                buckets.lt1h += 1
-                buckets.hrs_lt1h += clamped
-            case 1..<50:
-                buckets.h1to50 += 1
-                buckets.hrs_h1to50 += clamped
-            case 50..<70:
-                buckets.h50to70 += 1
-                buckets.hrs_h50to70 += clamped
-            default:
-                buckets.gt70 += 1
-                buckets.hrs_gt70 += clamped
-            }
-        }
-
-        return buckets
-    }
-
     private func sessionColor(for hours: Int, isOngoing: Bool) -> UIColor {
         if isOngoing { return .systemBlue }
         if hours < 50 { return .systemRed }
@@ -342,8 +373,7 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
         let interval = max(0, endDate.timeIntervalSince(currentStart))
         let hours = Int(interval / 3600)
         let prefix = isOngoing ? "Pågående" : "Session"
-        let podFailureSuffix = current.notes?.localizedCaseInsensitiveContains("Kritiskt poddfel") == true ? " ⛔️" : ""
-        return ("(\(prefix): \(hours) h)\(podFailureSuffix)", hours, isOngoing)
+        return ("(\(prefix): \(hours) h)", hours, isOngoing)
     }
 
     private func presentPumpAnalysis(for entry: PumpChangeHistoryEntry, centeredAt analysisDate: Date, indexPath: IndexPath) {
@@ -515,7 +545,13 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
 
         let composed = NSMutableAttributedString()
         composed.append(NSAttributedString(string: dateString, attributes: attrsBase))
-        composed.append(NSAttributedString(string: " \(sessionInfo.text)\n", attributes: sessionAttrs))
+        composed.append(NSAttributedString(string: " \(sessionInfo.text)", attributes: sessionAttrs))
+        if entry.notes?.localizedCaseInsensitiveContains("Kritiskt poddfel") == true {
+            composed.append(NSAttributedString(string: " ", attributes: sessionAttrs))
+            composed.append(InfoStatusSymbol.stop.attributedImage(
+                font: UIFont.monospacedDigitSystemFont(ofSize: 17, weight: .regular), traits: cell.traitCollection))
+        }
+        composed.append(NSAttributedString(string: "\n", attributes: sessionAttrs))
         composed.append(NSAttributedString(string: "\(entry.pumpModel) startades", attributes: noteBase))
 
         cell.textLabel?.numberOfLines = 0
@@ -560,7 +596,7 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
     private func presentNoteEditor(for entry: PumpChangeHistoryEntry) {
         let alert = UIAlertController(
             title: "Notering",
-            message: "Skriv en notering för pumpbytet. Texten ”Kritiskt poddfel” visar ⛔️ i historiken. Töm fältet för att ta bort noteringen.",
+            message: "Skriv en notering för pumpbytet. Texten ”Kritiskt poddfel” visar en röd varningstriangel i historiken. Töm fältet för att ta bort noteringen.",
             preferredStyle: .alert
         )
         alert.addTextField { textField in
@@ -662,8 +698,10 @@ extension PumpHistoryViewController: AddManualPumpDelegate {
 
 
 final class PumpSessionStatsViewController: ThemedTableViewController {
-    private let buckets: PumpSessionBuckets
-    private let history: [PumpChangeHistoryEntry]
+    private var buckets = PumpSessionBuckets()
+    private var history: [PumpChangeHistoryEntry]
+    private var selectedFilter: PumpSessionFilter = .all
+    private let pumpFilterControl = UISegmentedControl(items: PumpSessionFilter.allCases.map { $0.title })
     private let chartView: ScatterChartView = {
         let v = ScatterChartView()
         v.legend.enabled = false
@@ -683,9 +721,8 @@ final class PumpSessionStatsViewController: ThemedTableViewController {
         return v
     }()
 
-    init(buckets: PumpSessionBuckets, history: [PumpChangeHistoryEntry]) {
-        self.buckets = buckets
-        self.history = history
+    init(history: [PumpChangeHistoryEntry]) {
+        self.history = history.sorted { $0.date > $1.date }
         super.init(style: .insetGrouped)
     }
 
@@ -713,7 +750,27 @@ final class PumpSessionStatsViewController: ThemedTableViewController {
         )
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
         setupChartHeader()
+        NotificationCenter.default.addObserver(self, selector: #selector(historyUpdated), name: .pumpChangeHistoryUpdated, object: nil)
+        refreshStatistics()
+    }
+
+    deinit { NotificationCenter.default.removeObserver(self) }
+
+    @objc private func historyUpdated() {
+        history = Storage.shared.pumpChangeHistory.sorted { $0.date > $1.date }
+        refreshStatistics()
+    }
+
+    @objc private func pumpFilterChanged() {
+        selectedFilter = PumpSessionFilter(rawValue: pumpFilterControl.selectedSegmentIndex) ?? .all
+        refreshStatistics()
+    }
+
+    private func refreshStatistics() {
+        buckets = PumpSessionBuckets.compute(from: history, filter: selectedFilter)
+        chartView.fitScreen()
         loadChartData()
+        tableView.reloadData()
     }
 
     private func setupChartHeader() {
@@ -722,12 +779,19 @@ final class PumpSessionStatsViewController: ThemedTableViewController {
         container.isOpaque = false
         chartView.backgroundColor = .clear
         container.addSubview(chartView)
-        container.frame = CGRect(x: 0, y: 0, width: tableView.bounds.width, height: 260)
+        pumpFilterControl.selectedSegmentIndex = PumpSessionFilter.all.rawValue
+        pumpFilterControl.addTarget(self, action: #selector(pumpFilterChanged), for: .valueChanged)
+        pumpFilterControl.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(pumpFilterControl)
+        container.frame = CGRect(x: 0, y: 0, width: tableView.bounds.width, height: 304)
         chartView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             chartView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 12),
             chartView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -12),
-            chartView.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+            pumpFilterControl.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+            pumpFilterControl.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            pumpFilterControl.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            chartView.topAnchor.constraint(equalTo: pumpFilterControl.bottomAnchor, constant: 12),
             chartView.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -24)
         ])
         tableView.tableHeaderView = container
@@ -736,7 +800,7 @@ final class PumpSessionStatsViewController: ThemedTableViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         if let header = tableView.tableHeaderView {
-            let targetSize = CGSize(width: tableView.bounds.width, height: 260)
+            let targetSize = CGSize(width: tableView.bounds.width, height: 304)
             if header.frame.size != targetSize {
                 header.frame.size = targetSize
                 tableView.tableHeaderView = header
@@ -745,11 +809,18 @@ final class PumpSessionStatsViewController: ThemedTableViewController {
     }
 
     private func loadChartData() {
-        guard history.count > 1 else { return }
+        let matchingHistory = history.filter { selectedFilter.includes($0) }
+        guard !matchingHistory.isEmpty else {
+            chartView.data = nil
+            chartView.noDataText = "Inga pumpar för valt filter"
+            chartView.setNeedsDisplay()
+            return
+        }
         var histEntries: [ChartDataEntry] = []
         var histColors: [NSUIColor] = []
         // history ska vara sorterad DESC (0 = nyast)
         for i in stride(from: history.count - 1, through: 1, by: -1) {
+            guard selectedFilter.includes(history[i]) else { continue }
             let start = Date(timeIntervalSince1970: history[i].date)
             let end = Date(timeIntervalSince1970: history[i - 1].date)
             var interval = end.timeIntervalSince(start)
@@ -781,7 +852,7 @@ final class PumpSessionStatsViewController: ThemedTableViewController {
 
         // Add a single blue point for the ongoing session (index 0)
         var dataSets: [ChartDataSetProtocol] = [histSet]
-        if let first = history.first {
+        if let first = history.first, selectedFilter.includes(first) {
             let start = Date(timeIntervalSince1970: first.date)
             var interval = Date().timeIntervalSince(start)
             if interval < 0 { interval = 0 }
@@ -806,9 +877,9 @@ final class PumpSessionStatsViewController: ThemedTableViewController {
         chartView.drawGridBackgroundEnabled = true
         chartView.gridBackgroundColor = NSUIColor.systemBackground.withAlphaComponent(0.5)
 
-        // X-axel = datumintervall för avslutade sessioners starttider (utan pågående)
-        let oldestStart = Date(timeIntervalSince1970: history.last!.date)
-        let newestEnd = Date(timeIntervalSince1970: history[0].date)
+        // X-axel = starttider för det valda pumpfiltret, inklusive eventuell pågående session.
+        let oldestStart = Date(timeIntervalSince1970: matchingHistory.last!.date)
+        let newestEnd = Date(timeIntervalSince1970: matchingHistory[0].date)
         let xAxis = chartView.xAxis
         xAxis.axisMinimum = oldestStart.timeIntervalSince1970
         let rightPad: TimeInterval = 168 * 3600 // add seven days of padding so the last point isn't clipped
@@ -939,8 +1010,8 @@ final class PumpSessionStatsViewController: ThemedTableViewController {
             let row = CountRow(rawValue: indexPath.row)!
             switch row {
             case .all:
-                cell.textLabel?.text = "Alla pumpar"
-                cell.detailTextLabel?.text = "\(buckets.total) st (100%)"
+                cell.textLabel?.text = selectedFilter.pumpsTitle
+                cell.detailTextLabel?.text = "\(buckets.total) st (\(percent(buckets.total)))"
                 cell.detailTextLabel?.textColor = .label
             case .lt1:
                 cell.textLabel?.text = "< 1 h"
@@ -967,7 +1038,7 @@ final class PumpSessionStatsViewController: ThemedTableViewController {
             let row = AvgRow(rawValue: indexPath.row)!
             switch row {
             case .all:
-                cell.textLabel?.text = "Alla pumpar"
+                cell.textLabel?.text = selectedFilter.pumpsTitle
                 cell.detailTextLabel?.text = avgText(count: buckets.total, totalHours: buckets.hrs_total)
                 cell.detailTextLabel?.textColor = .label
             case .allExclLt1:
@@ -1070,4 +1141,3 @@ extension PumpHistoryViewController {
         )
     }
 }
-

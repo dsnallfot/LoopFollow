@@ -42,6 +42,22 @@ class InfoData {
     }
 }
 
+
+extension InfoStatusSymbol {
+    /// Inline SF Symbol sized and vertically aligned to the surrounding text.
+    func attributedImage(font: UIFont, traits: UITraitCollection) -> NSAttributedString {
+        let configuration = UIImage.SymbolConfiguration(font: font)
+        guard let image = UIImage(systemName: systemName, withConfiguration: configuration) else {
+            return NSAttributedString(string: "")
+        }
+        let attachment = NSTextAttachment()
+        attachment.image = image.withTintColor(color.resolvedColor(with: traits), renderingMode: .alwaysOriginal)
+        attachment.bounds = CGRect(x: 0, y: (font.capHeight - image.size.height) / 2,
+                                   width: image.size.width, height: image.size.height)
+        return NSAttributedString(attachment: attachment)
+    }
+}
+
 /// A status indicator independent of its text and the table row's text color.
 enum InfoStatusSymbol: String, CaseIterable {
     case red = "🔴", yellow = "🟡", green = "🟢", purple = "🟣", orange = "🟠", blue = "🔵"

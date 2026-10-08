@@ -1396,14 +1396,15 @@ final class EnteredByView: ThemedViewController, UITableViewDataSource, UITableV
                 .withTraits(traits: .traitBold)
 
             cell.titleLabel.text = "Glukos 3h efter måltid"
-            cell.bolusLabel.text = "🔴"
-            cell.mealLabel.text  = "🟢"
-            cell.totalLabel.text = "🟣"
 
             cell.titleLabel.font = headerFont
             cell.bolusLabel.font = headerFont
             cell.mealLabel.font  = headerFont
             cell.totalLabel.font = headerFont
+
+            cell.bolusLabel.attributedText = InfoStatusSymbol.red.attributedImage(font: headerFont, traits: cell.traitCollection)
+            cell.mealLabel.attributedText = InfoStatusSymbol.green.attributedImage(font: headerFont, traits: cell.traitCollection)
+            cell.totalLabel.attributedText = InfoStatusSymbol.purple.attributedImage(font: headerFont, traits: cell.traitCollection)
 
             let defaultColor = UIColor.label
             cell.titleLabel.textColor = defaultColor

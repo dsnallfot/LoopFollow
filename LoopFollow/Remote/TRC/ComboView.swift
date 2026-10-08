@@ -441,7 +441,8 @@ private struct ComboEditorView: View {
                                 }
                             }
                         },
-                        isDisabled: isButtonDisabled
+                        isDisabled: isButtonDisabled,
+                        showsWarning: buttonGuardrailMessage != nil
                     )
                     .id("\(primaryButtonTitle)-\(isButtonDisabled)-\(isLoading)")
                 }
@@ -759,16 +760,16 @@ private struct ComboEditorView: View {
         let maxProteinValue = maxProtein.value.doubleValue(for: .gram())
 
         if bolusValue > maxBolusValue {
-            return String(format: "⛔️ Max bolus %.1f E", maxBolusValue)
+            return String(format: "Max bolus %.1f E", maxBolusValue)
         }
         if carbsValue > maxCarbsValue {
-            return String(format: "⛔️ Max kolhydrater %.0f g", maxCarbsValue)
+            return String(format: "Max kolhydrater %.0f g", maxCarbsValue)
         }
         if fatValue > maxFatValue {
-            return String(format: "⛔️ Max fett %.0f g", maxFatValue)
+            return String(format: "Max fett %.0f g", maxFatValue)
         }
         if proteinValue > maxProteinValue {
-            return String(format: "⛔️ Max protein %.0f g", maxProteinValue)
+            return String(format: "Max protein %.0f g", maxProteinValue)
         }
         return nil
     }

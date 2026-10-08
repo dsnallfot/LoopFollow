@@ -316,6 +316,11 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         composed.append(NSAttributedString(string: formattedDate, attributes: baseAttrs))
         composed.append(NSAttributedString(string: " ", attributes: baseAttrs))
         composed.append(NSAttributedString(string: append.text, attributes: sessionAttrs))
+        for symbol in append.symbols {
+            composed.append(NSAttributedString(string: " ", attributes: sessionAttrs))
+            composed.append(symbol.attributedImage(
+                font: UIFont.monospacedDigitSystemFont(ofSize: 16, weight: .regular), traits: cell.traitCollection))
+        }
         composed.append(NSAttributedString(string: "\n", attributes: baseAttrs))
         composed.append(NSAttributedString(string: cleanedNote, attributes: detailsAttrs))
 
@@ -349,10 +354,10 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         return cell
     }
 
-    private func sessionAppendInfo(forEntry entry: SensorStartHistoryEntry) -> (text: String, color: UIColor) {
+    private func sessionAppendInfo(forEntry entry: SensorStartHistoryEntry) -> (text: String, color: UIColor, symbols: [InfoStatusSymbol]) {
         // Compute using the full (unfiltered) timeline so values remain correct while filtering
         guard let index = sensorHistory.firstIndex(where: { $0.date == entry.date && $0.note == entry.note }) else {
-            return ("", .label)
+            return ("", .label, [])
         }
         let current = sensorHistory[index]
         let currentStart = Date(timeIntervalSince1970: current.date)
@@ -384,18 +389,19 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         }
 
         let prefix = isOngoing ? " (Pågående: " : " (Session: "
-        var snippet = "\(prefix)\(days)d \(hours)h)"
+        let snippet = "\(prefix)\(days)d \(hours)h)"
 
         // Mark very short past sessions
-        if !isOngoing && totalHours < 24 { snippet += " ⛔️" }
+        var symbols: [InfoStatusSymbol] = []
+        if !isOngoing && totalHours < 24 { symbols.append(.stop) }
 
         // Append warning if this sensor session has identified Dexcom sensorfel
         let errorWindow = current.sensorUsageWindow(in: sensorHistory, now: analysisDate)
         if dexcomOutagesCache.contains(where: { errorWindow.contains($0.sensorErrorTimestamp) }) {
-            snippet += " ⚠️"
+            symbols.append(.warning)
         }
 
-        return (snippet, color)
+        return (snippet, color, symbols)
     }
     
     // MARK: - Dexcom sensorfel cache + reklamations-alert
