@@ -49,11 +49,11 @@ extension TreatmentsTableView {
         let displayEventType = treatment.category.title
 
         // Statussymbol för måltider (Måltid) baserat på BG ca 3h efter
-        let mealStatusSymbol: String
+        let mealStatusSymbol: (name: String, color: UIColor, accessibilityLabel: String)?
         if displayEventType == "Måltid" {
             mealStatusSymbol = statusSymbolForCarbMeal(at: treatment.timestamp)
         } else {
-            mealStatusSymbol = ""
+            mealStatusSymbol = nil
         }
         
         // Handle different treatment types.
@@ -187,11 +187,11 @@ extension TreatmentsTableView {
         let baseFontSize = cell.detailTextLabel?.font.pointSize
             ?? UIFont.preferredFont(forTextStyle: .subheadline).pointSize
         let timeFont = UIFont.monospacedDigitSystemFont(ofSize: baseFontSize, weight: .regular)
-        let statusFont = UIFont.monospacedDigitSystemFont(ofSize: 10, weight: .regular)
+        let statusConfiguration = UIImage.SymbolConfiguration(pointSize: 10, weight: .regular, scale: .large)
 
-        // Mått för den lilla "kolumnen" med status-emoji + tid.
+        // Mått för den lilla kolumnen med statussymbol + tid.
         let timeWidth: CGFloat = 50      // räcker för "00:00"
-        let symbolWidth: CGFloat = 13    // lagom för en emoji
+        let symbolWidth: CGFloat = 13
         let spacing: CGFloat = 2
         let height: CGFloat = timeFont.lineHeight
 
@@ -208,12 +208,14 @@ extension TreatmentsTableView {
         container.tag = trailingTag
         container.backgroundColor = .clear
 
-        let statusLabel = UILabel(frame: CGRect(x: 0, y: 0, width: symbolWidth, height: containerHeight))
-        statusLabel.text = mealStatusSymbol
-        statusLabel.font = statusFont
-        statusLabel.textAlignment = .right
-        statusLabel.textColor = .label
-        statusLabel.backgroundColor = .clear
+        let statusIcon = UIImageView(frame: CGRect(x: 0, y: 0, width: symbolWidth, height: containerHeight))
+        statusIcon.contentMode = .right
+        if let status = mealStatusSymbol {
+            statusIcon.image = UIImage(systemName: status.name, withConfiguration: statusConfiguration)
+            statusIcon.tintColor = status.color
+            statusIcon.isAccessibilityElement = true
+            statusIcon.accessibilityLabel = status.accessibilityLabel
+        }
 
         let timeLabel = UILabel(frame: CGRect(x: symbolWidth + spacing, y: 0, width: timeWidth, height: containerHeight))
         timeLabel.text = timeString
@@ -222,7 +224,7 @@ extension TreatmentsTableView {
         timeLabel.textColor = .secondaryLabel
         timeLabel.backgroundColor = .clear
 
-        container.addSubview(statusLabel)
+        container.addSubview(statusIcon)
         container.addSubview(timeLabel)
 
         // Positionera containern längst till höger i cellens contentView

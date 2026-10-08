@@ -346,8 +346,8 @@ extension MainViewController {
                 
                 if let maxSmbValue = Double(maxSmbValueString) {
                     let formattedValue = String(format: "%.2f", maxSmbValue)  // e.g. "0.00" or "1.25"
-                    // append 🚫 if zero
-                    let unitForInfo = maxSmbValue == 0 ? "E 🚫" : "E 🔵"
+                    // append ❌ if zero
+                    let unitForInfo = maxSmbValue == 0 ? "E ❌" : "E 🔵"
                     
                     infoManager.updateInfoData(
                         type: .maxSMB,
@@ -368,7 +368,7 @@ extension MainViewController {
                 infoManager.updateInfoData(
                     type: .maxSMB,
                     value: "0.00",
-                    unit: "E 🚫"
+                    unit: "E ❌"
                 )
             }
         }
@@ -382,7 +382,7 @@ extension MainViewController {
                 
                 let smbInactive = (smbInactiveMatch != nil) // True if match is found, false otherwise
                 
-                let smbStatusString = smbInactive ? "Inaktiv 🚫" : "Aktiv 🟢"
+                let smbStatusString = smbInactive ? "Inaktiv ❌" : "Aktiv 🟢"
                 
                 infoManager.updateInfoData(type: .smbStatus, value: smbStatusString)
                 

@@ -7,6 +7,8 @@ import subprocess
 import tempfile
 
 repo = Path(__file__).resolve().parents[1]
+from info_status_support import status_source
+
 source = (repo / 'LoopFollow/Controllers/Nightscout/BGData.swift').read_text()
 start = source.index('    func updateSensorStatus(')
 end = source.index('    /// Shows a big unicorn', start)
@@ -14,13 +16,15 @@ functions = source[start:end]
 stubs = r'''
 import Foundation
 enum InfoType: Int { case sensorStatus }
-struct InfoData { var value = "" }
+struct InfoData { var value = ""; var symbol: InfoStatusSymbol? }
 class InfoManager {
     var tableData = [InfoData()]
     var priority = false
     var updates = 0
     func updateInfoData(type: InfoType, value: String) {
-        tableData[type.rawValue].value = value
+        let parsed = InfoStatusValue(legacyText: value)
+        tableData[type.rawValue].value = parsed.text
+        tableData[type.rawValue].symbol = parsed.symbol
         updates += 1
     }
     func setPriority(_ value: Bool, for type: InfoType) { priority = value }
@@ -37,7 +41,9 @@ checks = r'''
 let controller = MainViewController()
 func check(_ expected: String, _ priority: Bool, at time: TimeInterval) {
     controller.updateSensorStatus(now: time)
-    precondition(controller.infoManager.tableData[0].value == expected, expected)
+    let parsed = InfoStatusValue(legacyText: expected)
+    precondition(controller.infoManager.tableData[0].value == parsed.text, expected)
+    precondition(controller.infoManager.tableData[0].symbol == parsed.symbol, expected)
     precondition(controller.infoManager.priority == priority, "Incorrect priority for \(expected)")
 }
 check("--", false, at: 1000)
@@ -77,5 +83,5 @@ print("Sensor status regressions passed")
 '''
 with tempfile.TemporaryDirectory(prefix='sensor-status-') as directory:
     path = Path(directory) / 'main.swift'
-    path.write_text(stubs + '\nextension MainViewController {\n' + functions + '\n}\n' + checks)
+    path.write_text(status_source(repo) + stubs + '\nextension MainViewController {\n' + functions + '\n}\n' + checks)
     subprocess.run(['swift', '-module-cache-path', directory + '/module-cache', str(path)], check=True)

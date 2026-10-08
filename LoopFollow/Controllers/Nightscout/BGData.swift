@@ -802,7 +802,9 @@ extension MainViewController {
         }
 
         // The minute timer can fire every second; reload only when the status changes.
-        guard infoManager.tableData[InfoType.sensorStatus.rawValue].value != status else { return }
+        let parsedStatus = InfoStatusValue(legacyText: status)
+        let currentStatus = infoManager.tableData[InfoType.sensorStatus.rawValue]
+        guard currentStatus.value != parsedStatus.text || currentStatus.symbol != parsedStatus.symbol else { return }
         infoManager.updateInfoData(type: .sensorStatus, value: status)
         infoManager.setPriority(isPriority, for: .sensorStatus)
     }

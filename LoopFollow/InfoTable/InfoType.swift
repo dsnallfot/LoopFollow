@@ -11,6 +11,18 @@ import Foundation
 enum InfoType: Int, CaseIterable {
     case iob, cob, basal, override, battery, pump, sage, cage, recBolus, minMax, carbsToday, autosens, profile, target, isf, carbRatio, updated, tdd, iage, carbReq, af, smbRatio, pumpStatus, smbStatus, SMBUAMmin, autosensMinMax, maxSMB, overridePercentage, bgi, dev, totIob, btPing, btPingHealth, sensorStatus, sensorTrend, tirNeeded, dbSize, websocket, dexcomShareStatus, bgDataSource, memoryLatest, latestRestart
 
+    /// Only generated status fields participate in legacy emoji conversion.
+    var usesStatusSymbol: Bool {
+        switch self {
+        case .pump, .pumpStatus, .battery, .memoryLatest, .updated, .iage, .cage, .sage,
+             .dev, .maxSMB, .smbStatus, .carbReq, .overridePercentage, .btPing, .btPingHealth,
+             .sensorStatus, .sensorTrend, .dbSize, .websocket, .dexcomShareStatus, .recBolus, .tirNeeded:
+            return true
+        default:
+            return false
+        }
+    }
+
     var name: String {
         switch self {
         case .iob: return "IOB"

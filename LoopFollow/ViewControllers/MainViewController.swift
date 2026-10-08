@@ -1254,10 +1254,12 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
             
             if let values = infoManager.priorityDataForIndexPath(rowIndexPath) {
                 cell.textLabel?.text = values.name
-                cell.detailTextLabel?.text = values.value
+                values.applyValue(to: cell.detailTextLabel)
             } else {
                 cell.textLabel?.text = ""
+                cell.detailTextLabel?.attributedText = nil
                 cell.detailTextLabel?.text = ""
+                cell.detailTextLabel?.accessibilityLabel = nil
             }
             
             if let type = infoManager.infoTypeForPriorityRow(rowIndexPath) {
@@ -1315,10 +1317,12 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
             
             if let values = infoManager.dataForIndexPath(rowIndexPath) {
                 cell.textLabel?.text = values.name
-                cell.detailTextLabel?.text = values.value
+                values.applyValue(to: cell.detailTextLabel)
             } else {
                 cell.textLabel?.text = ""
+                cell.detailTextLabel?.attributedText = nil
                 cell.detailTextLabel?.text = ""
+                cell.detailTextLabel?.accessibilityLabel = nil
             }
             
             if let type = infoManager.infoTypeForRow(rowIndexPath) {

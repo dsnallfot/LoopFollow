@@ -38,10 +38,12 @@ extension TreatmentsTableView {
     }
 
     /// Låg / ok / hög-symbol för en Kh-måltid, baserat på BG ~3h efter.
-    /// Om ingen BG finns inom ±30 min runt +3h visas "⏳".
-    func statusSymbolForCarbMeal(at mealDate: Date) -> String {
+    /// Om ingen BG finns inom ±30 min runt +3h visas en klocka i sekundärfärg.
+    func statusSymbolForCarbMeal(at mealDate: Date) -> (name: String, color: UIColor, accessibilityLabel: String) {
         let relevantBGPoints = bgPointsForMealStatus(at: mealDate)
-        guard !relevantBGPoints.isEmpty else { return "⏳" }
+        let waiting: (name: String, color: UIColor, accessibilityLabel: String) =
+            ("clock.fill", .secondaryLabel, "Glukosvärde efter måltid saknas")
+        guard !relevantBGPoints.isEmpty else { return waiting }
 
         // Target time = 3h efter måltid
         let target = mealDate.addingTimeInterval(3 * 60 * 60)
@@ -50,7 +52,7 @@ extension TreatmentsTableView {
         let maxDelta: TimeInterval = 30 * 60
 
         guard let point = nearestBGPoint(around: target, in: relevantBGPoints, maxDelta: maxDelta) else {
-            return "⏳"
+            return waiting
         }
 
         let endBG = point.mmol
@@ -59,11 +61,11 @@ extension TreatmentsTableView {
         let highMgdl = Double(UserDefaultsRepository.highLine.value)
 
         if endMgdl > highMgdl {
-            return "🟣"
+            return ("circle.fill", .systemPurple, "Högt glukos efter måltid")
         } else if endMgdl < lowMgdl {
-            return "🔴"
+            return ("circle.fill", .systemRed, "Lågt glukos efter måltid")
         } else {
-            return "🟢"
+            return ("circle.fill", .systemGreen, "Glukos inom målområdet efter måltid")
         }
     }
     

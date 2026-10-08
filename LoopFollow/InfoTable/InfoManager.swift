@@ -31,7 +31,7 @@ class InfoManager {
         onReloadData?()
     }
 
-    func updateInfoData(type: InfoType, value: String? = nil, unit: String? = nil) {
+    func updateInfoData(type: InfoType, value: String? = nil, unit: String? = nil, symbol: InfoStatusSymbol? = nil) {
         let displayValue: String
 
         // Set a default value for the "Override" case
@@ -45,42 +45,44 @@ class InfoManager {
             displayValue = unit != nil ? "\(value ?? "") \(unit!)" : (value ?? "")
         }
 
-        tableData[type.rawValue].value = displayValue
+        let status = type.usesStatusSymbol ? InfoStatusValue(legacyText: displayValue) : nil
+        tableData[type.rawValue].value = status?.text ?? displayValue
+        tableData[type.rawValue].symbol = symbol ?? status?.symbol
         reloadTables()
     }
 
-    func updateInfoData(type: InfoType, value: HKQuantity, unit: String? = nil) {
+    func updateInfoData(type: InfoType, value: HKQuantity, unit: String? = nil, symbol: InfoStatusSymbol? = nil) {
         let formattedValue = Localizer.formatQuantity(value)
-        updateInfoData(type: type, value: formattedValue, unit: unit)
+        updateInfoData(type: type, value: formattedValue, unit: unit, symbol: symbol)
     }
 
-    func updateInfoData(type: InfoType, firstValue: HKQuantity, secondValue: HKQuantity, separator: InfoDataSeparator, unit: String? = nil) {
+    func updateInfoData(type: InfoType, firstValue: HKQuantity, secondValue: HKQuantity, separator: InfoDataSeparator, unit: String? = nil, symbol: InfoStatusSymbol? = nil) {
         let formattedFirstValue = Localizer.formatQuantity(firstValue)
         let formattedSecondValue = Localizer.formatQuantity(secondValue)
         if formattedFirstValue != formattedSecondValue {
             let combinedValue = "\(formattedFirstValue) \(separator.rawValue) \(formattedSecondValue)"
-            updateInfoData(type: type, value: combinedValue, unit: unit)
+            updateInfoData(type: type, value: combinedValue, unit: unit, symbol: symbol)
         } else {
-            updateInfoData(type: type, value: formattedFirstValue, unit: unit)
+            updateInfoData(type: type, value: formattedFirstValue, unit: unit, symbol: symbol)
         }
     }
 
-    func updateInfoData(type: InfoType, value: Double, maxFractionDigits: Int = 1, minFractionDigits: Int = 0, unit: String? = nil) {
+    func updateInfoData(type: InfoType, value: Double, maxFractionDigits: Int = 1, minFractionDigits: Int = 0, unit: String? = nil, symbol: InfoStatusSymbol? = nil) {
         let formattedValue = Localizer.formatToLocalizedString(value, maxFractionDigits: maxFractionDigits, minFractionDigits: minFractionDigits)
-        updateInfoData(type: type, value: formattedValue, unit: unit)
+        updateInfoData(type: type, value: formattedValue, unit: unit, symbol: symbol)
     }
 
-    func updateInfoData(type: InfoType, value: Double, enactedValue: Double, separator: InfoDataSeparator, maxFractionDigits: Int = 1, minFractionDigits: Int = 0, unit: String? = nil) {
+    func updateInfoData(type: InfoType, value: Double, enactedValue: Double, separator: InfoDataSeparator, maxFractionDigits: Int = 1, minFractionDigits: Int = 0, unit: String? = nil, symbol: InfoStatusSymbol? = nil) {
         let formattedValue = Localizer.formatToLocalizedString(value, maxFractionDigits: maxFractionDigits, minFractionDigits: minFractionDigits)
         let formattedEnactedValue = Localizer.formatToLocalizedString(enactedValue, maxFractionDigits: maxFractionDigits, minFractionDigits: minFractionDigits)
         let combinedValue = "\(formattedValue) \(separator.rawValue) \(formattedEnactedValue)"
-        updateInfoData(type: type, value: combinedValue, unit: unit)
+        updateInfoData(type: type, value: combinedValue, unit: unit, symbol: symbol)
     }
 
-    func updateInfoData(type: InfoType, value: Metric, unit: String? = nil) {
+    func updateInfoData(type: InfoType, value: Metric, unit: String? = nil, symbol: InfoStatusSymbol? = nil) {
         let formattedValue = value.formattedValue()
         let displayValue = unit != nil ? "\(formattedValue) \(unit!)" : formattedValue
-        updateInfoData(type: type, value: displayValue)
+        updateInfoData(type: type, value: displayValue, symbol: symbol)
     }
     
     func updateInfoDataForAF(value: Double) {
@@ -107,6 +109,7 @@ class InfoManager {
     }
     
     func clearInfoData(type: InfoType) {
+        tableData[type.rawValue].symbol = nil
         // Prevent clearing the default value for .override
         if type == .override {
             if let persistentNote = Observable.shared.override.value, !persistentNote.isEmpty {
@@ -122,6 +125,7 @@ class InfoManager {
 
     func clearInfoData(types: [InfoType]) {
         for type in types {
+            tableData[type.rawValue].symbol = nil
             // Prevent clearing the default value for .override
             if type == .override {
                 if let persistentNote = Observable.shared.override.value, !persistentNote.isEmpty {

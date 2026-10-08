@@ -59,20 +59,19 @@ extension MainViewController {
 
         if let percentage = data.dataPercentage {
             //set the status dot and priority
-            let statusDot: String
+            let statusSymbol: InfoStatusSymbol
 
             if percentage > 90 {
-                statusDot = "🔴"
+                statusSymbol = .red
                 infoManager.setPriority(true, for: .dbSize)
             } else if percentage > 70 {
-                statusDot = "🟡"
+                statusSymbol = .yellow
                 infoManager.setPriority(true, for: .dbSize)
             } else {
-                statusDot = "🟢"
+                statusSymbol = .green
                 infoManager.setPriority(false, for: .dbSize)
             }
-            //infoManager.updateInfoData(type: .dbSize, value: "\(used) MiB (\(percentage)%) \(statusDot)")
-            infoManager.updateInfoData(type: .dbSize, value: "\(percentage)% \(statusDot)")
+            infoManager.updateInfoData(type: .dbSize, value: "\(percentage)%", symbol: statusSymbol)
         } else {
             infoManager.setPriority(false, for: .dbSize)
             infoManager.updateInfoData(type: .dbSize, value: "\(used) MiB")
