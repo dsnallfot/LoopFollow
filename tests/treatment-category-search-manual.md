@@ -10,7 +10,8 @@ Inga historikförfrågningar till Nightscout görs av själva sökningen.
    Jämför första sökningens svarstid med efterföljande sökningar.
 2. Sök `sensor`, `SENSORBYTE`, `måltid` och `maltid`. Delord, skiftläge och accenter
    ska fungera. `måltid`, `dextro` och `fett/protein` ska ge separata kategorier.
-   Ett ord som bara finns i en anteckning eller matbeskrivning ska inte ge träff.
+   Fritext ska också matcha `notes` för typen `Note`, men inte matbeskrivningar
+   eller anteckningsfält på andra behandlingstyper.
 3. Växla mellan Alla, Auto, Manuell och Övriga under aktiv sökning. Träffantal och
    segmentnamn ska stämma. Vid noll träffar i ett begränsat segment visas tips om Alla.
 4. Sök `basal` eller en annan kategori med fler än 100 träffar. Scrolla nedåt:
@@ -32,3 +33,11 @@ Inga historikförfrågningar till Nightscout görs av själva sökningen.
     ska uppdateras och listan behålla sin position så långt innehållet tillåter.
 
 Automatiserad kontroll: `python3 tests/treatment-category-search.py`.
+
+11. Tryck i sökfältet och sedan på tangentbordsikonen längst till höger ovanför
+    tangentbordet. Tangentbordet ska döljas utan att söktext eller lista ändras.
+    Testa både före första sökningen och med en aktiv sökning och ändrad text.
+12. Sök `Loop`, `Dexcom`, `Sensorfel` och valfria andra ord i noteringar. Använd
+    Alla eller Övriga. Flera ord ska finnas i samma notering (ordningen är fri).
+    `notering Dexcom` begränsar sökningen till noteringar med Dexcom i texten.
+    Sökningen gäller hela anteckningen, även text som är avkortad i tabellraden.

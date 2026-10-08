@@ -80,14 +80,14 @@ func ids(_ query: String, segment: Int = 0) -> Set<String> {
 }
 precondition(ids("SENSORBYTE") == ["sensor", "alias"])
 precondition(ids("sensor") == ["sensor", "alias"])
-precondition(ids("pumpbyte") == ["pump"])
+precondition(ids("pumpbyte") == ["pump", "note"])
 precondition(ids("pumbyte") == ["pump"])
 for query in ["Fett/Protein", "fett & protein", "FPU", "protein fett"] {
     precondition(ids(query) == ["fat"], query)
 }
 precondition(ids("maltid") == ["meal"])
 precondition(ids("dextro") == ["dextro"])
-precondition(ids("pizza").isEmpty, "Do not search note/food contents")
+precondition(ids("pizza").isEmpty, "Do not search notes or food on other treatment types")
 precondition(ids("fingerstick") == ["bg"])
 precondition(ids("sensor", segment: 2).isEmpty)
 precondition(ids("sensor", segment: 3) == ["sensor", "alias"])
@@ -95,6 +95,32 @@ precondition(ids("smb", segment: 1) == ["smb"])
 precondition(ids("fpu", segment: 2).isEmpty, "Preserve existing segment rules")
 precondition(ids("  / & ").isEmpty)
 precondition(ids("saknas").isEmpty)
+
+// Free text is restricted to Note, with all words required in the same record.
+let notesIndex = TreatmentSearchIndex(records: [
+    record("loop", "Note", notes: "Loop-fel: pumpen svarar inte"),
+    record("dexcom", "Note", notes: "Dexcom G7: Sensorfel – försök igen"),
+    record("empty", "Note"),
+    record("announcement", "Announcement", notes: "Dexcom"),
+    record("other", "Sensor Start", notes: "Dexcom"),
+    record("duplicates", "Note", notes: "Note Loop"),
+    record("duplicates", "Note", notes: "Note Loop")
+])
+func noteIDs(_ query: String, segment: Int = 0) -> Set<String> {
+    let hits = notesIndex.matches(query: query, segment: segment, autoTypes: auto, manualTypes: manual)
+    precondition(hits.count == Set(hits.map(\._id)).count, "Duplicate category/text match")
+    return Set(hits.map(\._id))
+}
+precondition(noteIDs("LOOP") == ["loop", "duplicates"])
+precondition(noteIDs("dexcom") == ["dexcom"])
+precondition(noteIDs("Sensorfel") == ["dexcom"])
+precondition(noteIDs("forsok G7") == ["dexcom"])
+precondition(noteIDs("notering dexcom") == ["dexcom"])
+precondition(noteIDs("loop dexcom").isEmpty)
+precondition(noteIDs("dexcom", segment: 1).isEmpty)
+precondition(noteIDs("dexcom", segment: 2).isEmpty)
+precondition(noteIDs("dexcom", segment: 3) == ["dexcom"])
+precondition(noteIDs("note") == ["loop", "dexcom", "empty", "duplicates", "announcement"], "Keep existing category alias matches")
 
 // Typed conversion retains fractional timestamps and raw fields for editing/deleting.
 let beforeParse = NightscoutUtils.parseCount
@@ -129,8 +155,16 @@ let first = search("sensor")
 precondition(Set(first.records.map(\._id)) == ["sensor", "alias"], "Search days that were never scrolled in")
 precondition(first.dayCount == 91 && first.unavailableDays == 90)
 let reads = searchReadCount
-precondition(search("pump").records.count == 1)
+precondition(search("pump").records.count == 2)
 precondition(searchReadCount == reads, "Unchanged cache should reuse the index")
+
+// Note text is cached too, and an edit invalidates the old words.
+precondition(search("notering pumpbyte").records.map(\._id) == ["note"])
+precondition(searchReadCount == reads)
+NightscoutCache.upsertTreatment(from: ["_id": "note", "eventType": "Note", "notes": "Dexcom sensorfel",
+    "created_at": iso.string(from: day.addingTimeInterval(3600.125))])
+precondition(search("dexcom").records.map(\._id) == ["note"])
+precondition(search("notering pumpbyte").records.isEmpty)
 
 // A missing or unreadable file is not silently treated as complete history.
 let unreadable = calendar.date(byAdding: .day, value: -2, to: today)!
@@ -144,7 +178,7 @@ precondition(search("pump").unavailableDays == 90)
 try NightscoutCache.writeDay(date: day, sgv: [], treatments: fixture.filter { $0._id != "sensor" })
 precondition(search("sensor").records.map(\._id) == ["alias"])
 NightscoutCache.upsertTreatment(from: ["_id": "sensor", "eventType": "Site Change", "created_at": iso.string(from: sensor.created_at)])
-precondition(Set(search("pump").records.map(\._id)) == ["sensor", "pump"])
+precondition(Set(search("pump").records.map(\._id)) == ["sensor", "pump", "note"])
 
 // Large result sets stay raw until a requested page is prepared, in descending date order.
 let many = (0..<250).map { record("basal-\($0)", "Temp Basal", at: day.addingTimeInterval(Double($0) + 7200)) }
@@ -191,6 +225,26 @@ precondition(view.daySections[0].treatments.count == 1 && search("note").records
 view.replaceLocalTreatment(newTreatment, with: ["_id": "moved", "eventType": "Note", "notes": "moved",
     "created_at": iso.string(from: nextDay.addingTimeInterval(3600))])
 precondition(view.daySections[0].treatments.isEmpty && search("note").records.map(\._id) == ["moved"])
+if ProcessInfo.processInfo.environment["SEARCH_BENCHMARK"] == "1" {
+    let template = try JSONSerialization.jsonObject(with: JSONEncoder().encode(sensor)) as! [String: Any]
+    let documents: [[String: Any]] = (0..<50000).map { i in
+        var document = template
+        document["_id"] = "benchmark-\(i)"
+        document["eventType"] = i % 5 == 0 ? "Note" : "Temp Basal"
+        document["notes"] = i % 5 == 0 ? "Loop-fel: Dexcom G7 rapporterar sensorfel, försök igen om en stund" : ""
+        return document
+    }
+    let records = try JSONDecoder().decode([TreatmentJSON].self, from: JSONSerialization.data(withJSONObject: documents))
+    let start = DispatchTime.now().uptimeNanoseconds
+    let benchmark = TreatmentSearchIndex(records: records)
+    print(String(format: "Index, 50000 records / 10000 notes: %.1f ms", Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6))
+    for query in ["basal", "Dexcom", "Sensorfel", "Loop", "forsok igen", "saknas"] {
+        let start = DispatchTime.now().uptimeNanoseconds
+        var count = 0
+        for _ in 0..<10 { count += benchmark.matches(query: query, segment: 0, autoTypes: auto, manualTypes: manual).count }
+        print(String(format: "Search %@: %.1f ms average, %d hits", query, Double(DispatchTime.now().uptimeNanoseconds - start) / 1e7, count / 10))
+    }
+}
 print("Category search passed: aliases, shared categories, segment filters, cache-only history, index reuse/invalidation, raw-data preservation, paging, meal glucose and date boundaries")
 '''
 with tempfile.TemporaryDirectory(prefix='category-search-tests-') as temp:

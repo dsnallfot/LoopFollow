@@ -43,4 +43,8 @@ treatments, with glucose loaded later for meal rows in each displayed page.
 The search covers `NightscoutCache.retentionDays` local calendar days, including
 today, regardless of the date picker. It follows the existing segment rules and
 reports missing/unreadable files, but cannot establish whether a cached day contains
-complete remote history. Search aliases are category names, not note/food contents.
+complete remote history. Search matches category aliases and free text in `Note.notes`.
+Note text is normalized once per index build. All query words must match the same
+record's category/notes; note fields on other event types and food descriptions
+are excluded. Segment filters still apply. The keyboard accessory button dismisses
+only the keyboard, retaining the draft and current result.

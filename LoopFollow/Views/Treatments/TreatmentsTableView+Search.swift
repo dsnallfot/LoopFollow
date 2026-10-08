@@ -5,12 +5,21 @@ extension TreatmentsTableView: UISearchBarDelegate {
         categorySearchBar.translatesAutoresizingMaskIntoConstraints = false
         categorySearchBar.searchBarStyle = .minimal
         categorySearchBar.showsCancelButton = false
-        categorySearchBar.placeholder = "Sök typ: sensorbyte, måltid etc"
+        categorySearchBar.placeholder = "Sök behandlingar eller text i noteringar"
         categorySearchBar.delegate = self
         categorySearchBar.returnKeyType = .search
         categorySearchBar.autocorrectionType = .no
         categorySearchBar.autocapitalizationType = .none
-        categorySearchBar.searchTextField.accessibilityLabel = "Sök behandlingstyp i cachad historik"
+        categorySearchBar.searchTextField.accessibilityLabel = "Sök behandlingstyp eller text i noteringar i cachad historik"
+        let keyboardToolbar = UIToolbar()
+        keyboardToolbar.sizeToFit()
+        let dismissKeyboard = UIBarButtonItem(
+            image: UIImage(systemName: "keyboard.chevron.compact.down.fill"),
+            style: .plain, target: self, action: #selector(dismissSearchKeyboard))
+        dismissKeyboard.accessibilityLabel = "Dölj tangentbord"
+        keyboardToolbar.items = [UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+                                 dismissKeyboard]
+        categorySearchBar.searchTextField.inputAccessoryView = keyboardToolbar
         view.addSubview(categorySearchBar)
 
         searchStatusLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -33,6 +42,11 @@ extension TreatmentsTableView: UISearchBarDelegate {
         datePicker.isEnabled = false
         searchBar.resignFirstResponder()
         runCategorySearch()
+    }
+
+    @objc private func dismissSearchKeyboard() {
+        // Keep both the draft text and the currently displayed result unchanged.
+        categorySearchBar.resignFirstResponder()
     }
 
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {

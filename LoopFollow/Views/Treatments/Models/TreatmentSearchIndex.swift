@@ -68,6 +68,7 @@ struct TreatmentSearchIndex {
         var records: [TreatmentJSON]
     }
     private var groups: [TreatmentCategory: Group] = [:]
+    private var noteTextByID: [String: String] = [:]
 
     init(records: [TreatmentJSON]) {
         // A midnight entry can occur in adjacent legacy day files. Prefer one document.
@@ -78,14 +79,25 @@ struct TreatmentSearchIndex {
                 groups[category] = Group(text: category.searchText, records: [])
             }
             groups[category]!.records.append(record)
+            if record.eventType == "Note", let notes = record.notes, !notes.isEmpty {
+                // Normalize once when building the index, never during row rendering.
+                noteTextByID[record._id] = TreatmentCategory.normalize(notes)
+            }
         }
     }
 
     func matches(query: String, segment: Int, autoTypes: [String], manualTypes: [String]) -> [TreatmentJSON] {
         let words = TreatmentCategory.normalize(query).split(separator: " ")
         guard !words.isEmpty else { return [] }
-        return groups.values.filter { group in words.allSatisfy { group.text.contains($0) } }
-            .flatMap { $0.records }.filter { record in
+        return groups.flatMap { category, group -> [TreatmentJSON] in
+            let remainingWords = words.filter { !group.text.contains($0) }
+            if remainingWords.isEmpty { return group.records }
+            guard category == .other("Note") else { return [] }
+            return group.records.filter { record in
+                guard let text = noteTextByID[record._id] else { return false }
+                return remainingWords.allSatisfy { text.contains($0) }
+            }
+        }.filter { record in
                 switch segment {
                 case 1: return autoTypes.contains(record.eventType)
                 case 2:
