@@ -55,6 +55,10 @@
 	<string>Loop Follow would like to access your calendar to update BG readings</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Loop Follow would like to access your calendar to save BG readings</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Loop Follow behöver läsa och ersätta bytespåminnelser i den påminnelselista du väljer, även när listan är delad.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>Loop Follow behöver läsa och ersätta bytespåminnelser i den påminnelselista du väljer.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>This app requires access to contacts to update a contact image with real-time blood glucose information.</string>
 	<key>NSDocumentsDirectoryUsageDescription</key>
