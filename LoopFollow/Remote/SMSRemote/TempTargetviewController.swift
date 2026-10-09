@@ -170,7 +170,7 @@ class TempTargetViewController: ThemedViewController, UIPickerViewDataSource, UI
                     AudioServicesPlaySystemSound(SystemSoundID(1322))
                     
                     // Show success alert
-                    let alertController = UIAlertController(title: "Lyckades!", message: "Meddelandet levererades", preferredStyle: .alert)
+                    let alertController = UIAlertController(title: "Skickades!", message: "Meddelandet levererades", preferredStyle: .alert)
                     alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
                         // Dismiss the current view controller
                         self.dismiss(animated: true, completion: nil)
@@ -195,8 +195,8 @@ class TempTargetViewController: ThemedViewController, UIPickerViewDataSource, UI
         // Play a success sound
         AudioServicesPlaySystemSound(SystemSoundID(1322))
         
-        // Show success alert with "Lyckades"
-        showAlert(title: NSLocalizedString("Lyckades", comment: "Lyckades"), message: NSLocalizedString("Tillfälligt mål-registreringen skickades", comment: "Tillfälligt mål-registreringen skickades"), completion: {
+        // Show success alert with "Skickades"
+        showAlert(title: NSLocalizedString("Skickades", comment: "Skickades"), message: NSLocalizedString("Tillfälligt mål-registreringen skickades", comment: "Tillfälligt mål-registreringen skickades"), completion: {
             self.dismiss(animated: true, completion: nil)  // Dismiss the view controller after showing the alert
         })
     }

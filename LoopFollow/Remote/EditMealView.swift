@@ -109,7 +109,7 @@ struct EditMealView: View {
             } message: {
                 Text("Kolhydrater: \(draft.carbs) g\nProtein: \(draft.protein) g\nFett: \(draft.fat) g\nAnteckning: \(draft.notes)\nTid: \(draft.date.formatted(.dateTime.hour().minute().second()))")
             }
-            .alert(succeeded ? "Lyckades" : "Fel", isPresented: Binding(get: { status != nil }, set: { if !$0 { status = nil } })) {
+            .alert(succeeded ? "Skickades" : "Fel", isPresented: Binding(get: { status != nil }, set: { if !$0 { status = nil } })) {
                 Button("OK") { if succeeded { dismiss() } }
             } message: { Text(status ?? "") }
         }

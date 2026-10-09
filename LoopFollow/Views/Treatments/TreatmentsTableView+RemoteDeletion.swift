@@ -131,7 +131,7 @@ extension TreatmentsTableView {
             case .success:
                 AudioServicesPlaySystemSound(SystemSoundID(1322))
                 DispatchQueue.main.async {
-                    self.showAlert(title: "Lyckades!", message: "\nMeddelandet levererades") { }
+                    self.showAlert(title: "Skickades!", message: "\nMeddelandet levererades") { }
                 }
             case .failure(let error):
                 AudioServicesPlaySystemSound(SystemSoundID(1053))
@@ -202,7 +202,7 @@ extension TreatmentsTableView {
         finishShortcutDeletion(success: true)
         LogManager.shared.log(category: .treatments, message: "Shortcut succeeded", isDebug: true)
         AudioServicesPlaySystemSound(SystemSoundID(1322))
-        showAlert(title: NSLocalizedString("Lyckades", comment: "Lyckades"),
+        showAlert(title: NSLocalizedString("Skickades", comment: "Skickades"),
                   message: NSLocalizedString("\nMeddelandet levererades", comment: "Meddelandet levererades"),
                   completion: { /* No dismissal here */ })
     }

@@ -899,7 +899,7 @@ class MealViewController: ThemedViewController, UITextFieldDelegate, TwilioReque
                     AudioServicesPlaySystemSound(SystemSoundID(1322))
                     
                     // Show success alert
-                    let alertController = UIAlertController(title: "Lyckades!", message: "Meddelandet levererades", preferredStyle: .alert)
+                    let alertController = UIAlertController(title: "Skickades!", message: "Meddelandet levererades", preferredStyle: .alert)
                     alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
                         // Dismiss the current view controller
                         self.dismiss(animated: true, completion: nil)
@@ -924,8 +924,8 @@ class MealViewController: ThemedViewController, UITextFieldDelegate, TwilioReque
         // Play a success sound
         AudioServicesPlaySystemSound(SystemSoundID(1322))
         
-        // Show success alert with "Lyckades"
-        showAlert(title: NSLocalizedString("Lyckades", comment: "Lyckades"), message: NSLocalizedString("Måltidsregistreringen skickades", comment: "Måltidsregistreringen skickades"), completion: {
+        // Show success alert with "Skickades"
+        showAlert(title: NSLocalizedString("Skickades", comment: "Skickades"), message: NSLocalizedString("Måltidsregistreringen skickades", comment: "Måltidsregistreringen skickades"), completion: {
             self.dismiss(animated: true, completion: nil)  // Dismiss the view controller after showing the alert
         })
     }

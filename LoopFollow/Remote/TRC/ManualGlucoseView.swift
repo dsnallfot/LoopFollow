@@ -181,7 +181,7 @@ struct ManualGlucoseView: View {
                 isLoading = false
 
                 if success {
-                    statusMessage = "Blodsockerkommando lyckades."
+                    statusMessage = "Blodsockerkommando skickades."
 
                     manualGlucose = HKQuantity(
                         unit: HKUnit(from: "mmol/L"),

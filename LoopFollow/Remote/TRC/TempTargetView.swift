@@ -303,7 +303,7 @@ struct TempTargetView: View {
             DispatchQueue.main.async {
                 self.isLoading = false
                 if success {
-                    self.statusMessage = "Tillfälligt mål-kommando lyckades."
+                    self.statusMessage = "Tillfälligt mål-kommando skickades."
                     self.alertType = .statusSuccess
                 } else {
                     self.statusMessage = errorMessage ?? "Tillfälligt mål-kommando misslyckades!"
@@ -321,7 +321,7 @@ struct TempTargetView: View {
             DispatchQueue.main.async {
                 self.isLoading = false
                 if success {
-                    self.statusMessage = "Avbryt tillfälligt mål-kommando lyckades."
+                    self.statusMessage = "Avbryt tillfälligt mål-kommando skickades."
                     self.alertType = .statusSuccess
                 } else {
                     self.statusMessage = errorMessage ?? "Avbryt tillfälligt mål-kommando misslyckades!"

@@ -721,11 +721,11 @@ struct MealView: View {
 
             switch (shouldSendMealPayload, shouldSendBolusPayload) {
             case (true, true):
-                statusMessage = "Bolus- och måltidskommando lyckades"
+                statusMessage = "Bolus- och måltidskommando skickades"
             case (true, false):
-                statusMessage = "Måltidskommando lyckades"
+                statusMessage = "Måltidskommando skickades"
             case (false, true):
-                statusMessage = "Boluskommando lyckades"
+                statusMessage = "Boluskommando skickades"
             case (false, false):
                 statusMessage = "Inget kommando skickades"
             }

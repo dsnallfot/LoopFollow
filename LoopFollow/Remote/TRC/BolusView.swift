@@ -157,7 +157,7 @@ struct BolusView: View {
             DispatchQueue.main.async {
                 isLoading = false
                 if success {
-                    statusMessage = "Boluskommando lyckades."
+                    statusMessage = "Boluskommando skickades."
                     bolusAmount = HKQuantity(unit: .internationalUnit(), doubleValue: 0.0)
                     alertType = .statusSuccess
                 } else {

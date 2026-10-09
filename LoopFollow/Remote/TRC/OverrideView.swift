@@ -158,7 +158,7 @@ struct OverrideView: View {
                         )
                     case .statusSuccess:
                         return Alert(
-                            title: Text("Lyckades"),
+                            title: Text("Skickades"),
                             message: Text(statusMessage ?? ""),
                             dismissButton: .default(Text("OK"), action: {
                                 presentationMode.wrappedValue.dismiss()
@@ -191,7 +191,7 @@ struct OverrideView: View {
             DispatchQueue.main.async {
                 self.isLoading = false
                 if success {
-                    self.statusMessage = "Overridekommando lyckades."
+                    self.statusMessage = "Overridekommando skickades."
                     self.alertType = .statusSuccess
                 } else {
                     self.statusMessage = errorMessage ?? "Overridekommando misslyckades!"
@@ -209,7 +209,7 @@ struct OverrideView: View {
             DispatchQueue.main.async {
                 self.isLoading = false
                 if success {
-                    self.statusMessage = "Avbryt override-kommando lyckades."
+                    self.statusMessage = "Avbryt override-kommando skickades."
                     self.alertType = .statusSuccess
                 } else {
                     self.statusMessage = errorMessage ?? "Avbryt override-kommando misslyckades!"

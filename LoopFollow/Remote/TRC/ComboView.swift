@@ -871,19 +871,19 @@ private struct ComboEditorView: View {
             }
             switch (shouldSendBolusPayload, shouldSendOverridePayload, shouldSendMealPayload) {
             case (true, true, true):
-                return "Bolus-, override- och måltidskommando lyckades"
+                return "Bolus-, override- och måltidskommando skickades"
             case (true, true, false):
-                return "Bolus- och overridekommando lyckades"
+                return "Bolus- och overridekommando skickades"
             case (true, false, true):
-                return "Bolus- och måltidskommando lyckades"
+                return "Bolus- och måltidskommando skickades"
             case (false, true, true):
-                return "Override- och måltidskommando lyckades"
+                return "Override- och måltidskommando skickades"
             case (true, false, false):
-                return "Boluskommando lyckades"
+                return "Boluskommando skickades"
             case (false, true, false):
-                return "Overridekommando lyckades"
+                return "Overridekommando skickades"
             case (false, false, true):
-                return "Måltidskommando lyckades"
+                return "Måltidskommando skickades"
             case (false, false, false):
                 return "Inget kommando skickades"
             }
