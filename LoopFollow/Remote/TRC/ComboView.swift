@@ -515,10 +515,12 @@ private struct ComboEditorView: View {
                             }
                         }
                     }
+                    .listRowBackground(Color(.systemGray).opacity(0.15))
 
                     if profileManager.trioOverrides.isEmpty {
                         Text("Inga overrides tillgängliga.")
                             .foregroundColor(.secondary)
+                            .listRowBackground(Color(.systemGray).opacity(0.15))
                     } else {
                         ForEach(profileManager.trioOverrides, id: \.name) { override in
                             Button {
@@ -558,9 +560,12 @@ private struct ComboEditorView: View {
                                     }
                                 }
                             }
+                            .listRowBackground(Color(.systemGray).opacity(0.15))
                         }
                     }
                 }
+                .scrollContentBackground(.hidden)
+                .background(ThemeBackground().ignoresSafeArea())
                 .navigationTitle("Välj override")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
