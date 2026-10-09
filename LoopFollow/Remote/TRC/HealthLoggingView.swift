@@ -38,8 +38,7 @@ struct HealthLoggingView: View {
         if kind.isReminder {
             return service.hasReminderAccess && service.lists.contains(where: { $0.id == listID }) && reminderDate > Date()
         }
-        return kind == .insulin || (!title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-                                   !noteBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        return kind == .insulin || !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
@@ -139,7 +138,7 @@ struct HealthLoggingView: View {
                         .focused($textFocused)
                 }
             }
-            TextField(kind == .note ? "Brödtext" : "Anteckning (valfri)", text: $noteBody, axis: .vertical)
+            TextField(kind == .note ? "Brödtext (valfri)" : "Anteckning (valfri)", text: $noteBody, axis: .vertical)
                 .lineLimit(3...8)
                 .focused($textFocused)
         } header: {
