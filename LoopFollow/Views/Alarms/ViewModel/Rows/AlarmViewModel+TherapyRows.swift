@@ -212,6 +212,12 @@ extension AlarmViewModel {
         rows.append(.toggle(title: "Aktiverat", isOn: isActive, id: "missed_bolus_active"))
         guard isActive else { return rows }
 
+        rows.append(.toggle(
+            title: "Inkludera FPU",
+            isOn: UserDefaultsRepository.alertMissedIncludeFPU.value,
+            id: "missed_bolus_include_fpu"
+        ))
+
         // 2. Time after carbs without bolus
         rows.append(.valueStepper(
             title: "Tid efter måltid",

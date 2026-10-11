@@ -50,7 +50,7 @@ extension MainViewController {
             return UserDefaultsRepository.alertCAGEIsSnoozed.value
         case "❌ Loop ej aktiv!":
             return UserDefaultsRepository.alertNotLoopingIsSnoozed.value
-        case "⚠️ Missad måltidsbolus":
+        case "⚠️ Missad måltidsbolus", "⚠️ Missad måltidsbolus (FPU)":
             return UserDefaultsRepository.alertMissedBolusIsSnoozed.value
         case "⚠️ Låg insulinnivå":
             return UserDefaultsRepository.alertPumpIsSnoozed.value
@@ -576,14 +576,16 @@ extension MainViewController {
             
             let lastCarb = carbData[carbData.count - 1].value
             let lastCarbTime = carbData[carbData.count - 1].date
+            let isFPU = (carbData[carbData.count - 1].foodType ?? "").isEmpty
             let now = dateTimeUtils.getNowTimeIntervalUTC()
             
-            if lastCarbTime > (now - (60 * 60))
+            if (!isFPU || UserDefaultsRepository.alertMissedIncludeFPU.value)
+                && lastCarbTime > (now - (60 * 60))
                 && lastCarbTime < (now - Double((UserDefaultsRepository.alertMissedBolus.value * 60)))
                 && lastCarb > Double(UserDefaultsRepository.alertMissedBolusLowGrams.value) {
                 
                 if bolusData.count < 1 {
-                    AlarmSound.whichAlarm = "⚠️ Missad måltidsbolus"
+                    AlarmSound.whichAlarm = "⚠️ Missad måltidsbolus" + (isFPU ? " (FPU)" : "")
                     if UserDefaultsRepository.nightTime.value {
                         if UserDefaultsRepository.alertMissedBolusNightTime.value { numLoops = -1 }
                         if !UserDefaultsRepository.alertMissedBolusNightTimeAudible.value { playSound = false }
@@ -606,7 +608,7 @@ extension MainViewController {
                 }
                 
                 if lastBolus == 0.0 {
-                    AlarmSound.whichAlarm = "⚠️ Missad måltidsbolus"
+                    AlarmSound.whichAlarm = "⚠️ Missad måltidsbolus" + (isFPU ? " (FPU)" : "")
                     if UserDefaultsRepository.nightTime.value {
                         if UserDefaultsRepository.alertMissedBolusNightTime.value { numLoops = -1 }
                         if !UserDefaultsRepository.alertMissedBolusNightTimeAudible.value { playSound = false }

@@ -306,7 +306,7 @@ class SnoozeViewController: UIViewController, UNUserNotificationCenterDelegate {
             alarms?.reloadIsSnoozed(key: "alertNotLoopingIsSnoozed", value: true)
             alarms?.reloadSnoozeTime(key: "alertNotLoopingSnoozedTime", setNil: false, value: currentDate.addingTimeInterval(snoozeDuration))
 
-        case "⚠️ Missad måltidsbolus":
+        case "⚠️ Missad måltidsbolus", "⚠️ Missad måltidsbolus (FPU)":
             UserDefaultsRepository.alertMissedBolusIsSnoozed.value = true
             UserDefaultsRepository.alertMissedBolusSnoozedTime.value = currentDate.addingTimeInterval(snoozeDuration)
             alarms?.reloadIsSnoozed(key: "alertMissedBolusIsSnoozed", value: true)

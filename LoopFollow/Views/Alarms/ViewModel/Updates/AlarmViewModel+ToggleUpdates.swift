@@ -93,6 +93,9 @@ extension AlarmViewModel {
         case "missed_bolus_active":
             UserDefaultsRepository.alertMissedBolusActive.value = value
 
+        case "missed_bolus_include_fpu":
+            UserDefaultsRepository.alertMissedIncludeFPU.value = value
+
         case "missed_bolus_is_snoozed":
             UserDefaultsRepository.alertMissedBolusIsSnoozed.value = value
             if !value {

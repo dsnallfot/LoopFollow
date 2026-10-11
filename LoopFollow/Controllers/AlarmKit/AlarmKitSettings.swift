@@ -132,6 +132,7 @@ enum AlarmKitAlarm: String, CaseIterable, Codable {
         let plain = label.replacingOccurrences(of: " AlarmKit", with: "")
             .replacingOccurrences(of: " (Comp. low?)", with: "")
         if plain == "⚠️ Snart akut låg!" { return .urgentLow }
+        if plain == "⚠️ Missad måltidsbolus (FPU)" { return .missedBolus }
         return allCases.first { $0.label == plain }
     }
 

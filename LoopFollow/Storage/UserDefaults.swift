@@ -349,6 +349,7 @@ class UserDefaultsRepository {
     static let latestEnactedTime = UserDefaultsValue<Double>(key: "latestEnactedTime", default: 0)
     
     static let alertMissedBolusActive = UserDefaultsValue<Bool>(key: "alertMissedBolusActive", default: false)
+    static let alertMissedIncludeFPU = UserDefaultsValue<Bool>(key: "alertMissedIncludeFPU", default: false)
     static let alertMissedBolus = UserDefaultsValue<Int>(key: "alertMissedBolus", default: 10)
     static let alertMissedBolusSnooze = UserDefaultsValue<Int>(key: "alertMissedBolusSnooze", default: 10)
     static let alertMissedBolusPrebolus = UserDefaultsValue<Int>(key: "alertMissedBolusPrebolus", default: 20)
