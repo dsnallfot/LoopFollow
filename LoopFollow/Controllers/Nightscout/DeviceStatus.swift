@@ -248,10 +248,10 @@ extension MainViewController {
                     } else if isCharging {
                         batteryStatus = " ⚡"
                         infoManager.setPriority(true, for: .battery)
-                    } else if upbat >= lowBatteryThreshold {
+                    } else if upbat > lowBatteryThreshold {
                         batteryStatus = " 🟢"
                         infoManager.setPriority(false, for: .battery)
-                    } else if upbat >= 15 {
+                    } else if upbat > 15 {
                         batteryStatus = " 🟡"
                         infoManager.setPriority(true, for: .battery)
                     } else {
