@@ -20,7 +20,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var orientationLock: UIInterfaceOrientationMask = .portrait
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        LogManager.shared.log(category: .general, message: "App started")
+        LogManager.shared.log(category: .general, message: "App started; state=\(application.applicationState.rawValue), bluetoothRestore=\(launchOptions?[.bluetoothCentrals] != nil)")
         LogManager.shared.cleanupOldLogs()
 
         let options: UNAuthorizationOptions = [.alert, .sound, .badge]
@@ -64,6 +64,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if ObservableUserDefaults.shared.watchCommunicationEnabled.value {
             PhoneSessionManager.shared.startSession()
         }
+
+        // Also bootstrap monitoring on a silent Bluetooth relaunch with no UI scene.
+        // The scheduler retries recovery on subsequent heartbeats if this attempt fails.
+        TaskScheduler.shared.checkTasksNow()
 
         // Post a Nightscout Note about app restart, debounced
         postLaunchNoteToNightscoutIfNeeded()

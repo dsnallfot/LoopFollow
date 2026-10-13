@@ -7,11 +7,6 @@
 //
 
 import Foundation
-import UIKit
-
-extension Notification.Name {
-    static let taskSchedulerNoTasks = Notification.Name("taskSchedulerNoTasks")
-}
 
 enum TaskID: CaseIterable {
     case profile
@@ -40,6 +35,15 @@ class TaskScheduler {
 
     private var tasks: [TaskID: ScheduledTask] = [:]
     private var currentTimer: DispatchSourceTimer?
+    private var recoveryInProgress = false
+
+    // These tasks must exist even when their data source is disabled: their actions
+    // already handle that case and reschedule themselves.
+    private let requiredTasks: Set<TaskID> = [.profile, .deviceStatus, .treatments, .fetchBG, .alarmCheck]
+
+    private var hasMonitoringTasks: Bool {
+        requiredTasks.isSubset(of: Set(tasks.keys))
+    }
 
     private init() {}
 
@@ -63,28 +67,63 @@ class TaskScheduler {
             guard var existingTask = self.tasks[id] else { return }
             existingTask.nextRun = newRunDate
             self.tasks[id] = existingTask
-            self.checkTasksNow()
+            self.checkTasksAndTimer(renewWatchdog: false)
         }
     }
 
     func checkTasksNow() {
         queue.async {
-            self.fireOverdueTasks()
-            self.rescheduleTimer()
+            self.checkTasksAndTimer(renewWatchdog: true)
         }
     }
 
     // MARK: - Private
 
+    private func checkTasksAndTimer(renewWatchdog: Bool) {
+        guard !recoveryInProgress else { return }
+        guard hasMonitoringTasks else {
+            recoverMissingTasks()
+            return
+        }
+        if renewWatchdog {
+            Task { @MainActor in BackgroundAlertManager.shared.startBackgroundAlert() }
+        }
+        fireOverdueTasks()
+        rescheduleTimer()
+    }
+
+    private func recoverMissingTasks() {
+        guard !recoveryInProgress else { return }
+        recoveryInProgress = true
+        currentTimer?.cancel()
+        currentTimer = nil
+        let missing = Set(TaskID.allCases).subtracting(tasks.keys)
+        let names = missing.map { String(describing: $0) }.sorted().joined(separator: ", ")
+        LogManager.shared.log(category: .taskScheduler, message: "Recovering missing tasks: \(names)")
+
+        DispatchQueue.main.async {
+            ViewControllerManager.shared.restoreMonitoringTasks(missing: missing)
+            // scheduleTask enqueues registrations on this same serial queue, so this
+            // verification runs after all registrations requested by recovery.
+            self.queue.async {
+                self.recoveryInProgress = false
+                guard self.hasMonitoringTasks else {
+                    LogManager.shared.log(category: .taskScheduler, message: "Task recovery FAILED; watchdog not renewed; retry on next wake")
+                    return
+                }
+                LogManager.shared.log(category: .taskScheduler, message: "Task recovery succeeded: \(self.tasks.count) tasks registered")
+                self.checkTasksAndTimer(renewWatchdog: true)
+            }
+        }
+    }
+
     private func rescheduleTimer() {
         currentTimer?.cancel()
         currentTimer = nil
+        guard !recoveryInProgress else { return }
 
         guard let (_, earliestTask) = tasks.min(by: { $0.value.nextRun < $1.value.nextRun }) else {
-            LogManager.shared.log(category: .taskScheduler, message: "No tasks, no timer scheduled.")
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: .taskSchedulerNoTasks, object: nil)
-            }
+            recoverMissingTasks()
             return
         }
 
@@ -95,14 +134,14 @@ class TaskScheduler {
         timer.schedule(deadline: .now() + safeInterval)
         timer.setEventHandler { [weak self] in
             guard let self = self else { return }
-            self.fireOverdueTasks()
-            self.rescheduleTimer()
+            self.checkTasksAndTimer(renewWatchdog: false)
         }
         currentTimer = timer
         timer.resume()
     }
     
     private func fireOverdueTasks() {
+        // Called only after the required registrations have been verified.
         Task { @MainActor in BackgroundAlertManager.shared.scheduleBackgroundAlert() }
         let now = Date()
         let tasksToSkipAlarmCheck: Set<TaskID> = [.deviceStatus, .treatments, .fetchBG, .statsPrefetch]

@@ -2,6 +2,7 @@
 // NightscoutSocketDataHandler.swift
 
 import Foundation
+import UIKit
 
 extension MainViewController {
     func setupNightscoutSocket() {
@@ -17,7 +18,11 @@ extension MainViewController {
         )
 
         updateWebSocketInfoRow()
-        NightscoutSocketManager.shared.connectIfNeeded()
+        // A silent relaunch uses scheduled HTTP fetches, just like ordinary background
+        // operation. The foreground callback reconnects the socket when the app opens.
+        if UIApplication.shared.applicationState != .background {
+            NightscoutSocketManager.shared.connectIfNeeded()
+        }
     }
     
     @objc func handleNightscoutSocketStateChanged() {

@@ -18,18 +18,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     let appStateController = AppStateController()
     
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
-        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
-        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-        guard let _ = (scene as? UIWindowScene) else { return }
-         
-        // get the tabBar
-        guard let tabBarController = window?.rootViewController as? UITabBarController,
-           let viewControllers = tabBarController.viewControllers
-        else {
-           return
-         }
-                  
+        guard let windowScene = scene as? UIWindowScene,
+              let tabBarController = ViewControllerManager.shared.monitoringRootController(),
+              let viewControllers = tabBarController.viewControllers else { return }
+
+        let sceneWindow = UIWindow(windowScene: windowScene)
+        sceneWindow.rootViewController = tabBarController
+        window = sceneWindow
+
          // set the main controllers' connection to the app sate
          // other controllers that need to know app state are setup programatically
          for i in 0..<viewControllers.count {
@@ -53,6 +49,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Register the SceneDelegate as an observer for the "toggleSpeakBG" notification, which will be triggered when the user toggles the "Speak BG" feature in General Settings. This helps ensure that the Quick Action is updated according to the current setting.
         NotificationCenter.default.addObserver(self, selector: #selector(handleToggleSpeakBGEvent), name: NSNotification.Name("toggleSpeakBG"), object: nil)
         updateQuickActions()
+        LogManager.shared.log(category: .taskScheduler, message: "UI scene attached to shared monitoring controller")
+        sceneWindow.makeKeyAndVisible()
+        TaskScheduler.shared.checkTasksNow()
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

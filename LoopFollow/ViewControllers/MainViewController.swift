@@ -410,12 +410,6 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
             name: .bluetoothHeartbeatUpdated,
             object: nil
         )
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleTaskSchedulerEmpty),
-            name: .taskSchedulerNoTasks,
-            object: nil
-        )
 
         // Setup the Graph
         if firstGraphLoad {
@@ -568,7 +562,6 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("refresh"), object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name("RefreshTreatmentsCacheForDay"), object: nil)
         NotificationCenter.default.removeObserver(self, name: .bluetoothHeartbeatUpdated, object: nil)
-        NotificationCenter.default.removeObserver(self, name: .taskSchedulerNoTasks, object: nil)
         if let token = allowClippyObserver {
                 NotificationCenter.default.removeObserver(token)
             }
@@ -1894,15 +1887,4 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
 
         present(hostingController, animated: true, completion: nil)
     }
-    
-    @objc private func handleTaskSchedulerEmpty() {
-        LogManager.shared.log(
-            category: .taskScheduler,
-            message: "[TaskScheduler] No tasks reported, calling scheduleAllTasks()",
-            isDebug: true,
-            isTempDebug: false
-        )
-        scheduleAllTasks()
-    }
 }
-

@@ -10,19 +10,19 @@ import Foundation
 
 extension MainViewController {
 
-    func scheduleAllTasks() {
-        scheduleBGTask()
-        scheduleProfileTask()
-        scheduleDeviceStatusTask()
-        scheduleTreatmentsTask()
-        scheduleMinAgoTask()
-        scheduleCalendarTask()
-        scheduleAlarmTask()
-        scheduleDBSizeTask()
-        scheduleCacheTask()
-        scheduleStatsPrefetchTask()
-        scheduleNSOnlyGlucosePrefetchTask()
-        scheduleMonthlyArchiveTask()
+    func scheduleAllTasks(only ids: Set<TaskID> = Set(TaskID.allCases)) {
+        if ids.contains(.fetchBG) { scheduleBGTask() }
+        if ids.contains(.profile) { scheduleProfileTask() }
+        if ids.contains(.deviceStatus) { scheduleDeviceStatusTask() }
+        if ids.contains(.treatments) { scheduleTreatmentsTask() }
+        if ids.contains(.minAgoUpdate) { scheduleMinAgoTask() }
+        if ids.contains(.calendarWrite) { scheduleCalendarTask() }
+        if ids.contains(.alarmCheck) { scheduleAlarmTask() }
+        if ids.contains(.dbSize) { scheduleDBSizeTask() }
+        if ids.contains(.cacheFill) { scheduleCacheTask() }
+        if ids.contains(.statsPrefetch) { scheduleStatsPrefetchTask() }
+        if ids.contains(.nsOnlyGlucosePrefetch) { scheduleNSOnlyGlucosePrefetchTask() }
+        if ids.contains(.monthlyArchive) { scheduleMonthlyArchiveTask() }
         
         LogManager.shared.log(category: .taskScheduler, message: "scheduleAllTasks ran", isDebug: true, isTempDebug: true)
     }
