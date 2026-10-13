@@ -531,8 +531,9 @@ final class BatteryLogStatsViewController: ThemedViewController, ChartViewDelega
 
     private func colorForBattery(percent: Double, isCharging: Bool) -> UIColor {
         if isCharging { return .systemBlue.withAlphaComponent(0.8) }
-        if percent >= 50 { return .systemGreen.withAlphaComponent(0.8) }
-        if percent >= 20 { return .systemOrange.withAlphaComponent(0.8) }
+        let lowBatteryThreshold = Double(UserDefaultsRepository.alertBatteryLevel.value)
+        if percent >= lowBatteryThreshold { return .systemGreen.withAlphaComponent(0.8) }
+        if percent >= 15 { return .systemOrange.withAlphaComponent(0.8) }
         return .systemRed
     }
 
