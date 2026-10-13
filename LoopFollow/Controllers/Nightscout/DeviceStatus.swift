@@ -238,19 +238,20 @@ extension MainViewController {
                 if let uploader = lastDeviceStatus?["uploader"] as? [String: AnyObject],
                    let upbat = uploader["battery"] as? Double {
                     let isCharging = uploader["isCharging"] as? Bool ?? false
+                    let lowBatteryThreshold = Double(UserDefaultsRepository.alertBatteryLevel.value)
                     
                     // Determine battery status dot based on battery percentage
                     let batteryStatus: String
-                    if isCharging && upbat >= 50 {
+                    if isCharging && upbat >= lowBatteryThreshold {
                         batteryStatus = " ⚡"
                         infoManager.setPriority(false, for: .battery)
                     } else if isCharging {
                         batteryStatus = " ⚡"
                         infoManager.setPriority(true, for: .battery)
-                    } else if upbat >= 50 {
+                    } else if upbat >= lowBatteryThreshold {
                         batteryStatus = " 🟢"
                         infoManager.setPriority(false, for: .battery)
-                    } else if upbat >= 20 {
+                    } else if upbat >= 15 {
                         batteryStatus = " 🟡"
                         infoManager.setPriority(true, for: .battery)
                     } else {
