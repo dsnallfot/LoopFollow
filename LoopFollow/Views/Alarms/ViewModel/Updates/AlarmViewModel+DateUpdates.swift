@@ -7,6 +7,7 @@ extension AlarmViewModel {
                 case "urgent_low_snoozed_time":
                     UserDefaultsRepository.alertUrgentLowSnoozedTime.value = date
                     UserDefaultsRepository.alertUrgentLowIsSnoozed.value = true
+                    AlarmKitAlarm.urgentLow.snoozeLowerSeverity(until: date)
                     updateSnapshotData()
 
                 case "low_snoozed_time":
@@ -22,6 +23,7 @@ extension AlarmViewModel {
                 case "urgent_high_snoozed_time":
                     UserDefaultsRepository.alertUrgentHighSnoozedTime.value = date
                     UserDefaultsRepository.alertUrgentHighIsSnoozed.value = true
+                    AlarmKitAlarm.urgentHigh.snoozeLowerSeverity(until: date)
                     updateSnapshotData()
 
                 case "missing_readings_snoozed_time":

@@ -239,6 +239,18 @@ enum AlarmKitAlarm: String, CaseIterable, Codable {
         return (snoozedUntil?.value ?? .distantFuture) > date
     }
 
+    /// Shared by both delivery channels: an urgent snooze also covers the ordinary alarm.
+    func snoozeLowerSeverity(until date: Date) {
+        let lower: AlarmKitAlarm
+        switch self {
+        case .urgentHigh: lower = .high
+        case .urgentLow: lower = .low
+        default: return
+        }
+        lower.snoozedUntil?.value = date
+        lower.snoozed?.value = true
+    }
+
     func acknowledge(at date: Date = Date()) {
         if self == .temporary {
             active.value = false // This is a one-shot alarm, with no standard snooze interval.
@@ -247,6 +259,7 @@ enum AlarmKitAlarm: String, CaseIterable, Codable {
             // A delayed system intent must not shorten a snooze already extended in the app.
             snoozedUntil?.value = max(isSnoozed(at: date) ? (snoozedUntil?.value ?? until) : until, until)
             snoozed?.value = true
+            if let until = snoozedUntil?.value { snoozeLowerSeverity(until: until) }
         }
     }
 }

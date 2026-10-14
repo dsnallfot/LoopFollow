@@ -357,6 +357,7 @@ class SnoozeViewController: UIViewController, UNUserNotificationCenterDelegate {
         default:
             LogManager.shared.log(category: .alarm, message: "Unhandled alarm: \(label)")
         }
+        AlarmKitAlarm.from(label: label)?.snoozeLowerSeverity(until: currentDate.addingTimeInterval(snoozeDuration))
     }
 
     func setPresnoozeNight(snoozeTime: Date) {

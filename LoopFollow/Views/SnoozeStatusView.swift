@@ -307,7 +307,10 @@ struct SnoozedAlarmItem: Identifiable {
             else { UserDefaultsRepository.alertMuteAllTime.value = date }
         case .urgentLow:
             if setNil { UserDefaults.standard.removeObject(forKey: key.timeKeyString) }
-            else { UserDefaultsRepository.alertUrgentLowSnoozedTime.value = date }
+            else {
+                UserDefaultsRepository.alertUrgentLowSnoozedTime.value = date
+                if let date { AlarmKitAlarm.urgentLow.snoozeLowerSeverity(until: date) }
+            }
         case .low:
             if setNil { UserDefaults.standard.removeObject(forKey: key.timeKeyString) }
             else { UserDefaultsRepository.alertLowSnoozedTime.value = date }
@@ -316,7 +319,10 @@ struct SnoozedAlarmItem: Identifiable {
             else { UserDefaultsRepository.alertHighSnoozedTime.value = date }
         case .urgentHigh:
             if setNil { UserDefaults.standard.removeObject(forKey: key.timeKeyString) }
-            else { UserDefaultsRepository.alertUrgentHighSnoozedTime.value = date }
+            else {
+                UserDefaultsRepository.alertUrgentHighSnoozedTime.value = date
+                if let date { AlarmKitAlarm.urgentHigh.snoozeLowerSeverity(until: date) }
+            }
         case .fastDrop:
             if setNil { UserDefaults.standard.removeObject(forKey: key.timeKeyString) }
             else { UserDefaultsRepository.alertFastDropSnoozedTime.value = date }

@@ -16,8 +16,11 @@ manager = manager[:manager.index('\n@available(iOS 26.0, *)\nstruct LoopFollowAl
 manager = re.sub(r'^import (ActivityKit|AlarmKit|AppIntents|SwiftUI|UserNotifications)\n', '', manager, flags=re.M)
 manager = manager.replace('private init()', 'init()') # Recreate the coordinator to exercise persisted ownership.
 manager = manager.replace('UserDefaults(suiteName: AppConstants.APP_GROUP_ID)!', 'MemoryDefaults.shared')
+legacy = (repo / 'LoopFollow/ViewControllers/SnoozeViewController.swift').read_text()
+legacy = legacy[legacy.index('    func setSnoozeTime('):legacy.index('    func setPresnoozeNight(')]
+legacy = 'class LegacySnoozeController {\n' + legacy + '\n}\n'
 # Keep real preference names/defaults, but replace disk persistence with observable memory.
-used = set(re.findall(r'UserDefaultsRepository\.(\w+)', settings + manager))
+used = set(re.findall(r'UserDefaultsRepository\.(\w+)', settings + manager + legacy))
 source = (repo / 'LoopFollow/Storage/UserDefaults.swift').read_text()
 properties = []
 for name in sorted(used):
@@ -116,7 +119,7 @@ class Storage {
     var history: [String] = []
     func appendAlarmHistory(alarmLabel: String, message: String, date: Double) { history.append(alarmLabel) }
 }
-class FakeAlarmView { func reloadIsSnoozed(key: String, value: Bool) {} }
+class FakeAlarmView { func reloadIsSnoozed(key: String, value: Bool) {}; func reloadSnoozeTime(key: String, setNil: Bool, value: Date) {} }
 class ViewControllerManager {
     static let shared = ViewControllerManager()
     let alarmViewController: FakeAlarmView? = nil
@@ -169,6 +172,7 @@ checks = r'''
         precondition(AlarmKitAlarm.sage.defaultSnoozeSeconds == 10800)
         let now = Date()
         for alarm in AlarmKitAlarm.allCases where alarm != .temporary {
+            for other in AlarmKitAlarm.allCases { other.snoozed?.value = false }
             alarm.acknowledge(at: now)
             precondition(alarm.snoozed?.value == true)
             precondition(alarm.snoozedUntil?.value == now.addingTimeInterval(alarm.defaultSnoozeSeconds))
@@ -179,6 +183,39 @@ checks = r'''
         AlarmKitAlarm.low.acknowledge(at: now)
         precondition(AlarmKitAlarm.low.snoozedUntil?.value == now.addingTimeInterval(9999))
         AlarmKitAlarm.low.snoozed?.value = false
+        // Ordinary alarm snoozed at t=0, urgent alarm snoozed ten minutes later.
+        // At t=30 the ordinary alarm must still be snoozed, until the urgent t=40 deadline.
+        for (urgent, ordinary) in [(AlarmKitAlarm.urgentHigh, AlarmKitAlarm.high), (.urgentLow, .low)] {
+            for alarm in AlarmKitAlarm.allCases { alarm.snoozed?.value = false }
+            ordinary.snoozedUntil?.value = now.addingTimeInterval(30 * 60)
+            ordinary.snoozed?.value = true
+            if urgent == .urgentHigh { UserDefaultsRepository.alertUrgentHighSnooze.value = 30 }
+            else { UserDefaultsRepository.alertUrgentLowSnooze.value = 30 }
+            urgent.acknowledge(at: now.addingTimeInterval(10 * 60))
+            let deadline = now.addingTimeInterval(40 * 60)
+            precondition(urgent.snoozedUntil?.value == deadline)
+            precondition(ordinary.snoozedUntil?.value == deadline)
+            precondition(ordinary.isSnoozed(at: now.addingTimeInterval(30 * 60)))
+            precondition(!ordinary.isSnoozed(at: deadline))
+            // The shared manual-snooze path copies the exact selected date, too.
+            urgent.snoozeLowerSeverity(until: now.addingTimeInterval(90 * 60))
+            precondition(ordinary.snoozedUntil?.value == now.addingTimeInterval(90 * 60))
+            urgent.snoozed?.value = false
+            ordinary.acknowledge(at: now)
+            precondition(urgent.snoozed?.value == false) // Never propagate upwards.
+        }
+        for alarm in AlarmKitAlarm.allCases { alarm.snoozed?.value = false }
+        for (label, urgent, ordinary) in [
+            ("⚠️ Akut högt!", AlarmKitAlarm.urgentHigh, AlarmKitAlarm.high),
+            ("🆘 Akut lågt!", .urgentLow, .low),
+            ("🆘 Akut lågt! (Comp. low?)", .urgentLow, .low)
+        ] {
+            for alarm in AlarmKitAlarm.allCases { alarm.snoozed?.value = false }
+            LegacySnoozeController().setSnoozeTime(label: label, value: 30)
+            precondition(urgent.isSnoozed() && ordinary.isSnoozed())
+            precondition(urgent.snoozedUntil?.value == ordinary.snoozedUntil?.value)
+        }
+        for alarm in AlarmKitAlarm.allCases { alarm.snoozed?.value = false }
         let glucoseKinds: Set<AlarmKitAlarm> = [.urgentLow, .low, .high, .urgentHigh, .fastDrop, .fastRise]
         for kind in AlarmKitAlarm.allCases {
             let title = kind.presentationTitle(label: kind.label, glucoseMGDL: 52)
@@ -291,7 +328,7 @@ checks = r'''
 with tempfile.TemporaryDirectory(prefix='loopfollow-alarmkit-tests-') as directory:
     directory = Path(directory)
     swift = directory / 'Tests.swift'
-    swift.write_text(stubs + '\nclass UserDefaultsRepository {\n' + '\n'.join(properties) + '\n}\n' + settings + manager + checks)
+    swift.write_text(stubs + '\nclass UserDefaultsRepository {\n' + '\n'.join(properties) + '\n}\n' + settings + manager + legacy + checks)
     env = dict(os.environ, CLANG_MODULE_CACHE_PATH=str(directory / 'modules'))
     binary = directory / 'tests'
     subprocess.run(['swiftc', '-parse-as-library', '-swift-version', '5', str(swift), '-o', str(binary)], check=True, env=env)
