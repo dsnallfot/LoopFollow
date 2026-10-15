@@ -18,11 +18,13 @@ extension BGCheckStatsViewController {
         container.addSubview(modeControl)
         container.addSubview(chartView)
         container.addSubview(timeChartView)
+        container.addSubview(deltaChartCaption)
 
         periodControl.translatesAutoresizingMaskIntoConstraints = false
         modeControl.translatesAutoresizingMaskIntoConstraints = false
         chartView.translatesAutoresizingMaskIntoConstraints = false
         timeChartView.translatesAutoresizingMaskIntoConstraints = false
+        deltaChartCaption.translatesAutoresizingMaskIntoConstraints = false
 
         // Default visibility
         chartView.isHidden = false
@@ -41,6 +43,10 @@ extension BGCheckStatsViewController {
             chartView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 12),
             chartView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -12),
             chartView.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -24),
+
+            deltaChartCaption.topAnchor.constraint(equalTo: timeChartView.topAnchor),
+            deltaChartCaption.leadingAnchor.constraint(equalTo: timeChartView.leadingAnchor),
+            deltaChartCaption.trailingAnchor.constraint(equalTo: timeChartView.trailingAnchor),
 
             timeChartView.topAnchor.constraint(equalTo: modeControl.bottomAnchor, constant: 12),
             timeChartView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 12),
@@ -65,6 +71,8 @@ extension BGCheckStatsViewController {
             loadCountChartData()
         case .time:
             loadTimeChartData()
+        case .cgmDelta:
+            loadDeltaChartData()
         }
     }
 }

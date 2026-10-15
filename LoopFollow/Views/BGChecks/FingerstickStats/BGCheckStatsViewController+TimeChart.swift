@@ -3,6 +3,8 @@ import Charts
 
 extension BGCheckStatsViewController {
     func loadTimeChartData() {
+        timeChartView.noDataText = "Inga fingerstick för perioden"
+        timeChartView.extraTopOffset = 0
         let cal = Calendar.current
 
         // Index per dag för x-position
@@ -71,29 +73,7 @@ extension BGCheckStatsViewController {
         timeChartView.autoScaleMinMaxEnabled = false
         timeChartView.notifyDataSetChanged()
 
-        timeChartView.drawGridBackgroundEnabled = true
-        timeChartView.gridBackgroundColor = NSUIColor.systemBackground.withAlphaComponent(0.5)
-
-        // Legend under grafen
-        timeChartView.legend.enabled = true
-        timeChartView.legend.verticalAlignment = .bottom
-        timeChartView.legend.horizontalAlignment = .center
-        timeChartView.legend.orientation = .horizontal
-        timeChartView.legend.drawInside = false
-        timeChartView.legend.yOffset = 6
-
-        let e1 = LegendEntry(label: "Fingerstick")
-        e1.form = .circle
-        e1.formSize = 8
-        e1.formColor = redColor
-
-        let e2 = LegendEntry(label: "Fingerstick → 🍬")
-        e2.form = .circle
-        e2.formSize = 8
-        e2.formColor = purpleColor
-
-        timeChartView.legend.setCustom(entries: [e1, e2])
-        timeChartView.extraBottomOffset = 8
+        configureScatterChartAppearance()
 
         // X-axis labels = datum (kompakt format) för varje index
         let df = DateFormatter()
@@ -102,6 +82,8 @@ extension BGCheckStatsViewController {
         let labels = selectedDays.map { df.string(from: $0) }
 
         let xAxis = timeChartView.xAxis
+        xAxis.resetCustomAxisMin()
+        xAxis.resetCustomAxisMax()
         xAxis.labelPosition = .bottom
         xAxis.granularity = 1
         xAxis.granularityEnabled = true
@@ -110,6 +92,8 @@ extension BGCheckStatsViewController {
 
         // Y-axel = timmar på dygnet 0–24
         let yAxis = timeChartView.leftAxis
+        yAxis.drawGridLinesEnabled = true
+        yAxis.drawLimitLinesBehindDataEnabled = false
         yAxis.axisMinimum = 0
         yAxis.axisMaximum = 24
 
@@ -147,6 +131,126 @@ extension BGCheckStatsViewController {
         yAxis.gridLineDashLengths = [2, 2]
 
         timeChartView.rightAxis.enabled = false
+        timeChartView.notifyDataSetChanged()
+        timeChartView.setNeedsDisplay()
+    }
+
+    private func configureScatterChartAppearance() {
+        timeChartView.drawGridBackgroundEnabled = true
+        timeChartView.gridBackgroundColor = NSUIColor.systemBackground.withAlphaComponent(0.5)
+
+        // Legend under grafen
+        timeChartView.legend.enabled = true
+        timeChartView.legend.verticalAlignment = .bottom
+        timeChartView.legend.horizontalAlignment = .center
+        timeChartView.legend.orientation = .horizontal
+        timeChartView.legend.drawInside = false
+        timeChartView.legend.yOffset = 6
+
+        let e1 = LegendEntry(label: "Fingerstick")
+        e1.form = .circle
+        e1.formSize = 8
+        e1.formColor = .systemRed
+
+        let e2 = LegendEntry(label: "Fingerstick → 🍬")
+        e2.form = .circle
+        e2.formSize = 8
+        e2.formColor = .systemPurple
+
+        timeChartView.legend.setCustom(entries: [e1, e2])
+        timeChartView.extraBottomOffset = 8
+    }
+}
+
+extension BGCheckStatsViewController {
+    func loadDeltaChartData() {
+        let calendar = Calendar.current
+        let indexByDay = Dictionary(uniqueKeysWithValues: selectedDays.enumerated().map {
+            (calendar.startOfDay(for: $0.element), $0.offset)
+        })
+        var regularPoints: [ChartDataEntry] = []
+        var dextroPoints: [ChartDataEntry] = []
+
+        for entry in selectedBGCheckEntries {
+            guard let delta = entry.delta10m, delta.isFinite,
+                  let day = calendar.dateInterval(of: .day, for: entry.date),
+                  let index = indexByDay[day.start] else { continue }
+            // Preserve the time within each calendar day, including daylight-saving changes.
+            let x = Double(index) + entry.date.timeIntervalSince(day.start) / day.duration
+            let point = ChartDataEntry(x: x, y: delta)
+            if entry.hasDextroNearby {
+                dextroPoints.append(point)
+            } else {
+                regularPoints.append(point)
+            }
+        }
+
+        timeChartView.noDataText = "Inga CGM-deltavärden för perioden"
+        guard !regularPoints.isEmpty || !dextroPoints.isEmpty else {
+            timeChartView.clear()
+            return
+        }
+
+        let regular = ScatterChartDataSet(entries: regularPoints.sorted { $0.x < $1.x }, label: "Fingerstick")
+        let dextro = ScatterChartDataSet(entries: dextroPoints.sorted { $0.x < $1.x }, label: "Fingerstick → 🍬")
+        for (dataSet, color) in [(regular, UIColor.systemRed), (dextro, UIColor.systemPurple)] {
+            dataSet.setColor(color)
+            dataSet.setScatterShape(.circle)
+            dataSet.scatterShapeSize = 7
+            dataSet.drawValuesEnabled = false
+        }
+        configureScatterChartAppearance()
+        timeChartView.autoScaleMinMaxEnabled = false
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "sv_SE")
+        formatter.dateFormat = "dd/MM"
+        let labels = selectedDays.map { formatter.string(from: $0) }
+        let xAxis = timeChartView.xAxis
+        xAxis.axisMinimum = -0.15
+        xAxis.axisMaximum = Double(selectedDays.count) + 0.15
+        xAxis.labelPosition = .bottom
+        xAxis.granularity = 1
+        xAxis.granularityEnabled = true
+        xAxis.setLabelCount(min(6, max(2, labels.count)), force: false)
+        xAxis.valueFormatter = DefaultAxisValueFormatter { value, _ in
+            let index = Int(value.rounded())
+            guard abs(value - Double(index)) < 0.001, labels.indices.contains(index) else { return "" }
+            return labels[index]
+        }
+        xAxis.gridColor = UIColor.lightGray.withAlphaComponent(0.5)
+        xAxis.gridLineWidth = 0.5
+        xAxis.gridLineDashLengths = [2, 2]
+
+        let deltas = (regularPoints + dextroPoints).map { $0.y }
+        // Round outwards to half units and keep zero visible even for one-sided data.
+        let lower = min(-0.5, floor((deltas.min() ?? 0) * 2) / 2)
+        let upper = max(0.5, ceil((deltas.max() ?? 0) * 2) / 2)
+        let yAxis = timeChartView.leftAxis
+        yAxis.axisMinimum = lower - 0.15
+        yAxis.axisMaximum = upper + 0.15
+        yAxis.granularity = 0.5
+        yAxis.granularityEnabled = true
+        yAxis.setLabelCount(6, force: false)
+        yAxis.valueFormatter = DefaultAxisValueFormatter { value, _ in
+            abs(value) < 0.001 ? "0.0" : String(format: "%+.1f", value)
+        }
+        // Explicit lines keep the half-unit grid exact even when Charts thins axis labels.
+        yAxis.drawGridLinesEnabled = false
+        yAxis.removeAllLimitLines()
+        yAxis.drawLimitLinesBehindDataEnabled = true
+        for value in stride(from: lower, through: upper, by: 0.5) {
+            let line = ChartLimitLine(limit: value)
+            let isZero = abs(value) < 0.001
+            line.lineColor = UIColor.lightGray.withAlphaComponent(isZero ? 0.8 : 0.5)
+            line.lineWidth = isZero ? 1.2 : 0.5
+            line.lineDashLengths = isZero ? [] : [2, 2]
+            yAxis.addLimitLine(line)
+        }
+
+        timeChartView.extraTopOffset = 20
+        timeChartView.data = ScatterChartData(dataSets: [regular, dextro])
+        timeChartView.notifyDataSetChanged()
         timeChartView.setNeedsDisplay()
     }
 }

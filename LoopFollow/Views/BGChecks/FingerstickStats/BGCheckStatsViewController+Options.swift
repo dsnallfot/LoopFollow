@@ -25,12 +25,13 @@ extension BGCheckStatsViewController {
     }
 
     enum ChartMode: CaseIterable {
-        case count, time
+        case count, time, cgmDelta
 
         var title: String {
             switch self {
             case .count: return "Antal"
             case .time:  return "Tid"
+            case .cgmDelta: return "CGM Delta"
             }
         }
     }

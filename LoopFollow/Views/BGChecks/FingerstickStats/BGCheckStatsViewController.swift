@@ -57,6 +57,16 @@ final class BGCheckStatsViewController: ThemedTableViewController {
         return v
     }()
 
+    let deltaChartCaption: UILabel = {
+        let label = UILabel()
+        label.text = "CGM +10 min − fingerstick (mmol/L)"
+        label.font = .systemFont(ofSize: 11)
+        label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.isHidden = true
+        return label
+    }()
+
     let timeChartView: ScatterChartView = {
         let v = ScatterChartView()
         v.legend.enabled = true

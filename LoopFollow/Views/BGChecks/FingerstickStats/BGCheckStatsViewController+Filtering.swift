@@ -12,6 +12,7 @@ extension BGCheckStatsViewController {
     }
 
     func applyPeriod(_ period: PeriodOption) {
+        timeChartView.fitScreen()
         selectedPeriod = period
         let total = allDays.count
         guard total > 0 else {
@@ -19,6 +20,8 @@ extension BGCheckStatsViewController {
             selectedCounts = []
             selectedDextroCounts = []
             selectedBGCheckDates = []
+            selectedBGCheckDextroDates = []
+            selectedBGCheckEntries = []
             chartView.data = nil
             timeChartView.data = nil
             tableView.reloadData()
@@ -65,11 +68,13 @@ extension BGCheckStatsViewController {
     @objc func modeChanged(_ sender: UISegmentedControl) {
         let index = sender.selectedSegmentIndex
         guard index >= 0 && index < ChartMode.allCases.count else { return }
+        timeChartView.fitScreen()
         selectedMode = ChartMode.allCases[index]
 
         let showCount = (selectedMode == .count)
         chartView.isHidden = !showCount
         timeChartView.isHidden = showCount
+        deltaChartCaption.isHidden = selectedMode != .cgmDelta
 
         loadChartData()
     }
