@@ -14,7 +14,12 @@ import LocalAuthentication
 struct ComboView: View {
     @State private var presets: [ComboPreset] = []
     private let storage = Storage.shared
-    @State private var selectedPreset: ComboPreset? = nil
+    private struct SendRequest: Identifiable {
+        let id = UUID()
+        let preset: ComboPreset?
+    }
+
+    @State private var selectedSend: SendRequest? = nil
     @State private var presetBeingEdited: ComboPreset? = nil
     @State private var showCreatePreset: Bool = false
     @State private var presetPendingDelete: ComboPreset? = nil
@@ -25,78 +30,80 @@ struct ComboView: View {
             ThemeBackground()
                 .ignoresSafeArea()
 
-            Group {
-                if presets.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "square.and.pencil")
-                            .font(.system(size: 40))
-                            .foregroundStyle(.secondary)
+            List {
+                Section {
+                    Button {
+                        selectedSend = SendRequest(preset: nil)
+                    } label: {
+                        Text("Skicka valfri kombination")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                            .padding(.vertical, 4)
+                    }
+                    .listRowBackground(Color(.systemGray).opacity(0.15))
+                }
 
+                Section {
+                    if presets.isEmpty {
                         Text("Skapa ett snabbval genom att klicka på plustecknet uppe till höger")
-                            .font(.body)
                             .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    List {
-                        ForEach(sortedPresets) { preset in
-                            Button {
-                                selectedPreset = preset
-                            } label: {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(preset.name)
-                                        .font(.headline)
-                                        .foregroundColor(.primary)
-
-                                    HStack(spacing: 10) {
-                                        if preset.carbs.doubleValue(for: .gram()) > 0 {
-                                            Text("KH: \(Int(preset.carbs.doubleValue(for: .gram()))) g")
-                                        }
-                                        if preset.protein.doubleValue(for: .gram()) > 0 {
-                                            Text("Protein: \(Int(preset.protein.doubleValue(for: .gram()))) g")
-                                        }
-                                        if preset.fat.doubleValue(for: .gram()) > 0 {
-                                            Text("Fett: \(Int(preset.fat.doubleValue(for: .gram()))) g")
-                                        }
-                                        if preset.bolusAmount.doubleValue(for: .internationalUnit()) > 0 {
-                                            Text(String(format: "Bolus: %.2f E", preset.bolusAmount.doubleValue(for: .internationalUnit())))
-                                        }
-                                    }
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-
-                                    if let overrideName = preset.overrideName, !overrideName.isEmpty {
-                                        Text("Override: \(overrideName)")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                                .padding(.vertical, 4)
-                            }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button(role: .destructive) {
-                                    presetPendingDelete = preset
-                                } label: {
-                                    Label("Radera", systemImage: "trash")
-                                }
-
-                                Button {
-                                    presetBeingEdited = preset
-                                } label: {
-                                    Label("Redigera", systemImage: "pencil")
-                                }
-                                .tint(.blue)
-                            }
                             .listRowBackground(Color(.systemGray).opacity(0.15))
-                        }
                     }
-                    .id(listRefreshID)
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
+                    ForEach(sortedPresets) { preset in
+                        Button {
+                            selectedSend = SendRequest(preset: preset)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(preset.name)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+
+                                HStack(spacing: 10) {
+                                    if preset.carbs.doubleValue(for: .gram()) > 0 {
+                                        Text("KH: \(Int(preset.carbs.doubleValue(for: .gram()))) g")
+                                    }
+                                    if preset.protein.doubleValue(for: .gram()) > 0 {
+                                        Text("Protein: \(Int(preset.protein.doubleValue(for: .gram()))) g")
+                                    }
+                                    if preset.fat.doubleValue(for: .gram()) > 0 {
+                                        Text("Fett: \(Int(preset.fat.doubleValue(for: .gram()))) g")
+                                    }
+                                    if preset.bolusAmount.doubleValue(for: .internationalUnit()) > 0 {
+                                        Text(String(format: "Bolus: %.2f E", preset.bolusAmount.doubleValue(for: .internationalUnit())))
+                                    }
+                                }
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                                if let overrideName = preset.overrideName, !overrideName.isEmpty {
+                                    Text("Override: \(overrideName)")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                presetPendingDelete = preset
+                            } label: {
+                                Label("Radera", systemImage: "trash")
+                            }
+
+                            Button {
+                                presetBeingEdited = preset
+                            } label: {
+                                Label("Redigera", systemImage: "pencil")
+                            }
+                            .tint(.blue)
+                        }
+                        .listRowBackground(Color(.systemGray).opacity(0.15))
+                    }
                 }
             }
+            .id(listRefreshID)
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
             .safeAreaInset(edge: .top, spacing: 0) { RemoteCommandPendingBanner() }
             .navigationTitle("Snabbval")
             .navigationBarTitleDisplayMode(.inline)
@@ -110,9 +117,9 @@ struct ComboView: View {
                 }
             }
         }
-        .sheet(item: $selectedPreset) { preset in
+        .sheet(item: $selectedSend) { request in
             NavigationStack {
-                ComboEditorView(mode: .sendFromPreset, preset: preset) { _ in }
+                ComboEditorView(mode: .sendFromPreset, preset: request.preset) { _ in }
             }
         }
         .sheet(item: $presetBeingEdited, onDismiss: {
@@ -422,7 +429,9 @@ private struct ComboEditorView: View {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                 guard !(showAlert && alertType == .validationError) else { return }
                                 guard hasAnyComboPayload else {
-                                    handleValidationError("Du måste ange minst ett värde för kolhydrater, protein, fett, bolus eller välja en override.")
+                                    handleValidationError(mode == .sendFromPreset
+                                        ? "Du måste ange kolhydrater, protein, fett, bolus, blodsocker eller välja en override."
+                                        : "Du måste ange kolhydrater, protein, fett, bolus eller välja en override.")
                                     return
                                 }
 
@@ -584,9 +593,9 @@ private struct ComboEditorView: View {
                 let proteinAmount = protein.doubleValue(for: HKUnit.gram())
                 let fatAmount = fat.doubleValue(for: HKUnit.gram())
                 let bolus = bolusAmount.doubleValue(for: .internationalUnit())
-                let name = presetName
+                let name = preset?.name ?? "Valfri kombination"
 
-                var message = "Är du säker på att du vill skicka snabbvaletet '\(name)'?\n"
+                var message = "Är du säker på att du vill skicka snabbvalet '\(name)'?\n"
 
                 if carbsAmount > 0 {
                     message += String(format: "\nKolhydrater: %.0f g", carbsAmount)
@@ -738,7 +747,7 @@ private struct ComboEditorView: View {
         case .editPreset:
             return "Redigera Snabbval"
         case .sendFromPreset:
-            return preset?.name ?? "Snabbval"
+            return preset?.name ?? "Valfri kombination"
         }
     }
 
@@ -749,7 +758,7 @@ private struct ComboEditorView: View {
         case .editPreset:
             return "Uppdatera Snabbval"
         case .sendFromPreset:
-            return "Skicka Snabbval"
+            return preset == nil ? "Skicka kombination" : "Skicka Snabbval"
         }
     }
 
@@ -800,7 +809,7 @@ private struct ComboEditorView: View {
     }
 
     private var hasAnyComboPayload: Bool {
-        hasMealPayload || hasBolusPayload || hasOverridePayload
+        hasMealPayload || hasBolusPayload || hasOverridePayload || optionalGlucose != nil
     }
 
     private var primaryButtonTitle: String {

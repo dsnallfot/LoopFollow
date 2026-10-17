@@ -424,8 +424,10 @@ class PushNotificationManager {
         let scheduledTimeInterval: TimeInterval? = scheduledTime?.timeIntervalSince1970
         let bolusAmountValue = convertToOptionalDecimal(bolusAmount)
 
-        guard carbsValue != nil || proteinValue != nil || fatValue != nil else {
-            completion(false, "No nutrient data provided. At least one of carbs, fat, or protein must be greater than 0.")
+        let hasOverride = !(override?.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+        guard carbsValue != nil || proteinValue != nil || fatValue != nil ||
+              bolusAmountValue != nil || glucoseDecimal != nil || hasOverride else {
+            completion(false, "Du måste ange kolhydrater, protein, fett, bolus, blodsocker eller välja en override.")
             return
         }
 

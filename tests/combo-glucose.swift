@@ -38,6 +38,23 @@ struct ComboGlucoseTests {
         let glucose = entry("glucose", "BG Check", date: sent.addingTimeInterval(-60), extra: ["enteredBy": "Trio", "glucose": 3.5, "units": "mmol"])
         withTracker.observe([glucose], site: "test", requestStartedAt: sent.addingTimeInterval(7))
         precondition(withTracker.pending.isEmpty)
+        // Nutrient-free combos must serialize without a meal and track only their actual parts.
+        for (id, glucoseValue, overrideName, parts) in [
+            ("glucose-only", Decimal(100) as Decimal?, nil as String?, Set<RemoteCommandReceiptTracker.Part>([.glucose])),
+            ("override-only", nil, "Låg", [.override]),
+            ("glucose-override", Decimal(100), "Låg", [.glucose, .override])
+        ] {
+            let combo = PushMessage(aps: .init(alert: "test"), user: "Test", commandType: .combo,
+                                    glucose: glucoseValue, sharedSecret: "test",
+                                    timestamp: sent.timeIntervalSince1970, overrideName: overrideName)
+            let comboTracker = RemoteCommandReceiptTracker()
+            comboTracker.track(combo, id: id, site: "test", now: sent)
+            precondition(comboTracker.pending.first?.remaining == parts)
+            let encoded = try JSONSerialization.jsonObject(with: JSONEncoder().encode(combo)) as! [String: Any]
+            for key in ["carbs", "fat", "protein", "bolus_amount"] {
+                precondition(encoded[key] == nil || encoded[key] is NSNull)
+            }
+        }
         print("Combo glucose tests passed")
     }
 }
