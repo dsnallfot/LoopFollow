@@ -35,7 +35,7 @@ struct ComboView: View {
                     Button {
                         selectedSend = SendRequest(preset: nil)
                     } label: {
-                        Text("Skicka valfri kombination")
+                        Label("Skicka valfri kombination", systemImage: "circle.grid.2x2.topleft.checkmark.filled")
                             .font(.headline)
                             .foregroundColor(.primary)
                             .padding(.vertical, 4)
