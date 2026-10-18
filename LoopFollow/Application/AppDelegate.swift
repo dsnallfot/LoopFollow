@@ -20,7 +20,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var orientationLock: UIInterfaceOrientationMask = .portrait
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        LogManager.shared.log(category: .general, message: "App started; state=\(application.applicationState.rawValue), bluetoothRestore=\(launchOptions?[.bluetoothCentrals] != nil)")
+        LogManager.shared.log(category: .general, message: "App started; pid=\(ProcessInfo.processInfo.processIdentifier), state=\(application.applicationState.rawValue); BLE restoration is reported by central callbacks")
         LogManager.shared.cleanupOldLogs()
 
         let options: UNAuthorizationOptions = [.alert, .sound, .badge]
@@ -52,13 +52,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         _ = BLEManager.shared
         
-        _ = BackgroundAlertManager.shared // Also clean up persisted watchdogs when refresh is disabled.
-        if Storage.shared.backgroundRefreshType.value != .none {
-            LogManager.shared.log(category: .backgroundAlerts,
-                                  message: "AppDelegate: starting BackgroundAlertManager on launch")
-            BackgroundAlertManager.shared.startBackgroundAlert()
+        // Loading ownership must not cancel persisted protection or renew deadlines.
+        // TaskScheduler arms replacements only after monitoring recovery succeeds.
+        _ = BackgroundAlertManager.shared
+        if Storage.shared.backgroundRefreshType.value == .none || !BackgroundAlertSettings.enabled.value {
+            BackgroundAlertManager.shared.stopBackgroundAlert()
         }
-        
+
         // Ensure VolumeButtonHandler is initialized so it can receive alarm notifications
         _ = VolumeButtonHandler.shared
         if ObservableUserDefaults.shared.watchCommunicationEnabled.value {
@@ -68,6 +68,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Also bootstrap monitoring on a silent Bluetooth relaunch with no UI scene.
         // The scheduler retries recovery on subsequent heartbeats if this attempt fails.
         TaskScheduler.shared.checkTasksNow()
+        LogManager.shared.log(category: .general, message: "Launch bootstrap completed; monitoring recovery requested")
 
         // Post a Nightscout Note about app restart, debounced
         postLaunchNoteToNightscoutIfNeeded()

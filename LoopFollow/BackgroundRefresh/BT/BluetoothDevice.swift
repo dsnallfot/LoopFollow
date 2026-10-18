@@ -22,8 +22,7 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
     private var peripheral: CBPeripheral?
     private var timeStampLastStatusUpdate:Date
     private var receiveCharacteristic:CBCharacteristic?
-    private let maxTimeToWaitForPeripheralResponse = 5.0
-    private var connectTimeOutTimer: Timer?
+    private var shouldMaintainConnection = true
     var lastHeartbeatTime: Date?
     // --- Begin Dexcom force-disconnect watchdog additions ---
     private var lastConnectTime: Date?
@@ -66,15 +65,22 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
     }
 
     func connect() {
-        // Cancel any pending force-disconnect from a previous session
-        forceDisconnectWorkItem?.cancel()
-        forceDisconnectWorkItem = nil
-        if let centralManager = centralManager, !retrievePeripherals(centralManager) {
+        shouldMaintainConnection = true
+        guard let central = centralManager, central.state == .poweredOn else { return }
+        if let peripheral {
+            resumeConnection(central, peripheral: peripheral)
+        } else if !retrievePeripherals(central) {
             _ = startScanning()
         }
     }
 
     func disconnect() {
+        shouldMaintainConnection = false
+        forceDisconnectWorkItem?.cancel()
+        forceDisconnectWorkItem = nil
+        lastConnectTime = nil
+        endBackgroundTask()
+        centralManager?.stopScan()
         if let peripheral = peripheral {
             if let centralManager = centralManager {
                 centralManager.cancelPeripheralConnection(peripheral)
@@ -111,9 +117,8 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
             case .connected:
                 return .alreadyConnected
             case .connecting:
-                if Date() > Date(timeInterval: maxTimeToWaitForPeripheralResponse, since: timeStampLastStatusUpdate) {
-                    disconnect()
-                }
+                // A pending CoreBluetooth connection survives suspension and can
+                // wake/relaunch us when the sensor returns. Do not time it out.
                 return .connecting
             default:()
             }
@@ -167,27 +172,23 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
         peripheral.delegate = self
         self.peripheral = peripheral
 
-        if peripheral.state == .disconnected {
-            connectTimeOutTimer = Timer.scheduledTimer(timeInterval: 5.0, target: self, selector: #selector(stopConnectAndRestartScanning), userInfo: nil, repeats: false)
-            centralManager?.connect(peripheral, options: nil)
-        } else {
-            if let newCentralManager = centralManager {
-                centralManager(newCentralManager, didConnect: peripheral)
-            }
-        }
+        if let central = centralManager { resumeConnection(central, peripheral: peripheral) }
     }
 
-    @objc fileprivate func stopConnectAndRestartScanning() {
-        disconnectAndForget()
-        _ = startScanning()
-    }
-
-    public func cancelConnectionTimer() {
-        if let connectTimeOutTimer = connectTimeOutTimer {
-            connectTimeOutTimer.invalidate()
-            self.connectTimeOutTimer = nil
+    private func resumeConnection(_ central: CBCentralManager, peripheral: CBPeripheral) {
+        guard shouldMaintainConnection, central.state == .poweredOn else { return }
+        peripheral.delegate = self
+        switch peripheral.state {
+        case .disconnected:
+            central.connect(peripheral, options: nil)
+        case .connected:
+            // Restored connections need discovery/delegates, not another connect().
+            if lastConnectTime == nil { centralManager(central, didConnect: peripheral) }
+        case .connecting, .disconnecting:
+            break // Preserve the pending operation and await its delegate callback.
+        @unknown default:
+            break
         }
-
     }
 
     fileprivate func retrievePeripherals(_ central:CBCentralManager) -> Bool {
@@ -198,7 +199,7 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
                 peripheral = peripheralArr[0]
                 if let peripheral = peripheral {
                     peripheral.delegate = self
-                    central.connect(peripheral, options: nil)
+                    resumeConnection(central, peripheral: peripheral)
                     return true
                 }
             }
@@ -217,13 +218,18 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        // 1. Starta Background Task för att garantera att Watchdog-timern hinner köra
+        guard shouldMaintainConnection else {
+            central.cancelPeripheralConnection(peripheral)
+            return
+        }
+        self.peripheral = peripheral
+        peripheral.delegate = self
+        endBackgroundTask()
+        // A finite execution allowance, not a guarantee against suspension.
         self.backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "DexcomWatchdog") { [weak self] in
             // Denna kod körs om tiden tar slut (t.ex. iOS tvingar vila)
             self?.endBackgroundTask()
         }
-
-        cancelConnectionTimer()
 
         timeStampLastStatusUpdate = Date()
 
@@ -268,7 +274,22 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
 
         bluetoothDeviceDelegate?.didConnectTo(bluetoothDevice: self)
 
-        peripheral.discoverServices(servicesCBUUIDs)
+        resumeDiscovery(peripheral)
+    }
+
+    private func resumeDiscovery(_ peripheral: CBPeripheral) {
+        guard let services = peripheral.services, !services.isEmpty,
+              servicesCBUUIDs?.allSatisfy({ expected in services.contains { $0.uuid == expected } }) ?? true else {
+            peripheral.discoverServices(servicesCBUUIDs)
+            return
+        }
+        for service in services {
+            if service.characteristics == nil {
+                peripheral.discoverCharacteristics(nil, for: service)
+            } else {
+                self.peripheral(peripheral, didDiscoverCharacteristicsFor: service, error: nil)
+            }
+        }
     }
 
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
@@ -285,7 +306,10 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
 
         LogManager.shared.log(category: .bluetooth, message: "Failed to connect to peripheral '\(peripheralName)' (UUID: \(peripheral.identifier.uuidString)). Error: \(errorMessage). Retrying...")
 
-        centralManager?.connect(peripheral, options: nil)
+        endBackgroundTask()
+        if shouldMaintainConnection, central.state == .poweredOn {
+            central.connect(peripheral, options: nil)
+        }
     }
 
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
@@ -293,8 +317,15 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
 
         timeStampLastStatusUpdate = Date()
 
-        if central.state == .poweredOn {
-            _ = retrievePeripherals(central)
+        if central.state == .poweredOn, shouldMaintainConnection {
+            connect()
+        } else if central.state == .resetting || central.state == .poweredOff {
+            forceDisconnectWorkItem?.cancel()
+            forceDisconnectWorkItem = nil
+            lastConnectTime = nil
+            receiveCharacteristic = nil
+            peripheral = nil
+            endBackgroundTask()
         }
     }
 
@@ -315,7 +346,7 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
             LogManager.shared.log(category: .bluetooth, message: "[BLE] didDisconnectPeripheral error: \(error.localizedDescription)", isDebug: true, isTempDebug: true)
         }
 
-        if let ownPeripheral = self.peripheral {
+        if shouldMaintainConnection, central.state == .poweredOn, let ownPeripheral = self.peripheral {
             centralManager?.connect(ownPeripheral, options: nil)
         }
     }
@@ -328,7 +359,8 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
                 peripheral.discoverCharacteristics(nil, for: service)
             }
         } else {
-            disconnect()
+            // A transient discovery error should reconnect, not disable monitoring.
+            centralManager?.cancelPeripheralConnection(peripheral)
         }
     }
 
@@ -339,7 +371,7 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
             for characteristic in characteristics {
                 if characteristic.uuid == CBUUID(string: CBUUID_ReceiveCharacteristic) {
                     receiveCharacteristic = characteristic
-                    peripheral.setNotifyValue(true, for: characteristic)
+                    if !characteristic.isNotifying { peripheral.setNotifyValue(true, for: characteristic) }
                 }
             }
         }
@@ -382,7 +414,19 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
     }
 
     func centralManager(_ central: CBCentralManager, willRestoreState dict: [String : Any]) {
-        LogManager.shared.log(category: .bluetooth, message: "Restoring BLE after crash/kill")
+        let restored = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] ?? []
+        guard let selected = restored.first(where: { $0.identifier.uuidString == deviceAddress }) else {
+            LogManager.shared.log(category: .bluetooth, message: "BLE restoration: selected peripheral absent; retrieve/scan when powered on")
+            return
+        }
+        peripheral = selected
+        selected.delegate = self
+        deviceName = selected.name ?? deviceName
+        LogManager.shared.log(category: .bluetooth,
+            message: "BLE restoration: adopted selected peripheral, state=\(selected.state.rawValue)")
+        // willRestoreState can precede poweredOn. Retain/delegate now, perform
+        // CoreBluetooth operations only once the central is ready.
+        resumeConnection(central, peripheral: selected)
     }
 
     private func initialize() {

@@ -4,7 +4,7 @@ import AppIntents
 import Combine
 import Foundation
 import SwiftUI
-import UserNotifications
+@preconcurrency import UserNotifications
 
 /// Keep stable slot identifiers and the old six-minute identifier for upgrade cleanup.
 /// The first and second slots now have configurable delays.
@@ -25,18 +25,21 @@ enum BackgroundAlertIdentifier: String, CaseIterable {
     private var revision = 0
     private var desiredAlerts: [BackgroundAlert] = []
     private var worker: Task<Void, Never>?
-    private let center = UNUserNotificationCenter.current()
     private let defaults = UserDefaults(suiteName: AppConstants.APP_GROUP_ID)!
     private let idsKey = "alarmKit.background.systemIDs.v1"
     private var systemIDs: Set<UUID> = []
-    private var schedulingIDs: Set<UUID> = []
+    private let notificationIDsKey = "background.notificationIDs.v2"
+    private var notificationIDs: Set<String> = []
+    // Until monitoring is recovered, preference/authorization callbacks must leave
+    // persisted alarms alone. Merely starting the process is not a heartbeat.
+    private var monitoringRecovered = false
     private var preferenceObservations: [ObservationToken] = []
     private var subscriptions = Set<AnyCancellable>()
 
     private init() {
         systemIDs = Set((defaults.stringArray(forKey: idsKey) ?? []).compactMap(UUID.init(uuidString:)))
-        cancelSystemAlarms()
-        removeNotifications()
+        notificationIDs = Set(defaults.stringArray(forKey: notificationIDsKey) ?? [])
+        notificationIDs.formUnion(BackgroundAlertIdentifier.allCases.map(\.rawValue))
         observe(AlarmKitSettings.enabled)
         observe(UserDefaultsRepository.quietHourEnd)
         observe(UserDefaultsRepository.quietHourStart)
@@ -67,11 +70,13 @@ enum BackgroundAlertIdentifier: String, CaseIterable {
     func startBackgroundAlert() {
         // Foreground BLE heartbeats must not re-arm a watchdog just cancelled on activation.
         guard UIApplication.shared.applicationState != .active else { return }
+        monitoringRecovered = true
         isAlertScheduled = true
         scheduleBackgroundAlert(force: true)
     }
 
     func stopBackgroundAlert() {
+        monitoringRecovered = true
         isAlertScheduled = false
         lastScheduleDate = nil
         replaceAlerts()
@@ -90,6 +95,8 @@ enum BackgroundAlertIdentifier: String, CaseIterable {
     }
 
     private func replaceAlerts() {
+        guard monitoringRecovered || !BackgroundAlertSettings.enabled.value ||
+                Storage.shared.backgroundRefreshType.value == .none else { return }
         revision += 1
         if isAlertScheduled, BackgroundAlertSettings.enabled.value,
            Storage.shared.backgroundRefreshType.value != .none, let anchor = lastScheduleDate {
@@ -100,15 +107,19 @@ enum BackgroundAlertIdentifier: String, CaseIterable {
         } else {
             desiredAlerts = []
         }
-        // Stop existing alarms immediately, even if a preceding schedule is still suspended.
-        removeNotifications()
-        cancelSystemAlarms()
         guard worker == nil else { return }
         worker = Task { await applyLatestAlerts() }
     }
 
     private func applyLatestAlerts() async {
-        let backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "Background watchdog alarms")
+        var backgroundTask = UIBackgroundTaskIdentifier.invalid
+        backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "Background watchdog alarms") {
+            if backgroundTask != .invalid {
+                UIApplication.shared.endBackgroundTask(backgroundTask)
+                backgroundTask = .invalid
+            }
+            // Keep persisted protection if scheduling is interrupted by suspension.
+        }
         defer {
             worker = nil
             if backgroundTask != .invalid { UIApplication.shared.endBackgroundTask(backgroundTask) }
@@ -116,13 +127,15 @@ enum BackgroundAlertIdentifier: String, CaseIterable {
         while true {
             let applyingRevision = revision
             let alerts = desiredAlerts
+            let oldSystemIDs = systemIDs
+            let oldNotificationIDs = notificationIDs
+            var allScheduled = true
             for alert in alerts {
                 guard applyingRevision == revision else { break }
                 if #available(iOS 26.0, *), BackgroundAlertSettings.usesAlarmKit(at: max(alert.fireDate, Date())),
                    AlarmManager.shared.authorizationState == .authorized {
                     let id = UUID()
                     systemIDs.insert(id)
-                    schedulingIDs.insert(id)
                     persistIDs() // Ownership survives termination during schedule().
                     do {
                         let presentation = AlarmPresentation(alert: AlarmPresentation.Alert(
@@ -137,34 +150,47 @@ enum BackgroundAlertIdentifier: String, CaseIterable {
                             sound: .named(alert.soundName)
                         )
                         _ = try await AlarmManager.shared.schedule(id: id, configuration: config)
-                        schedulingIDs.remove(id)
-                        guard applyingRevision == revision else {
-                            cancelSystemAlarm(id)
-                            break
-                        }
+                        guard applyingRevision == revision else { break }
                         LogManager.shared.log(category: .backgroundAlerts, message: "Background AlarmKit scheduled: \(alert.identifier), deadline: \(alert.fireDate)", isDebug: true)
                         continue
                     } catch {
-                        schedulingIDs.remove(id)
-                        cancelSystemAlarm(id)
+                        await cancelSystemAlarm(id)
                         guard applyingRevision == revision else { break }
                         LogManager.shared.log(category: .backgroundAlerts, message: "Background AlarmKit failed; using notification: \(error)")
                     }
                 }
                 guard applyingRevision == revision else { break }
-                await scheduleNotification(alert)
-                if applyingRevision != revision {
-                    // No newer notification has been added yet: this worker is serialized.
-                    center.removePendingNotificationRequests(withIdentifiers: [alert.identifier])
-                    center.removeDeliveredNotifications(withIdentifiers: [alert.identifier])
+                let id = alert.identifier + "." + UUID().uuidString
+                notificationIDs.insert(id)
+                persistIDs() // Also owns a request if the process dies inside add().
+                if !(await scheduleNotification(alert, identifier: id)) {
+                    allScheduled = false
                     break
                 }
+            }
+            if applyingRevision == revision && allScheduled {
+                // Commit only after every replacement is accepted. Until then the old
+                // generation remains armed, including across termination/relaunch.
+                for id in oldSystemIDs { await cancelSystemAlarm(id) }
+                await removeNotifications(oldNotificationIDs)
+                LogManager.shared.log(category: .backgroundAlerts,
+                    message: "Background watchdog plan committed: \(alerts.count) slots, revision=\(applyingRevision)", isDebug: true)
+            } else if applyingRevision != revision {
+                // A newer plan follows immediately. Its commit cleans up every
+                // persisted generation, including late/partial completions here.
+                LogManager.shared.log(category: .backgroundAlerts,
+                    message: "Background watchdog plan superseded; protection retained until replacement", isDebug: true)
+            } else {
+                // Also keep any accepted slots from this partial attempt. On a
+                // first installation there may be no older protection at all.
+                LogManager.shared.log(category: .backgroundAlerts,
+                    message: "Background watchdog replacement incomplete; existing and accepted protection retained")
             }
             if applyingRevision == revision { return }
         }
     }
 
-    private func scheduleNotification(_ alert: BackgroundAlert) async {
+    private func scheduleNotification(_ alert: BackgroundAlert, identifier: String) async -> Bool {
         let content = UNMutableNotificationContent()
         content.title = "LoopFollow Background Refresh"
         content.body = alert.body
@@ -177,38 +203,77 @@ enum BackgroundAlertIdentifier: String, CaseIterable {
         content.categoryIdentifier = "loopfollow.background.alert"
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, alert.fireDate.timeIntervalSinceNow), repeats: false)
         do {
-            try await center.add(UNNotificationRequest(identifier: alert.identifier, content: content, trigger: trigger))
+            try await BackgroundAlertSystemIO.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
+            return true
         } catch {
             LogManager.shared.log(category: .backgroundAlerts, message: "Background notification scheduling failed: \(error)")
+            return false
         }
     }
 
-    private func removeNotifications() {
-        let identifiers = BackgroundAlertIdentifier.allCases.map(\.rawValue)
-        center.removePendingNotificationRequests(withIdentifiers: identifiers)
-        center.removeDeliveredNotifications(withIdentifiers: identifiers)
+    private func removeNotifications(_ identifiers: Set<String>) async {
+        guard !identifiers.isEmpty else { return }
+        await BackgroundAlertSystemIO.remove(Array(identifiers))
+        notificationIDs.subtract(identifiers)
+        persistIDs()
     }
 
-    private func cancelSystemAlarms() {
-        for id in systemIDs { cancelSystemAlarm(id) }
-    }
-
-    private func cancelSystemAlarm(_ id: UUID) {
-        guard #available(iOS 26.0, *) else { return }
-        do {
-            try AlarmManager.shared.cancel(id: id)
-            if !schedulingIDs.contains(id) { systemIDs.remove(id) }
-        } catch {
-            try? AlarmManager.shared.stop(id: id)
-            if !schedulingIDs.contains(id), let alarms = try? AlarmManager.shared.alarms,
-               !alarms.contains(where: { $0.id == id }) { systemIDs.remove(id) }
-        }
+    private func cancelSystemAlarm(_ id: UUID) async {
+        if await BackgroundAlertSystemIO.cancelAlarm(id) { systemIDs.remove(id) }
         persistIDs()
     }
 
     private func persistIDs() {
+        let notifications = notificationIDs.sorted()
+        if defaults.stringArray(forKey: notificationIDsKey) != notifications {
+            defaults.set(notifications, forKey: notificationIDsKey)
+        }
         let ids = systemIDs.map(\.uuidString).sorted()
         if defaults.stringArray(forKey: idsKey) != ids { defaults.set(ids, forKey: idsKey) }
+    }
+}
+
+/// These APIs can synchronously wait on a system daemon, even though their public
+/// signatures look inexpensive. Never run them on the main actor or during init.
+private enum BackgroundAlertSystemIO {
+    private static let queue = DispatchQueue(label: "com.loopfollow.watchdog.system-io", qos: .utility)
+
+    static func add(_ request: UNNotificationRequest) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            queue.async {
+                UNUserNotificationCenter.current().add(request) { error in
+                    if let error { continuation.resume(throwing: error) }
+                    else { continuation.resume() }
+                }
+            }
+        }
+    }
+
+    static func remove(_ identifiers: [String]) async {
+        await withCheckedContinuation { continuation in
+            queue.async {
+                let center = UNUserNotificationCenter.current()
+                center.removePendingNotificationRequests(withIdentifiers: identifiers)
+                center.removeDeliveredNotifications(withIdentifiers: identifiers)
+                continuation.resume()
+            }
+        }
+    }
+
+    static func cancelAlarm(_ id: UUID) async -> Bool {
+        await withCheckedContinuation { continuation in
+            queue.async {
+                guard #available(iOS 26.0, *) else { continuation.resume(returning: true); return }
+                do {
+                    try AlarmManager.shared.cancel(id: id)
+                    continuation.resume(returning: true)
+                } catch {
+                    // Keep ownership on failure so a later pass can retry cleanup.
+                    let absent = (try? AlarmManager.shared.alarms.contains { $0.id == id }) == false
+                    continuation.resume(returning: absent)
+                }
+            }
+        }
     }
 }
 

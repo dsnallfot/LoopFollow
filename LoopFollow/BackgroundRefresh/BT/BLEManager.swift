@@ -52,7 +52,7 @@ class BLEManager: NSObject, ObservableObject {
         centralManager = CBCentralManager(
             delegate: self,
             queue: bleQueue,
-            options: [CBCentralManagerOptionRestoreIdentifierKey: "LoopFollow-ScanningCentral"]
+            options: nil
         )
 
         if let device = Storage.shared.selectedBLEDevice.value {
@@ -100,6 +100,10 @@ class BLEManager: NSObject, ObservableObject {
     }
 
     func connect(device: BLEDevice) {
+        if let activeDevice, activeDevice.deviceAddress == device.id.uuidString {
+            activeDevice.connect()
+            return
+        }
         // IMPORTANT: Do not clear selectedBLEDevice during reconnects; a transient nil can cause UI/observers
         // to auto-select another discovered sensor.
         disconnect(clearSelection: false)
@@ -212,15 +216,11 @@ extension BLEManager: CBCentralManagerDelegate {
         switch central.state {
         case .poweredOn:
             LogManager.shared.log(category: .bluetooth, message: "Central poweredOn", isDebug: true, isTempDebug: true)
-            // If we have a previously selected device, ensure we are connected when Bluetooth becomes available again.
-            if let selected = Storage.shared.selectedBLEDevice.value {
-                // If activeDevice is missing or we are not currently connected, attempt a reconnect.
-                let isConnected = (self.getSelectedDevice()?.isConnected ?? false)
-                if self.activeDevice == nil || !isConnected {
-                    LogManager.shared.log(category: .bluetooth, message: "Bluetooth poweredOn: ensuring connection to selected device", isDebug: true, isTempDebug: true)
-                    DispatchQueue.main.async {
-                        self.connect(device: selected)
-                    }
+            // Selection and activeDevice belong to main. Never replace a restoring
+            // central just because its connection has not completed yet.
+            DispatchQueue.main.async {
+                if self.activeDevice == nil, let selected = Storage.shared.selectedBLEDevice.value {
+                    self.connect(device: selected)
                 }
             }
         default:

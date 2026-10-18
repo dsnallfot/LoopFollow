@@ -12,6 +12,7 @@ repo = Path(__file__).resolve().parents[1]
 source = (repo / 'LoopFollow/Controllers/BackgroundAlertManager.swift').read_text()
 source = source[:source.index('/// Opening the app resumes')]
 source = re.sub(r'^import (ActivityKit|AlarmKit|AppIntents|SwiftUI|UserNotifications)\n', '', source, flags=re.M)
+source = source.replace('@preconcurrency import UserNotifications\n', '')
 source = source.replace('UserDefaults(suiteName: AppConstants.APP_GROUP_ID)!', 'MemoryDefaults.shared')
 source = source.replace('private init()', 'init()')
 source = source.replace('private var worker:', 'var worker:')
@@ -56,7 +57,7 @@ class UIApplication {
     static let didBecomeActiveNotification = Notification.Name("active")
     enum State { case active, inactive, background }
     var applicationState = State.background
-    func beginBackgroundTask(withName: String) -> UIBackgroundTaskIdentifier { .invalid }
+    func beginBackgroundTask(withName: String, expirationHandler: (() -> Void)? = nil) -> UIBackgroundTaskIdentifier { .invalid }
     func endBackgroundTask(_ id: UIBackgroundTaskIdentifier) {}
 }
 struct Color { static let orange = Self(); static let white = Self() }
@@ -73,7 +74,7 @@ struct LoopFollowAlarmMetadata {}
 struct OpenLoopFollowBackgroundAlertIntent {}
 struct AlertConfiguration { enum AlertSound: Equatable { case named(String) } }
 struct SystemAlarm { let id: UUID; let date: Date; let sound: AlertConfiguration.AlertSound }
-@MainActor class AlarmManager {
+class AlarmManager {
     static let shared = AlarmManager()
     enum AuthorizationState { case authorized, denied, notDetermined }
     enum Schedule { case fixed(Date) }
@@ -91,12 +92,13 @@ struct SystemAlarm { let id: UUID; let date: Date; let sound: AlertConfiguration
     var alarms: [SystemAlarm] { get throws { stored } }
     var fail = false
     var schedules = 0
+    var failOnSchedule: Int?
     var suspendNext = false
     var suspension: CheckedContinuation<Void, Never>?
     func schedule<T>(id: UUID, configuration: AlarmConfiguration<T>) async throws -> SystemAlarm {
         schedules += 1
         if suspendNext { suspendNext = false; await withCheckedContinuation { suspension = $0 } }
-        if fail { throw NSError(domain: "test", code: 1) }
+        if fail || schedules == failOnSchedule { throw NSError(domain: "test", code: 1) }
         let alarm = SystemAlarm(id: id, date: configuration.date, sound: configuration.sound)
         stored.append(alarm); return alarm
     }
@@ -116,23 +118,34 @@ class UNMutableNotificationContent {
     var interruptionLevel = Level.timeSensitive
 }
 struct UNTimeIntervalNotificationTrigger { let timeInterval: TimeInterval; let repeats: Bool }
-struct UNNotificationRequest {
+struct UNNotificationRequest: @unchecked Sendable {
     let identifier: String
     let content: UNMutableNotificationContent
     let trigger: UNTimeIntervalNotificationTrigger
 }
-@MainActor final class UNUserNotificationCenter {
+final class UNUserNotificationCenter {
     static let shared = UNUserNotificationCenter()
     static func current() -> UNUserNotificationCenter { shared }
     var requests: [UNNotificationRequest] = []
     var removed: Set<String> = []
     var suspendNext = false
     var suspension: CheckedContinuation<Void, Never>?
-    func add(_ request: UNNotificationRequest) async throws {
-        if suspendNext { suspendNext = false; await withCheckedContinuation { suspension = $0 } }
-        requests.removeAll { $0.identifier == request.identifier }; requests.append(request)
+    var fail = false
+    var slowRemove = false
+    var removalEntered = false
+    let removalGate = DispatchSemaphore(value: 0)
+    func add(_ request: UNNotificationRequest, withCompletionHandler completion: @escaping (Error?) -> Void) {
+        precondition(!Thread.isMainThread)
+        Task { @MainActor in
+            if suspendNext { suspendNext = false; await withCheckedContinuation { suspension = $0 } }
+            if fail { completion(NSError(domain: "notification-test", code: 1)); return }
+            requests.removeAll { $0.identifier == request.identifier }; requests.append(request)
+            completion(nil)
+        }
     }
     func removePendingNotificationRequests(withIdentifiers ids: [String]) {
+        precondition(!Thread.isMainThread)
+        if slowRemove { removalEntered = true; removalGate.wait() }
         removed.formUnion(ids); requests.removeAll { ids.contains($0.identifier) }
     }
     func removeDeliveredNotifications(withIdentifiers ids: [String]) { removed.formUnion(ids) }
@@ -211,11 +224,11 @@ checks = r'''
         BackgroundAlertSettings.periodValue.value = AlarmKitPeriod.day.rawValue
         await settle(manager)
         precondition(system.stored.count == 1 && system.stored[0].date == dates[1])
-        precondition(notifications.requests.count == 1 && notifications.requests[0].identifier == BackgroundAlertIdentifier.twelveMin.rawValue)
+        precondition(notifications.requests.count == 1 && notifications.requests[0].identifier.hasPrefix(BackgroundAlertIdentifier.twelveMin.rawValue))
         BackgroundAlertSettings.periodValue.value = AlarmKitPeriod.night.rawValue
         await settle(manager)
         precondition(system.stored.count == 1 && system.stored[0].date == dates[0])
-        precondition(notifications.requests.count == 1 && notifications.requests[0].identifier == BackgroundAlertIdentifier.eighteenMin.rawValue)
+        precondition(notifications.requests.count == 1 && notifications.requests[0].identifier.hasPrefix(BackgroundAlertIdentifier.eighteenMin.rawValue))
         BackgroundAlertSettings.enabled.value = false
         await settle(manager)
         precondition(system.stored.isEmpty && notifications.requests.isEmpty)
@@ -280,9 +293,11 @@ checks = r'''
         notifications.suspension?.resume(); notifications.suspension = nil
         await settle(manager)
         precondition(system.stored.count == 2 && notifications.requests.isEmpty)
-        // Relaunch cleanup uses persisted ownership, including when background refresh is off.
+        // Relaunch leaves deadlines and persisted protection untouched, even when
+        // authorization changes before monitoring has recovered.
+        let beforeRelaunch = system.stored.map(\.id)
         let restored = BackgroundAlertManager()
-        precondition(system.stored.isEmpty)
+        precondition(system.stored.map(\.id) == beforeRelaunch)
         manager.stopBackgroundAlert()
         await settle(manager)
         UIApplication.shared.applicationState = .active
@@ -293,10 +308,63 @@ checks = r'''
         manager.startBackgroundAlert()
         await settle(manager)
         precondition(system.stored.count == 2)
+        // Slow notification daemon: the main actor still runs while cleanup waits.
+        AlarmKitSettings.enabled.value = false
+        await settle(manager)
+        precondition(notifications.requests.count == 2)
+        notifications.slowRemove = true
+        AlarmKitSettings.enabled.value = true
+        manager.startBackgroundAlert()
+        while !notifications.removalEntered { await Task.yield() }
+        let mainActorStillResponsive = true
+        precondition(mainActorStillResponsive && system.stored.count >= 2)
+        notifications.slowRemove = false
+        notifications.removalGate.signal()
+        await settle(manager)
+
+        // Both channels fail: the previous generation must remain armed.
+        let protectedIDs = Set(system.stored.map(\.id))
+        system.fail = true
+        notifications.fail = true
+        manager.startBackgroundAlert()
+        await settle(manager)
+        precondition(Set(system.stored.map(\.id)) == protectedIDs)
+        system.fail = false
+        notifications.fail = false
+
+        // With no previous generation, a partial success must not be discarded.
+        manager.stopBackgroundAlert()
+        await settle(manager)
+        system.failOnSchedule = system.schedules + 2
+        notifications.fail = true
+        manager.startBackgroundAlert()
+        await settle(manager)
+        precondition(system.stored.count == 1)
+        system.failOnSchedule = nil
+        notifications.fail = false
+        manager.startBackgroundAlert()
+        await settle(manager)
+        precondition(system.stored.count == 2)
+        let protectionBeforeSuspension = Set(system.stored.map(\.id))
+
+        // Termination during scheduling: ownership is already persisted, and a
+        // newly constructed coordinator does not disarm the existing generation.
+        system.suspendNext = true
+        manager.startBackgroundAlert()
+        while system.suspension == nil { await Task.yield() }
+        precondition(Set(system.stored.map(\.id)) == protectionBeforeSuspension)
+        let duringSchedule = BackgroundAlertManager()
+        precondition(Set(system.stored.map(\.id)) == protectionBeforeSuspension)
+        precondition((MemoryDefaults.shared.stringArray(forKey: "alarmKit.background.systemIDs.v1") ?? []).count > protectedIDs.count)
+        _ = duringSchedule
+        system.suspension?.resume(); system.suspension = nil
+        await settle(manager)
+        precondition(system.stored.count == 2)
+
         Storage.shared.backgroundRefreshType.value = .none
         await settle(manager)
         precondition(system.stored.isEmpty && notifications.requests.isEmpty)
-        print("Background AlarmKit regressions passed: configurable delays, bounds, day/night boundaries, enable switches, fallback, cancellation races and relaunch cleanup")
+        print("Background AlarmKit regressions passed: configurable delays, bounds, day/night boundaries, enable switches, fallback, slow daemon, partial/failed replacement, cancellation races and persisted relaunch protection")
     }
 }
 '''
