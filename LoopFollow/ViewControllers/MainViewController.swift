@@ -1135,6 +1135,7 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
     }
      
     override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         updateStatsHeadlineText()
         // set screen lock
         UIApplication.shared.isIdleTimerDisabled = UserDefaultsRepository.screenlockSwitchState.value;
@@ -1201,6 +1202,16 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
         }
         // Always update Bluetooth ping info on appear
         updateBluetoothHeartbeatInfo()
+        resetInfoTableScrollPosition()
+    }
+
+    private func resetInfoTableScrollPosition() {
+        // Keep the expanded overlay open while resetting the underlying list.
+        infoTable.layoutIfNeeded()
+        infoTable.setContentOffset(
+            CGPoint(x: infoTable.contentOffset.x, y: -infoTable.adjustedContentInset.top),
+            animated: false
+        )
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -1487,6 +1498,8 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
     }
     
     @objc func appCameToForeground() {
+        resetInfoTableScrollPosition()
+
         // reset screenlock state if needed
         UIApplication.shared.isIdleTimerDisabled = UserDefaultsRepository.screenlockSwitchState.value;
         
