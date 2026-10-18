@@ -2023,7 +2023,7 @@ extension MainViewController {
         
         if autoScrollPauseUntil == nil || Date() > autoScrollPauseUntil! {
             BGChart.moveViewToAnimated(
-                xValue: dateTimeUtils.getNowTimeIntervalUTC() - (BGChart.visibleXRange * 0.7),
+                xValue: dateTimeUtils.getNowTimeIntervalUTC() - (BGChart.visibleXRange * 0.8),
                 yValue: 0.0,
                 axis: .right,
                 duration: 1,
