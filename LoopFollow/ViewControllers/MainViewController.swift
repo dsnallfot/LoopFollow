@@ -206,6 +206,7 @@ class MainViewController: ThemedViewController, UITableViewDataSource, ChartView
     var tempTargetGraphData: [DataStructs.tempTargetStruct] = []
     var predictionData: [ShareGlucoseData] = []
     var bgCheckData: [ShareGlucoseData] = []
+    var fingerstickSGVIds: Set<String> = []
     var suspendGraphData: [DataStructs.timestampOnlyStruct] = []
     var resumeGraphData: [DataStructs.timestampOnlyStruct] = []
     var trainingGraphData: [DataStructs.noteStruct] = []

@@ -408,7 +408,7 @@ extension MainViewController {
                     continue
                 }
 
-                let reading = ShareGlucoseData(sgv: sgvValue, date: readingTimestamp, direction: data[data.count - 1 - i].direction, trioSentAt: data[data.count - 1 - i].trioSentAt)
+                let reading = ShareGlucoseData(sgv: sgvValue, date: readingTimestamp, direction: data[data.count - 1 - i].direction, trioSentAt: data[data.count - 1 - i].trioSentAt, nightscoutID: data[data.count - 1 - i].nightscoutID)
                 bgData.append(reading)
                 // Collect SGVs for NightscoutCache (seconds since 1970 already)
                 let sgvEntry = SGVJSON(date: reading.date, sgv: reading.sgv, trioSentAt: reading.trioSentAt)
@@ -785,7 +785,13 @@ extension MainViewController {
     func updateSensorStatus(now: TimeInterval = Date().timeIntervalSince1970) {
         let status: String
         let isPriority: Bool
-        if let latestBG = bgData.last {
+        // Trio also uploads fingersticks as SGV entries. They remain visible as BG,
+        // but cannot establish sensor freshness or recovery from a sensor error.
+        let latestSensorBG = bgData.last { reading in
+            guard let id = reading.nightscoutID else { return true }
+            return !fingerstickSGVIds.contains(id)
+        }
+        if let latestBG = latestSensorBG {
             if now - latestBG.date < 6 * 60 {
                 status = "OK 🟢"
                 isPriority = false
@@ -809,7 +815,18 @@ extension MainViewController {
         infoManager.setPriority(isPriority, for: .sensorStatus)
     }
 
-    /// Returns a sensor-status string based on Dexcom G7 Nightscout Note treatments AFTER the latest BG timestamp.
+    /// Rebuild from each treatment snapshot so edits and deletions remove old matches.
+    func updateFingerstickSGVIds(entries: [[String: AnyObject]]) {
+        fingerstickSGVIds = Set(entries.compactMap { entry -> String? in
+            guard entry["eventType"] as? String == "BG Check",
+                  entry["glucoseType"] as? String == "Fingerstick",
+                  let id = entry["id"] as? String, !id.isEmpty else { return nil }
+            // The treatment's own _id is different; id points to the SGV's _id.
+            return id
+        })
+    }
+
+    /// Returns a sensor-status string based on Dexcom G7 Nightscout Note treatments AFTER the latest sensor BG timestamp.
     /// We use the emoji prefix in the note to infer severity:
     /// - "⛔️ Dexcom G7"  -> "Fel ⛔️"
     /// - "⚠️ Dexcom G7" -> "Fel ⚠️"

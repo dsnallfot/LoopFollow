@@ -10,12 +10,14 @@ import Foundation
 import ShareClient
 
 public struct ShareGlucoseData: Decodable {
+    var nightscoutID: String?
     var sgv: Int
     var date: TimeInterval
     var trioSentAt: Date?
     var direction: String?
 
     enum CodingKeys: String, CodingKey {
+        case nightscoutID = "_id"
         case sgv  // Sensor Blood Glucose
         case mbg  // Manual Blood Glucose
         case glucose  // Other type of entry
@@ -27,6 +29,7 @@ public struct ShareGlucoseData: Decodable {
     // Decoder initializer for handling JSON data
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        nightscoutID = try? container.decode(String.self, forKey: .nightscoutID)
         
         if let glucoseValue = try? container.decode(Double.self, forKey: .sgv) {
             sgv = Int(glucoseValue.rounded())
@@ -55,7 +58,8 @@ public struct ShareGlucoseData: Decodable {
         }
     }
 
-    public init(sgv: Int, date: TimeInterval, direction: String?, trioSentAt: Date? = nil) {
+    public init(sgv: Int, date: TimeInterval, direction: String?, trioSentAt: Date? = nil, nightscoutID: String? = nil) {
+        self.nightscoutID = nightscoutID
         self.sgv = sgv
         self.date = date
         self.direction = direction

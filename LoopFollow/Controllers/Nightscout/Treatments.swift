@@ -136,6 +136,7 @@ extension MainViewController {
     
     // Process and split out treatments to individual tasks
     func updateTreatments(entries: [[String:AnyObject]], replacingRecentSince: Date? = nil) {
+        updateFingerstickSGVIds(entries: entries)
         
         var tempBasal: [[String:AnyObject]] = []
         var bolus: [[String:AnyObject]] = []
