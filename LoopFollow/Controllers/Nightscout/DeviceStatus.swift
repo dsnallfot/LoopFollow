@@ -270,6 +270,22 @@ extension MainViewController {
 
                 // Extract the "additional" dictionary for SMB/UAM minutes and Autosens Min/Max.
                 let additionalInfo = lastDeviceStatus?["additional"] as? [String: AnyObject]
+
+                let activeAlarms = (additionalInfo?["activeAlarms"] as? String)?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                infoManager.updateInfoData(type: .activeAlarms, value: activeAlarms.isEmpty ? "Inga" : activeAlarms)
+
+                let snoozedUntil = (additionalInfo?["snoozedUntil"] as? NSNumber)?.doubleValue
+                let snoozeDisplay: String
+                if let snoozedUntil, snoozedUntil.isFinite, snoozedUntil > Date().timeIntervalSince1970 {
+                    let timeFormatter = DateFormatter()
+                    timeFormatter.locale = Locale(identifier: "sv_SE")
+                    timeFormatter.dateFormat = "HH:mm"
+                    snoozeDisplay = timeFormatter.string(from: Date(timeIntervalSince1970: snoozedUntil))
+                } else {
+                    snoozeDisplay = "Nej"
+                }
+                infoManager.updateInfoData(type: .snoozedUntil, value: snoozeDisplay)
                 
                 // Runtime diagnostics from Trio.
                 if let additional = additionalInfo {

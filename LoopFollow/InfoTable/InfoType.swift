@@ -9,7 +9,7 @@
 import Foundation
 
 enum InfoType: Int, CaseIterable {
-    case iob, cob, basal, override, battery, pump, sage, cage, recBolus, minMax, carbsToday, autosens, profile, target, isf, carbRatio, updated, tdd, iage, carbReq, af, smbRatio, pumpStatus, smbStatus, SMBUAMmin, autosensMinMax, maxSMB, overridePercentage, bgi, dev, totIob, btPing, btPingHealth, sensorStatus, sensorTrend, tirNeeded, dbSize, websocket, dexcomShareStatus, bgDataSource, memoryLatest, latestRestart
+    case iob, cob, basal, override, battery, pump, sage, cage, recBolus, minMax, carbsToday, autosens, profile, target, isf, carbRatio, updated, tdd, iage, carbReq, af, smbRatio, pumpStatus, smbStatus, SMBUAMmin, autosensMinMax, maxSMB, overridePercentage, bgi, dev, totIob, btPing, btPingHealth, sensorStatus, sensorTrend, tirNeeded, dbSize, websocket, dexcomShareStatus, bgDataSource, memoryLatest, latestRestart, activeAlarms, snoozedUntil
 
     /// Only generated status fields participate in legacy emoji conversion.
     var usesStatusSymbol: Bool {
@@ -67,6 +67,8 @@ enum InfoType: Int, CaseIterable {
         case .bgDataSource: return "BG källa"
         case .memoryLatest: return "Trio RAM(max)"
         case .latestRestart: return "Trio upptid"
+        case .activeAlarms: return "Trio larm"
+        case .snoozedUntil: return "Trio snoozad"
         }
     }
 
