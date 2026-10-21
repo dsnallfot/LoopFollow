@@ -68,7 +68,7 @@ extension MainViewController {
             linkCriticalPodFailureWarningToPumpChange(note: thisNote, timestamp: dateTimeStamp)
             
             if dateTimeStamp < (dateTimeUtils.getNowTimeIntervalUTC() + (60 * 60)) {
-                let dot = DataStructs.noteStruct(date: Double(dateTimeStamp), sgv: Int(18), note: thisNote)
+                let dot = DataStructs.noteStruct(date: Double(dateTimeStamp), sgv: Int(18), note: thisNote, enteredBy: currentEntry["enteredBy"] as? String)
                 warningGraphData.append(dot)
             }
         }

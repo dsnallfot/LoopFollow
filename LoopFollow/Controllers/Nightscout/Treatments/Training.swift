@@ -26,7 +26,7 @@ extension MainViewController {
             guard let thisNote = currentEntry["notes"] as? String else { return }
             
             if dateTimeStamp < (dateTimeUtils.getNowTimeIntervalUTC() + (60 * 60)) {
-                let dot = DataStructs.noteStruct(date: Double(dateTimeStamp), sgv: Int(18), note: thisNote)
+                let dot = DataStructs.noteStruct(date: Double(dateTimeStamp), sgv: Int(18), note: thisNote, enteredBy: currentEntry["enteredBy"] as? String)
                 trainingGraphData.append(dot)
             }
         }

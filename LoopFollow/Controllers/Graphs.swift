@@ -936,16 +936,6 @@ extension MainViewController {
             return
         }
 
-        // 3. BG-linjen i huvudgrafen → Trio-besluts-popup (utan ordinarie marker-popup)
-        if chartView == BGChart, highlight.dataSetIndex == GraphDataIndex.bg.rawValue {
-            // Ta bort highlight/marker direkt så att standard-pill-popup inte visas.
-            BGChart.highlightValue(nil, callDelegate: false)
-            BGChartFull.highlightValue(nil, callDelegate: false)
-
-            showTrioDecisionAlert(for: entry.x)
-            return
-        }
-
         guard chartView == BGChart || chartView == BGChartFull,
               let kind = GraphDataIndex(rawValue: highlight.dataSetIndex) else { return }
 
@@ -953,10 +943,23 @@ extension MainViewController {
         let title: String
         let actionTitle: String
         switch kind {
+        case .bg:
+            guard chartView == BGChart else { return }
+            source = nil
+            title = "Glukosvärde"
+            actionTitle = "Visa behandlingsbeslut"
         case .smb:
-            clearTreatmentHighlight()
-            showTrioDecisionAlert(for: entry.x)
-            return
+            source = nil
+            title = "SMB"
+            actionTitle = "Visa behandlingsbeslut"
+        case .note, .warningEvent:
+            source = nil
+            title = "Notering"
+            actionTitle = ""
+        case .training:
+            source = nil
+            title = "Träning"
+            actionTitle = ""
         case .bolus:
             source = nil
             title = "Bolus"
@@ -998,12 +1001,24 @@ extension MainViewController {
         // The marker's last line only contains the time; the alert has a full timestamp.
         var detailLines = (entry.data as? String ?? "").components(separatedBy: "\r\n")
         if detailLines.count > 1 { detailLines.removeLast() }
-        if kind == .bolus {
+        if let note = entry.data as? DataStructs.noteStruct,
+           kind == .note || kind == .warningEvent || kind == .training {
+            let enteredBy = note.enteredBy?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            detailLines = [note.note, "Inlagt av: \(enteredBy.isEmpty ? "Okänd" : enteredBy)"]
+        } else if kind == .bg {
+            let units = UserDefaultsRepository.units.value == "mmol/L" ? "mmol/L" : "mg/dL"
+            detailLines = ["Glukos: \(Localizer.toDisplayUnits(String(entry.y))) \(units)"]
+        } else if kind == .smb {
+            detailLines.removeAll { $0 == "SMB" }
+            detailLines = ["Insulin " + detailLines.joined(separator: "\n")]
+        } else if kind == .bolus {
             detailLines.removeAll { $0 == "Bolus" }
             detailLines = ["Insulin: " + detailLines.joined(separator: "\n")]
         } else if kind == .basal {
             detailLines.removeAll { $0 == "Basal" }
             detailLines = ["Basalhastighet: " + detailLines.joined(separator: "\n")]
+        } else if kind == .training {
+            detailLines.removeAll { $0 == "Träning" }
         }
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "sv_SE")
@@ -1024,6 +1039,11 @@ extension MainViewController {
             message: detailLines.joined(separator: "\n"),
             preferredStyle: .alert
         )
+        if kind == .bg || kind == .smb {
+            alert.addAction(UIAlertAction(title: actionTitle, style: .default) { [weak self] _ in
+                self?.showTrioDecisionAlert(for: timestamp)
+            })
+        }
         if let source = source {
             alert.addAction(UIAlertAction(title: actionTitle, style: .default) { [weak self] _ in
                 self?.presentMealAnalysis(for: start, source: source)
@@ -2405,7 +2425,8 @@ extension MainViewController {
             if dateTimeStamp < dateTimeUtils.getTimeIntervalNHoursAgo(N: graphHours) { continue }
             
             let glucose = findNearestBGbyTime(needle: dateTimeStamp, haystack: bgData, startingIndex: 0).sgv
-            let dot = ChartDataEntry(x: Double(dateTimeStamp), y: glucose + 20, data: formatPillText(line1: "SMB\n" + (formatter.string(from: NSNumber(value: smbData[i].value))?.replacingOccurrences(of: ",", with: "."))! + " E", time: dateTimeStamp))
+            let dot = TreatmentChartDataEntry(x: Double(dateTimeStamp), y: glucose + 20, data: formatPillTextExtraLine(line1: "SMB", line2: (formatter.string(from: NSNumber(value: smbData[i].value))?.replacingOccurrences(of: ",", with: "."))! + " E", time: dateTimeStamp))
+            dot.treatmentTimestamp = smbData[i].date
             mainChart.addEntry(dot)
             if UserDefaultsRepository.smallGraphTreatments.value {
                 smallChart.addEntry(dot)
@@ -2657,11 +2678,7 @@ extension MainViewController {
             let dotEntry = ChartDataEntry(
                 x: Double(entry.date),
                 y: Double(entry.sgv),
-                data: formatPillTextExtraLine(
-                    line1: "Träning",
-                    line2: entry.note,
-                    time: entry.date
-                )
+                data: entry
             )
 
             dotEntries.append(dotEntry)
@@ -2748,7 +2765,7 @@ extension MainViewController {
                 color = .systemYellow
             }
 
-            let value = ChartDataEntry(x: Double(thisData[i].date), y: Double(thisData[i].sgv), data: formatPillTextNotes(line1: note, time: thisData[i].date))
+            let value = ChartDataEntry(x: Double(thisData[i].date), y: Double(thisData[i].sgv), data: thisData[i])
             mainChart.addEntry(value)
             mainChart.circleColors.append(color)
             if UserDefaultsRepository.smallGraphTreatments.value {
@@ -2830,7 +2847,7 @@ extension MainViewController {
             let graphHours = 24 * UserDefaultsRepository.downloadDays.value
             if thisData[i].date < dateTimeUtils.getTimeIntervalNHoursAgo(N: graphHours) { continue }
             
-            let value = ChartDataEntry(x: Double(thisData[i].date), y: Double(thisData[i].sgv), data: formatPillTextNotes(line1: thisData[i].note, time: thisData[i].date))
+            let value = ChartDataEntry(x: Double(thisData[i].date), y: Double(thisData[i].sgv), data: thisData[i])
             BGChart.data?.dataSets[dataIndex].addEntry(value)
             if UserDefaultsRepository.smallGraphTreatments.value {
                 BGChartFull.data?.dataSets[dataIndex].addEntry(value)

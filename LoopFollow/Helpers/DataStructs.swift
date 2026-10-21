@@ -34,6 +34,7 @@ class DataStructs {
         var date: TimeInterval
         var sgv: Int
         var note: String
+        var enteredBy: String? = nil
     }
     
     // Updated Sensor Start Struct
