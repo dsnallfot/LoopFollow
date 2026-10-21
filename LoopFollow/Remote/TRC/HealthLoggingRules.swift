@@ -5,6 +5,7 @@ enum HealthLogKind: String, CaseIterable, Identifiable {
     case sensor = "Sensorbyte"
     case insulin = "Insulinbyte"
     case note = "Notering"
+    case snooze = "Snooza Trio-larm"
 
     var id: String { rawValue }
     var isReminder: Bool { self == .pump || self == .sensor }
@@ -24,6 +25,16 @@ enum HealthLogPump: String, CaseIterable, Identifiable {
 }
 
 enum HealthLoggingRules {
+    static let snoozeMinutes = [0] + Array(stride(from: 15, through: 180, by: 15)) + [240, 300, 360, 420, 480]
+
+    static func snoozeLabel(_ minutes: Int) -> String {
+        if minutes == 0 { return "Avbryt snooze" }
+        let hours = minutes / 60
+        let remainder = minutes % 60
+        if hours == 0 { return "\(minutes) min" }
+        return remainder == 0 ? "\(hours) tim" : "\(hours) tim \(remainder) min"
+    }
+
     static let noteTitles = ["Inställningar", "HBA1C", "Ketoner", "Egen rubrik"]
 
     static func formattedDate(_ date: Date) -> String {
@@ -51,7 +62,7 @@ enum HealthLoggingRules {
     }
 
     static func treatment(kind: HealthLogKind, date: Date, title: String, body: String, enteredBy: String) -> [String: Any] {
-        precondition(!kind.isReminder)
+        precondition(kind == .insulin || kind == .note)
         let heading = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let detail = body.trimmingCharacters(in: .whitespacesAndNewlines)
         let name = enteredBy.trimmingCharacters(in: .whitespacesAndNewlines)

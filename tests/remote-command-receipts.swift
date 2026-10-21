@@ -116,6 +116,28 @@ struct RemoteReceiptTests {
                      "Explicit override permits immediate deletion")
         gate.dismissForExplicitOverride(ids: ["warned"])
         precondition(gate.pending.map(\.id) == ["deletion"], "Stale confirmation cannot clear a newer send")
+        let snoozeTracker = RemoteCommandReceiptTracker()
+        var snooze = message(.snooze); snooze.duration = 30
+        let time = DateFormatter(); time.locale = Locale(identifier: "sv_SE"); time.dateFormat = "HH:mm"
+        let note = "Alla Trio larm snoozade till kl \(time.string(from: sent.addingTimeInterval(1800)))"
+        let oldSnooze = entry("old-snooze", "Note", sender: "Trio", extra: ["notes": note])
+        snoozeTracker.observe([oldSnooze], site: "school", requestStartedAt: sent.addingTimeInterval(-1))
+        snoozeTracker.track(snooze, id: "snooze", site: "school", now: sent)
+        snoozeTracker.observe([oldSnooze,
+            entry("wrong-snooze", "Note", sender: "Trio", extra: ["notes": "Alla Trio larm snoozade till kl 99:99"]),
+            entry("wrong-sender", "Note", sender: "LoopFollow", extra: ["notes": note])],
+            site: "school", requestStartedAt: sent.addingTimeInterval(5))
+        precondition(snoozeTracker.hasPendingCommands, "Old notes and wrong deadline/sender cannot confirm snooze")
+        let receipt = entry("snooze-receipt", "Note", sender: "Trio", extra: ["notes": note])
+        snoozeTracker.observe([receipt], site: "school", requestStartedAt: sent.addingTimeInterval(5))
+        precondition(!snoozeTracker.hasPendingCommands, "Fresh Trio note confirms matching snooze")
+        var cancelSnooze = message(.snooze); cancelSnooze.duration = 0
+        snoozeTracker.track(cancelSnooze, id: "cancel-snooze", site: "school", now: sent)
+        snoozeTracker.observe([receipt], site: "school", requestStartedAt: sent.addingTimeInterval(5))
+        precondition(snoozeTracker.hasPendingCommands, "A snooze note cannot confirm cancellation")
+        snoozeTracker.observe([entry("cancel-snooze-receipt", "Note", sender: "Trio", extra: ["notes": "Alla Trio snoozer avbrutna"])],
+                              site: "school", requestStartedAt: sent.addingTimeInterval(5))
+        precondition(!snoozeTracker.hasPendingCommands, "Cancellation has its own receipt")
         print("Remote receipt checks passed: combo parts, correlation, sender, values, backdating, multiple sends, rejection, dismissal and cancellation")
     }
 }

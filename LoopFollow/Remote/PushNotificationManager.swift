@@ -68,6 +68,22 @@ class PushNotificationManager {
         self.bundleId = Storage.shared.bundleId.value
     }
 
+    func sendSnoozePushNotification(duration: Int, completion: @escaping (Bool, String?) -> Void) {
+        guard (0...480).contains(duration) else {
+            completion(false, "Välj en snoozetid mellan 1 och 480 minuter, eller Avbryt snooze.")
+            return
+        }
+        let message = PushMessage(
+            aps: .init(alert: duration == 0 ? "Remote avbryt snooze" : "Remote snooze: \(duration) min"),
+            user: user,
+            commandType: .snooze,
+            duration: duration,
+            sharedSecret: sharedSecret,
+            timestamp: Date().timeIntervalSince1970
+        )
+        sendPushNotification(message: message, completion: completion)
+    }
+
     func sendOverridePushNotification(override: ProfileManager.TrioOverride, completion: @escaping (Bool, String?) -> Void) {
         var alertString = "Remote Override"
         alertString += "\(override.name)"

@@ -9,6 +9,7 @@
 import Foundation
 
 enum TRCCommandType: String {
+    case snooze = "snooze"
     case bolus = "bolus"
     case glucose = "glucose"
     case tempTarget = "temp_target"

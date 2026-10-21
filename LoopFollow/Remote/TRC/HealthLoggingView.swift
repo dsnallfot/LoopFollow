@@ -44,15 +44,19 @@ struct HealthLoggingView: View {
     var body: some View {
         Form {
             Section() {
-                DatePicker("Datum och tid", selection: $eventDate, in: ...Date(), displayedComponents: [.date, .hourAndMinute])
-                    .environment(\.locale, Locale(identifier: "sv_SE"))
+                if kind != .snooze {
+                    DatePicker("Datum och tid", selection: $eventDate, in: ...Date(), displayedComponents: [.date, .hourAndMinute])
+                        .environment(\.locale, Locale(identifier: "sv_SE"))
+                }
                 Picker("Registrera", selection: $kind) {
                     Text("Välj…").tag(nil as HealthLogKind?)
                     ForEach(HealthLogKind.allCases) { Text($0.rawValue).tag(Optional($0)) }
                 }
             }
             .listRowBackground(Color(.systemGray).opacity(0.15))
-            if let kind {
+            if kind == .snooze {
+                SnoozeLoggingControls(isLoading: $isSaving)
+            } else if let kind {
                 if kind.isReminder {
                     reminderSection(kind: kind)
                 } else {
@@ -165,7 +169,7 @@ struct HealthLoggingView: View {
     }
 
     private func perform() {
-        guard let kind, valid, !isSaving else { return }
+        guard let kind, kind != .snooze, valid, !isSaving else { return }
         isSaving = true
         Task { @MainActor in
             defer { isSaving = false }
@@ -182,6 +186,85 @@ struct HealthLoggingView: View {
                 result = ResultMessage(text: message, success: true)
             } catch {
                 result = ResultMessage(text: error.localizedDescription, success: false)
+            }
+        }
+    }
+}
+
+/// Uses the same confirmation, progress and pending-command behavior as ManualGlucoseView.
+private struct SnoozeLoggingControls: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var receiptTracker = RemoteCommandReceiptTracker.shared
+    @State private var duration = 15
+    @Binding var isLoading: Bool
+    @State private var alert: SnoozeAlert?
+
+    private enum SnoozeAlert: Identifiable {
+        case confirm, result(Bool, String)
+        var id: String {
+            switch self {
+            case .confirm: return "confirm"
+            case .result: return "result"
+            }
+        }
+    }
+
+    private var isDisabled: Bool { isLoading || receiptTracker.hasPendingCommands }
+
+    var body: some View {
+        if receiptTracker.hasPendingCommands {
+            Section {
+                RemoteCommandPendingBanner()
+                    .listRowBackground(Color.clear)
+            }
+        }
+        Section("Snooza alla larm & notiser i Trio") {
+            Picker("Snoozetid", selection: $duration) {
+                ForEach(HealthLoggingRules.snoozeMinutes, id: \.self) { minutes in
+                    Text(HealthLoggingRules.snoozeLabel(minutes)).tag(minutes)
+                }
+            }
+            .pickerStyle(.wheel)
+            .labelsHidden()
+            .disabled(isLoading)
+        }
+        .listRowBackground(Color(.systemGray).opacity(0.15))
+
+        LoadingButtonView(
+            buttonText: "Skicka Snooze",
+            progressText: "Skickar snooze...",
+            isLoading: isLoading,
+            action: { alert = .confirm },
+            isDisabled: isDisabled
+        )
+        .id("snooze-\(isDisabled)-\(isLoading)")
+        .navigationBarBackButtonHidden(isLoading)
+        .interactiveDismissDisabled(isLoading)
+        .alert(item: $alert) { item in
+            switch item {
+            case .confirm:
+                return Alert(
+                    title: Text(duration == 0 ? "Avbryt snooze" : "Bekräfta snooze"),
+                    message: Text(duration == 0
+                        ? "Vill du avbryta alla pågående snoozer i Trio, både gemensamma och individuella?"
+                        : "Vill du snooza alla Trio-larm och notiser i \(HealthLoggingRules.snoozeLabel(duration)) från nu?"),
+                    primaryButton: .default(Text("Bekräfta"), action: send),
+                    secondaryButton: .cancel(Text("Avbryt"))
+                )
+            case let .result(success, message):
+                return Alert(title: Text("Status"), message: Text(message),
+                             dismissButton: .default(Text("OK")) { if success { dismiss() } })
+            }
+        }
+    }
+
+    private func send() {
+        guard !isDisabled else { return }
+        isLoading = true
+        PushNotificationManager().sendSnoozePushNotification(duration: duration) { success, error in
+            DispatchQueue.main.async {
+                isLoading = false
+                alert = .result(success, success ? "Snoozekommando skickades." : (error ?? "Snoozekommando misslyckades!"))
             }
         }
     }

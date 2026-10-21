@@ -8,7 +8,7 @@ final class RemoteCommandReceiptTracker: ObservableObject {
     static let dismissalDelay: TimeInterval = 30
 
     enum Part: String, Hashable {
-        case meal, bolus, glucose, override, target, cancelOverride, cancelTarget, deletion, unknown
+        case snooze, meal, bolus, glucose, override, target, cancelOverride, cancelTarget, deletion, unknown
     }
 
     struct Pending: Identifiable {
@@ -23,6 +23,7 @@ final class RemoteCommandReceiptTracker: ObservableObject {
 
         var title: String {
             switch message.commandType {
+            case .snooze: return "Snooza Trio-larm"
             case .combo: return "Snabbval"
             case .meal: return "Måltid"
             case .editMeal: return "Redigera måltid"
@@ -47,7 +48,7 @@ final class RemoteCommandReceiptTracker: ObservableObject {
         private static let formatter = ISO8601DateFormatter()
         private static let relevantTypes: Set<String> = [
             "Carb Correction", "Meal Bolus", "Kolhydrater", "Dextro", "Måltid",
-            "Correction Bolus", "Bolus", "BG Check", "Exercise", "Temporary Override", "Override", "Temporary Target"
+            "Note", "Correction Bolus", "Bolus", "BG Check", "Exercise", "Temporary Override", "Override", "Temporary Target"
         ]
         let raw: [String: Any]
         let date: Date
@@ -100,6 +101,7 @@ final class RemoteCommandReceiptTracker: ObservableObject {
             if (message.bolusAmount ?? 0) > 0 { parts.insert(.bolus) }
             if message.commandType == .combo, let name = message.overrideName, !name.isEmpty { parts.insert(.override) }
             if message.commandType == .combo, (message.glucose ?? 0) > 0 { parts.insert(.glucose) }
+        case .snooze: parts.insert(.snooze)
         case .editMeal: parts.insert(.meal)
         case .bolus: parts.insert(.bolus)
         case .glucose: parts.insert(.glucose)
@@ -218,6 +220,15 @@ final class RemoteCommandReceiptTracker: ObservableObject {
         // Existing records, including backdated fingersticks/meals, cannot acknowledge a new send.
         guard !command.baselineIDs.contains(entry.identity) else { return false }
         switch part {
+        case .snooze:
+            guard entry.type == "Note", entry.sender == "Trio", executionTime(),
+                  let duration = message.duration, (0...480).contains(duration) else { return false }
+            if duration == 0 { return entry.notes == "Alla Trio snoozer avbrutna" }
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "sv_SE")
+            formatter.dateFormat = "HH:mm"
+            let deadline = Date(timeIntervalSince1970: sent + Double(duration) * 60)
+            return entry.notes == "Alla Trio larm snoozade till kl \(formatter.string(from: deadline))"
         case .meal:
             return ["Carb Correction", "Meal Bolus", "Kolhydrater", "Dextro", "Måltid"].contains(entry.type) &&
                 eventTime() && entry.sender == (message.notes?.isEmpty == false ? expectedSender : "Trio (📲)") &&
