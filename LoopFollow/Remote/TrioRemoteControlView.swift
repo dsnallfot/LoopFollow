@@ -32,7 +32,7 @@ struct TrioRemoteControlView: View {
                         CommandButtonView(command: "Override", iconName: "slider.horizontal.3", destination: OverrideView(), color: .purple)
                         CommandButtonView(command: "Snabbval", iconName: "plus.square.on.square", destination: ComboView(), color: .green)
                         CommandButtonView(command: "Fingerstick", iconName: "drop", destination: ManualGlucoseView(), color: .red)
-                        CommandButtonView(command: "Hälsologgning", iconName: "list.clipboard", destination: HealthLoggingView(), color: .gray)
+                        CommandButtonView(command: "Loggning & Inställningar", iconName: "list.clipboard", destination: HealthLoggingView(), color: .gray)
                     }
                     .padding(.horizontal)
                     

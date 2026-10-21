@@ -2,9 +2,11 @@ import SwiftUI
 
 struct RemoteCommandPendingBanner: View {
     @ObservedObject private var tracker: RemoteCommandReceiptTracker
+    private let horizontalPadding: CGFloat?
 
-    init(tracker: RemoteCommandReceiptTracker = .shared) {
+    init(tracker: RemoteCommandReceiptTracker = .shared, horizontalPadding: CGFloat? = nil) {
         self.tracker = tracker
+        self.horizontalPadding = horizontalPadding
     }
 
     var body: some View {
@@ -38,7 +40,7 @@ struct RemoteCommandPendingBanner: View {
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(red: 0.65, green: 0.05, blue: 0.08), in: RoundedRectangle(cornerRadius: 12))
-                .padding(.horizontal)
+                .padding(.horizontal, horizontalPadding)
                 .padding(.vertical, 4)
             }
         }

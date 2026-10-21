@@ -80,7 +80,7 @@ struct HealthLoggingView: View {
         .scrollContentBackground(.hidden)
         .background(ThemeBackground().ignoresSafeArea())
         .scrollDismissesKeyboard(.interactively)
-        .navigationTitle("Hälsologgning")
+        .navigationTitle("Loggning & Inställningar")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(isSaving)
         .interactiveDismissDisabled(isSaving)
@@ -216,7 +216,8 @@ private struct SnoozeLoggingControls: View {
     var body: some View {
         if receiptTracker.hasPendingCommands {
             Section {
-                RemoteCommandPendingBanner()
+                RemoteCommandPendingBanner(horizontalPadding: 0)
+                    .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
             }
         }
@@ -255,11 +256,13 @@ private struct SnoozeLoggingControls: View {
         .alert(item: $alert) { item in
             switch item {
             case .confirm:
+                let endTime = Date().addingTimeInterval(TimeInterval(duration) * 60)
+                    .formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).locale(Locale(identifier: "sv_SE")))
                 return Alert(
                     title: Text(duration == 0 ? "Avbryt snooze" : "Bekräfta snooze"),
                     message: Text(duration == 0
                         ? "Vill du avbryta alla pågående snoozer i Trio, både gemensamma och individuella?"
-                        : "Vill du snooza alla Trio-larm och notiser i \(HealthLoggingRules.snoozeLabel(duration)) från nu?"),
+                        : "Vill du snooza alla Trio-larm och notiser i \(HealthLoggingRules.snoozeLabel(duration)) från nu till kl \(endTime)?"),
                     primaryButton: .default(Text("Bekräfta"), action: send),
                     secondaryButton: .cancel(Text("Avbryt"))
                 )
