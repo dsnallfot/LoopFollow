@@ -9,7 +9,7 @@
 import Foundation
 extension MainViewController {
     // NS Carb Bolus Response Processor
-    func processNSCarbs(entries: [[String:AnyObject]]) {
+    func processNSCarbs(entries: [[String:AnyObject]], dates: [String: Date]? = nil) {
         // Because it's a small array, we're going to destroy and reload every time.
         carbData.removeAll()
         var lastFoundIndex = 0
@@ -30,7 +30,7 @@ extension MainViewController {
             let fat = currentEntry["fat"] as? Double
             let protein = currentEntry["protein"] as? Double
             
-            guard let parsedDate = NightscoutUtils.parseDate(carbDate),
+            guard let parsedDate = NightscoutUtils.parseDate(carbDate, prepared: dates),
                   let carbs = currentEntry["carbs"] as? Double else { return }
             
             let dateTimeStamp = parsedDate.timeIntervalSince1970
@@ -51,7 +51,7 @@ extension MainViewController {
         }
     }
     
-    func updateTodaysCarbsFromEntries(entries: [[String:AnyObject]]) {
+    func updateTodaysCarbsFromEntries(entries: [[String:AnyObject]], dates: [String: Date]? = nil) {
         var totalCarbs: Double = 0.0
         
         let calendar = Calendar.current
@@ -69,7 +69,7 @@ extension MainViewController {
                 continue
             }
             
-            guard let date = NightscoutUtils.parseDate(carbDate) else {
+            guard let date = NightscoutUtils.parseDate(carbDate, prepared: dates) else {
                 continue
             }
             

@@ -9,7 +9,7 @@
 import Foundation
 extension MainViewController {
     // NS Meal Bolus Response Processor
-    func processNSBolus(entries: [[String:AnyObject]]) {
+    func processNSBolus(entries: [[String:AnyObject]], dates: [String: Date]? = nil) {
         // because it's a small array, we're going to destroy and reload every time.
         bolusData.removeAll()
         var lastFoundIndex = 0
@@ -24,7 +24,7 @@ extension MainViewController {
                 return
             }
             
-            guard let parsedDate = NightscoutUtils.parseDate(bolusDate),
+            guard let parsedDate = NightscoutUtils.parseDate(bolusDate, prepared: dates),
                   let bolus = currentEntry["insulin"] as? Double else { return }
             
             let dateTimeStamp = parsedDate.timeIntervalSince1970

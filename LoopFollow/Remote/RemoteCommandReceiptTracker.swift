@@ -62,15 +62,16 @@ final class RemoteCommandReceiptTracker: ObservableObject {
             return nil
         }
 
-        static func parseDate(_ raw: [String: Any]) -> Date? {
+        static func parseDate(_ raw: [String: Any], parsedDates: [String: Date]? = nil) -> Date? {
             guard let text = raw["created_at"] as? String ?? raw["timestamp"] as? String else { return nil }
+            if let parsedDates { return parsedDates[text] }
             return fractionalFormatter.date(from: text) ?? formatter.date(from: text)
         }
 
-        init?(_ raw: [String: Any]) {
+        init?(_ raw: [String: Any], parsedDates: [String: Date]? = nil) {
             guard let type = raw["eventType"] as? String, Self.relevantTypes.contains(type),
                   let text = raw["created_at"] as? String ?? raw["timestamp"] as? String,
-                  let date = Self.fractionalFormatter.date(from: text) ?? Self.formatter.date(from: text) else { return nil }
+                  let date = Self.parseDate(raw, parsedDates: parsedDates) else { return nil }
             self.raw = raw
             self.date = date
             // Stable fallback for servers without IDs; deliberately excludes duration,
@@ -119,7 +120,7 @@ final class RemoteCommandReceiptTracker: ObservableObject {
         if message.commandType == .editMeal, let raw = deletingTreatment, let original = Treatment(raw) {
             baseline.append(original)
         }
-        let deletionCandidates = (deletingTreatment.map { [$0] }?.compactMap(Treatment.init) ?? baseline).filter {
+        let deletionCandidates = (deletingTreatment.map { [$0] }?.compactMap { Treatment($0) } ?? baseline).filter {
             Self.isDeletionTarget($0, for: message)
         }
         let deletionTarget = deletionCandidates.count == 1 ? deletionCandidates.first : nil
@@ -141,8 +142,8 @@ final class RemoteCommandReceiptTracker: ObservableObject {
         pending.removeAll { ids.contains($0.id) }
     }
 
-    func observe(_ entries: [[String: Any]], site: String, requestStartedAt: Date) {
-        let treatments = entries.compactMap(Treatment.init)
+    func observe(_ entries: [[String: Any]], site: String, requestStartedAt: Date, parsedDates: [String: Date]? = nil) {
+        let treatments = entries.compactMap { Treatment($0, parsedDates: parsedDates) }
         latest[site] = treatments
         var updated = pending
         for index in updated.indices where updated[index].site == site && requestStartedAt >= updated[index].sentAt {
@@ -172,10 +173,10 @@ final class RemoteCommandReceiptTracker: ObservableObject {
     /// Only call for successful network snapshots of the full, unfiltered date window.
     /// Local optimistic removal, cached rows and partial responses are never evidence.
     func observeDeletions(_ entries: [[String: Any]], site: String, requestStartedAt: Date,
-                          from: Date, through: Date, responseLimit: Int) {
+                          from: Date, through: Date, responseLimit: Int, parsedDates: [String: Date]? = nil) {
         guard pending.contains(where: { $0.site == site && $0.remaining == [.deletion] }),
               from <= through, responseLimit > 0, entries.count < responseLimit,
-              entries.allSatisfy({ Treatment.parseDate($0) != nil && $0["eventType"] is String }) else { return }
+              entries.allSatisfy({ Treatment.parseDate($0, parsedDates: parsedDates) != nil && $0["eventType"] is String }) else { return }
         pending.removeAll { command in
             guard command.remaining == [.deletion], command.site == site,
                   requestStartedAt >= command.sentAt, let target = command.deletionTarget,
@@ -185,7 +186,7 @@ final class RemoteCommandReceiptTracker: ObservableObject {
                 if let id = raw["_id"] as? String ?? raw["id"] as? String, id == target.identity { return true }
                 // A replacement document at the same treatment time is not a confirmed removal.
                 return raw["eventType"] as? String == target.type &&
-                    abs(Treatment.parseDate(raw)!.timeIntervalSince(target.date)) < 1
+                    abs(Treatment.parseDate(raw, parsedDates: parsedDates)!.timeIntervalSince(target.date)) < 1
             }
         }
     }

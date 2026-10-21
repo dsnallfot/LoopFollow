@@ -9,7 +9,7 @@
 import Foundation
 extension MainViewController {
     // NS Resume Pump Response Processor
-    func processResumePump(entries: [[String:AnyObject]]) {
+    func processResumePump(entries: [[String:AnyObject]], dates: [String: Date]? = nil) {
         resumeGraphData.removeAll()
         
         var lastFoundIndex = 0
@@ -17,7 +17,7 @@ extension MainViewController {
         entries.reversed().forEach { currentEntry in
             guard let dateStr = currentEntry["timestamp"] as? String ?? currentEntry["created_at"] as? String else { return }
             
-            guard let parsedDate = NightscoutUtils.parseDate(dateStr) else {
+            guard let parsedDate = NightscoutUtils.parseDate(dateStr, prepared: dates) else {
                 return
             }
             

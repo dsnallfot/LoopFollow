@@ -19,7 +19,7 @@ extension MainViewController {
     }
     
     // NS Pump Change Response Processor
-    func processPumpChange(entries: [cageData]) {
+    func processPumpChange(entries: [cageData], dates: [String: Date]? = nil) {
         pumpChangeGraphData.removeAll()
         
         // Load existing pump change history
@@ -29,7 +29,7 @@ extension MainViewController {
         for entry in entries {
             let date = entry.created_at
             
-            if let parsedDate = NightscoutUtils.parseDate(date) {
+            if let parsedDate = NightscoutUtils.parseDate(date, prepared: dates) {
                 let dateTimeStamp = parsedDate.timeIntervalSince1970
                 let sgv = findNearestBGbyTime(needle: dateTimeStamp, haystack: bgData, startingIndex: lastFoundIndex)
                 lastFoundIndex = sgv.foundIndex

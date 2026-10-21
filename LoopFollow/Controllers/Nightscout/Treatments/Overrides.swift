@@ -13,7 +13,7 @@ var sharedOverrideFactor: Double = 1.0
 
 extension MainViewController {
     // NS Override Response Processor
-    func processNSOverrides(entries: [[String:AnyObject]]) {
+    func processNSOverrides(entries: [[String:AnyObject]], dates: [String: Date]? = nil) {
         overrideGraphData.removeAll()
         var activeOverrideNote: String? = nil
 
@@ -27,7 +27,7 @@ extension MainViewController {
 
         entries.reversed().enumerated().forEach { (index, currentEntry) in
             guard let dateStr = currentEntry["timestamp"] as? String ?? currentEntry["created_at"] as? String else { return }
-            guard let parsedDate = NightscoutUtils.parseDate(dateStr) else { return }
+            guard let parsedDate = NightscoutUtils.parseDate(dateStr, prepared: dates) else { return }
 
             var dateTimeStamp = parsedDate.timeIntervalSince1970
             let graphHours = 24 * UserDefaultsRepository.downloadDays.value

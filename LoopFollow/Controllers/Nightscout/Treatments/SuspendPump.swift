@@ -9,7 +9,7 @@
 import Foundation
 extension MainViewController {
     // NS Suspend Pump Response Processor
-    func processSuspendPump(entries: [[String:AnyObject]]) {
+    func processSuspendPump(entries: [[String:AnyObject]], dates: [String: Date]? = nil) {
         suspendGraphData.removeAll()
         
         var lastFoundIndex = 0
@@ -17,7 +17,7 @@ extension MainViewController {
         entries.reversed().forEach { currentEntry in
             guard let dateStr = currentEntry["timestamp"] as? String ?? currentEntry["created_at"] as? String else { return }
             
-            guard let parsedDate = NightscoutUtils.parseDate(dateStr) else {
+            guard let parsedDate = NightscoutUtils.parseDate(dateStr, prepared: dates) else {
                 return
             }
             

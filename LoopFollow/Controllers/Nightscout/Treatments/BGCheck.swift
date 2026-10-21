@@ -11,13 +11,13 @@ import UIKit
 
 extension MainViewController {
     // NS BG Check Response Processor
-    func processNSBGCheck(entries: [[String:AnyObject]]) {
+    func processNSBGCheck(entries: [[String:AnyObject]], dates: [String: Date]? = nil) {
         bgCheckData.removeAll()
         
         entries.reversed().forEach { currentEntry in
             guard let dateStr = currentEntry["timestamp"] as? String ?? currentEntry["created_at"] as? String else { return }
             
-            guard let parsedDate = NightscoutUtils.parseDate(dateStr),
+            guard let parsedDate = NightscoutUtils.parseDate(dateStr, prepared: dates),
                   let glucose = currentEntry["glucose"] as? Double else {
                 return
             }

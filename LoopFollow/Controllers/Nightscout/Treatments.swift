@@ -20,10 +20,10 @@ extension MainViewController {
         if !UserDefaultsRepository.downloadTreatments.value { return }
 
         let now = Date()
-        
+
         if isTreatmentsFetchInProgress {
             let elapsed = now.timeIntervalSince(treatmentsFetchStartedAt ?? now)
-            
+
             if elapsed > 60 {
                 // En pågående fetch verkar ha hängt → släpp låset och börja om.
                 LogManager.shared.log(
@@ -43,16 +43,16 @@ extension MainViewController {
                 return
             }
         }
-        
+
         isTreatmentsFetchInProgress = true
         treatmentsFetchStartedAt = now
-        
+
         let startTimeString = dateTimeUtils.getDateTimeString(addingDays: -1 * UserDefaultsRepository.downloadDays.value)
-        
+
         //let currentTimeString = dateTimeUtils.getDateTimeString(addingHours: 6)
         let currentTimeString = dateTimeUtils.getDateTimeString(addingHours: 6) //TEST
         let estimatedCount = max(UserDefaultsRepository.downloadDays.value * 100, 5000)//TEST
-        
+
         let parameters: [String: String] = [
             "find[created_at][$gte]": startTimeString,
             "find[created_at][$lte]": currentTimeString,
@@ -60,6 +60,7 @@ extension MainViewController {
         ]
         let receiptSite = ObservableUserDefaults.shared.url.value
         NightscoutUtils.executeDynamicRequest(eventType: .treatments, parameters: parameters) { (result: Result<Any, Error>) in
+            guard treatmentsFetchStartedAt == now else { return }
             switch result {
             case .success(let data):
                 if let entries = data as? [[String: AnyObject]] {
@@ -72,55 +73,75 @@ extension MainViewController {
                             limitIdentifier: "treatments-response-capped")
                         return
                     }
-                    // Uppdatera appens behandlingstillstånd på main-tråden som tidigare
-                    DispatchQueue.main.async {
-                        RemoteCommandReceiptTracker.shared.observe(
-                            entries.map { $0 as [String: Any] }, site: receiptSite, requestStartedAt: now
-                        )
-                        if let from = NightscoutUtils.parseDate(startTimeString),
-                           let through = NightscoutUtils.parseDate(currentTimeString) {
-                            RemoteCommandReceiptTracker.shared.observeDeletions(
-                                entries.map { $0 as [String: Any] }, site: receiptSite, requestStartedAt: now,
-                                from: from, through: through, responseLimit: estimatedCount
-                            )
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        // The request helper calls back on main. Parse the whole batch on a worker,
+                        // then pass immutable lookups to the synchronous graph/UI update.
+                        var receiptDates: [String: Date] = [:]
+                        var preparedDates: [String: Date] = [:]
+                        let rawDates = Set(entries.flatMap { entry in
+                            [entry["timestamp"] as? String, entry["created_at"] as? String].compactMap { $0 }
+                        } + [startTimeString, currentTimeString])
+                        for raw in rawDates {
+                            if let date = NightscoutUtils.parseDate(raw) { preparedDates[raw] = date }
+                            if let date = NightscoutUtils.parseISODate(raw) { receiptDates[raw] = date }
                         }
-                        self.updateTreatments(entries: entries, replacingRecentSince: now.addingTimeInterval(-24 * 60 * 60))
-                    }
-                    
-                    // Skriv samma behandlingsdata till NightscoutCache i bakgrunden.
-                    // Detta gör att TreatmentsTableView (och andra vyer som läser via NightscoutCache)
-                    // får löpande uppdaterade 90-dagarsfiler utan extra nattliga fetchar.
-                    DispatchQueue.global(qos: .utility).async {
-                        if let startDate = NightscoutUtils.parseDate(startTimeString),
-                           let endDate = NightscoutUtils.parseDate(currentTimeString) {
-
-                            // Always overwrite the latest 24 hours in cache so edited/deleted/reposted
-                            // treatments (same timestamp, changed duration/notes, etc.) never linger.
-                            let last24hStart = max(startDate, now.addingTimeInterval(-24 * 60 * 60))
-
-                            // 1) Hard refresh (delete + replace) for last 24 hours
-                            NightscoutCache.refreshTreatmentsWindow(
-                                from: last24hStart,
-                                to: endDate,
-                                entries: entries.map { $0 as [String: Any] }
-                            )
-
-                            // 2) Best-effort upsert for older treatments (do NOT delete older cache content)
-                            // This prevents accidental data loss if Nightscout doesn't return the full window.
-                            let olderEntries = entries.filter { entry in
-                                guard let iso = entry["created_at"] as? String,
-                                      let createdAt = NightscoutUtils.parseDate(iso) else { return false }
-                                return createdAt < last24hStart
+                        let dates = preparedDates
+                        let isoDates = receiptDates
+                        DispatchQueue.main.async {
+                            guard treatmentsFetchStartedAt == now else { return }
+                            defer {
+                                isTreatmentsFetchInProgress = false
+                                treatmentsFetchStartedAt = nil
                             }
-                            NightscoutCache.upsertTreatments(from: olderEntries.map { $0 as [String: Any] })
+                            RemoteCommandReceiptTracker.shared.observe(
+                                entries.map { $0 as [String: Any] }, site: receiptSite, requestStartedAt: now, parsedDates: isoDates
+                            )
+                            if let from = NightscoutUtils.parseDate(startTimeString, prepared: dates),
+                               let through = NightscoutUtils.parseDate(currentTimeString, prepared: dates) {
+                                RemoteCommandReceiptTracker.shared.observeDeletions(
+                                    entries.map { $0 as [String: Any] }, site: receiptSite, requestStartedAt: now,
+                                    from: from, through: through, responseLimit: estimatedCount, parsedDates: isoDates
+                                )
+                            }
+                            self.updateTreatments(entries: entries, dates: dates, replacingRecentSince: now.addingTimeInterval(-24 * 60 * 60))
 
-                            NightscoutCache.purgeOldFiles()
-                        } else {
-                            // Fallback: if parsing fails, keep previous behavior (best-effort upsert)
-                            NightscoutCache.upsertTreatments(from: entries.map { $0 as [String: Any] })
-                            NightscoutCache.purgeOldFiles()
+                            // Skriv samma behandlingsdata till NightscoutCache i bakgrunden.
+                            // Detta gör att TreatmentsTableView (och andra vyer som läser via NightscoutCache)
+                            // får löpande uppdaterade 90-dagarsfiler utan extra nattliga fetchar.
+                            DispatchQueue.global(qos: .utility).async {
+                                if let startDate = NightscoutUtils.parseDate(startTimeString, prepared: dates),
+                                   let endDate = NightscoutUtils.parseDate(currentTimeString, prepared: dates) {
+
+                                    // Always overwrite the latest 24 hours in cache so edited/deleted/reposted
+                                    // treatments (same timestamp, changed duration/notes, etc.) never linger.
+                                    let last24hStart = max(startDate, now.addingTimeInterval(-24 * 60 * 60))
+
+                                    // 1) Hard refresh (delete + replace) for last 24 hours
+                                    NightscoutCache.refreshTreatmentsWindow(
+                                        from: last24hStart,
+                                        to: endDate,
+                                        entries: entries.map { $0 as [String: Any] }
+                                    )
+
+                                    // 2) Best-effort upsert for older treatments (do NOT delete older cache content)
+                                    // This prevents accidental data loss if Nightscout doesn't return the full window.
+                                    let olderEntries = entries.filter { entry in
+                                        guard let iso = entry["created_at"] as? String,
+                                              let createdAt = NightscoutUtils.parseDate(iso, prepared: dates) else { return false }
+                                        return createdAt < last24hStart
+                                    }
+                                    NightscoutCache.upsertTreatments(from: olderEntries.map { $0 as [String: Any] })
+
+                                    NightscoutCache.purgeOldFiles()
+                                } else {
+                                    // Fallback: if parsing fails, keep previous behavior (best-effort upsert)
+                                    NightscoutCache.upsertTreatments(from: entries.map { $0 as [String: Any] })
+                                    NightscoutCache.purgeOldFiles()
+                                }
+                            }
                         }
                     }
+                    return
                 } else {
                     LogManager.shared.log(category: .nightscout, message: "WebLoadNSTreatments, Unexpected data structure")
                 }
@@ -133,11 +154,11 @@ extension MainViewController {
             }
         }
     }
-    
+
     // Process and split out treatments to individual tasks
-    func updateTreatments(entries: [[String:AnyObject]], replacingRecentSince: Date? = nil) {
+    func updateTreatments(entries: [[String:AnyObject]], dates: [String: Date]? = nil, replacingRecentSince: Date? = nil) {
         updateFingerstickSGVIds(entries: entries)
-        
+
         var tempBasal: [[String:AnyObject]] = []
         var bolus: [[String:AnyObject]] = []
         var smb: [[String:AnyObject]] = []
@@ -158,7 +179,7 @@ extension MainViewController {
             guard let eventType = entry["eventType"] as? String else {
                 continue
             }
-            
+
             switch eventType {
             case "Temp Basal":
                 tempBasal.append(entry)
@@ -235,38 +256,38 @@ extension MainViewController {
                 LogManager.shared.log(category: .nightscout, message: "No treatment match: \(String(describing: entry))", isDebug: true)
             }
         }
-        
+
         if tempBasal.count > 0 {
-            processNSBasals(entries: tempBasal)
+            processNSBasals(entries: tempBasal, dates: dates)
         } else {
             if basalData.count > 0 {
                 clearOldTempBasal()
             }
         }
         if bolus.count > 0 {
-            processNSBolus(entries: bolus)
+            processNSBolus(entries: bolus, dates: dates)
         } else {
             if bolusData.count > 0 {
                 clearOldBolus()
             }
         }
         if smb.count > 0 {
-            processNSSmb(entries: smb)
+            processNSSmb(entries: smb, dates: dates)
         } else {
             if smbData.count > 0 {
                 clearOldSmb()
             }
         }
-        updateTodaysCarbsFromEntries(entries: carbs)
+        updateTodaysCarbsFromEntries(entries: carbs, dates: dates)
         if carbs.count > 0 {
-            processNSCarbs(entries: carbs)
+            processNSCarbs(entries: carbs, dates: dates)
         } else {
             if carbData.count > 0 {
                 clearOldCarb()
             }
         }
         if bgCheck.count > 0 {
-            processNSBGCheck(entries: bgCheck)
+            processNSBGCheck(entries: bgCheck, dates: dates)
         } else {
             if bgCheckData.count > 0 {
                 clearOldBGCheck()
@@ -276,7 +297,7 @@ extension MainViewController {
             clearOldOverride()
         }
         if temporaryOverride.count > 0 {
-            processNSOverrides(entries: temporaryOverride)
+            processNSOverrides(entries: temporaryOverride, dates: dates)
         } else {
             infoManager.updateInfoData(type: .overridePercentage, value: "100 %")
             LogManager.shared.log(category: .general, message: "No Overrides found: Override percentage updated to default 100 %", isDebug: true)
@@ -286,31 +307,31 @@ extension MainViewController {
             clearOldTempTarget()
         }
         if temporaryTarget.count > 0 {
-            processNSTemporaryTarget(entries: temporaryTarget)
+            processNSTemporaryTarget(entries: temporaryTarget, dates: dates)
         }
         if suspendPump.count > 0 {
-            processSuspendPump(entries: suspendPump)
+            processSuspendPump(entries: suspendPump, dates: dates)
         } else {
             if suspendGraphData.count > 0 {
                 clearOldSuspend()
             }
         }
         if resumePump.count > 0 {
-            processResumePump(entries: resumePump)
+            processResumePump(entries: resumePump, dates: dates)
         } else {
             if resumeGraphData.count > 0 {
                 clearOldResume()
             }
         }
         if training.count > 0 {
-            processTraining(entries: training)
+            processTraining(entries: training, dates: dates)
         } else {
             if trainingGraphData.count > 0 {
                 clearOldTraining()
             }
         }
         if warningEvent.count > 0 {
-            processWarning(entries: warningEvent)
+            processWarning(entries: warningEvent, dates: dates)
         } else {
             if warningGraphData.count > 0 {
                 clearOldWarning()
@@ -318,7 +339,7 @@ extension MainViewController {
         }
         processSage(entries: cgmSensorStart)
         if cgmSensorStart.count > 0 {
-            processSensorStart(entries: cgmSensorStart)
+            processSensorStart(entries: cgmSensorStart, dates: dates)
         } else {
             if sensorStartGraphData.count > 0 {
                 clearOldSensor()
@@ -328,7 +349,7 @@ extension MainViewController {
         processIage(entries: insulinCartridge)
 
         if note.count > 0 {
-            processNotes(entries: note)
+            processNotes(entries: note, dates: dates)
         } else {
             if noteGraphData.count > 0 {
                 clearOldNotes()
@@ -336,7 +357,7 @@ extension MainViewController {
         }
         processCage(entries: pumpSiteChange)
         if pumpSiteChange.count > 0 {
-            processPumpChange(entries: pumpSiteChange)
+            processPumpChange(entries: pumpSiteChange, dates: dates)
         } else {
             if pumpChangeGraphData.count > 0 {
                 clearOldPump()

@@ -23,6 +23,14 @@ class LogManager {
     func log(category: Category, message: String) {}
 }
 struct NightscoutUtils {
+    static func parseISODate(_ raw: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: raw) { return date }
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.date(from: raw)
+    }
+
     static func parseDate(_ raw: String) -> Date? { TreatmentJSON.parseTrioSentAt(raw) }
 }
 struct SGVJSON { var date: TimeInterval; var sgv: Int; var readingDate: Date { Date(timeIntervalSince1970: date) } }

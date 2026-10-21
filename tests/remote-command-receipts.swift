@@ -16,6 +16,12 @@ struct RemoteReceiptTests {
         return data
     }
     static func main() {
+        let preparedEntry = entry("prepared", "Note", sender: "Trio")
+        let rawDate = preparedEntry["created_at"] as! String
+        precondition(RemoteCommandReceiptTracker.Treatment(preparedEntry, parsedDates: [:]) == nil,
+                     "Missing prepared date must not fall back to main-thread parsing")
+        precondition(RemoteCommandReceiptTracker.Treatment(preparedEntry, parsedDates: [rawDate: sent])?.date == sent,
+                     "Receipt processing uses the supplied background result")
         let tracker = RemoteCommandReceiptTracker()
         func observe(_ entries: [[String: Any]], site: String = "school") {
             tracker.observe(entries, site: site, requestStartedAt: sent.addingTimeInterval(5))

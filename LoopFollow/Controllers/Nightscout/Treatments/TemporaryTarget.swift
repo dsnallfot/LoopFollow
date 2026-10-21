@@ -12,13 +12,13 @@ import HealthKit
 
 extension MainViewController {
     // NS Temporary Target Response Processor
-    func processNSTemporaryTarget(entries: [[String: AnyObject]]) {
+    func processNSTemporaryTarget(entries: [[String: AnyObject]], dates: [String: Date]? = nil) {
         tempTargetGraphData.removeAll()
         var activeTempTarget: Int? = nil
 
         entries.reversed().enumerated().forEach { (index, currentEntry) in
             guard let dateStr = currentEntry["timestamp"] as? String ?? currentEntry["created_at"] as? String else { return }
-            guard let parsedDate = NightscoutUtils.parseDate(dateStr) else { return }
+            guard let parsedDate = NightscoutUtils.parseDate(dateStr, prepared: dates) else { return }
 
             var dateTimeStamp = parsedDate.timeIntervalSince1970
             let graphHours = 24 * UserDefaultsRepository.downloadDays.value

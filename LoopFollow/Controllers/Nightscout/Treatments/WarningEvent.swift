@@ -47,7 +47,7 @@ extension MainViewController {
         )
     }
     // NS Warning Response Processor
-    func processWarning(entries: [[String:AnyObject]]) {
+    func processWarning(entries: [[String:AnyObject]], dates: [String: Date]? = nil) {
         warningGraphData.removeAll()
         
         var lastFoundIndex = 0
@@ -55,7 +55,7 @@ extension MainViewController {
         entries.reversed().forEach { currentEntry in
             guard let dateStr = currentEntry["timestamp"] as? String ?? currentEntry["created_at"] as? String else { return }
             
-            guard let parsedDate = NightscoutUtils.parseDate(dateStr) else {
+            guard let parsedDate = NightscoutUtils.parseDate(dateStr, prepared: dates) else {
                 return
             }
             

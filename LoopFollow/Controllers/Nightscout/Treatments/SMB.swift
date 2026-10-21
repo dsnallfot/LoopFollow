@@ -9,7 +9,7 @@
 import Foundation
 extension MainViewController {
     // NS SMB Processor
-    func processNSSmb(entries: [[String:AnyObject]]) {
+    func processNSSmb(entries: [[String:AnyObject]], dates: [String: Date]? = nil) {
         smbData.removeAll()
         var lastFoundIndex = 0
         
@@ -23,7 +23,7 @@ extension MainViewController {
                 return
             }
             
-            guard let parsedDate = NightscoutUtils.parseDate(bolusDate),
+            guard let parsedDate = NightscoutUtils.parseDate(bolusDate, prepared: dates),
                   let bolus = currentEntry["insulin"] as? Double else { return }
             
             let dateTimeStamp = parsedDate.timeIntervalSince1970

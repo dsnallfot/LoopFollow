@@ -11,7 +11,7 @@ import UIKit
 
 extension MainViewController {
     // NS Note Response Processor
-    func processNotes(entries: [[String:AnyObject]]) {
+    func processNotes(entries: [[String:AnyObject]], dates: [String: Date]? = nil) {
         // because it's a small array, we're going to destroy and reload every time.
         noteGraphData.removeAll()
         var lastFoundIndex = 0
@@ -28,7 +28,7 @@ extension MainViewController {
                 return
             }
             
-            if let parsedDate = NightscoutUtils.parseDate(date) {
+            if let parsedDate = NightscoutUtils.parseDate(date, prepared: dates) {
                 let dateTimeStamp = parsedDate.timeIntervalSince1970
                 let sgv = findNearestBGbyTime(needle: dateTimeStamp, haystack: bgData, startingIndex: lastFoundIndex)
                 lastFoundIndex = sgv.foundIndex

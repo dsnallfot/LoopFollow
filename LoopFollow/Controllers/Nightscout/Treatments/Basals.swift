@@ -11,7 +11,7 @@ import Foundation
 extension MainViewController {
 
     // NS Temp Basal Response Processor
-    func processNSBasals(entries: [[String:AnyObject]]) {
+    func processNSBasals(entries: [[String:AnyObject]], dates: [String: Date]? = nil) {
         infoManager.clearInfoData(type: .basal)
 
         basalData.removeAll()
@@ -28,7 +28,7 @@ extension MainViewController {
             let dateString = currentEntry["timestamp"] as? String
             ?? currentEntry["created_at"] as? String
             guard let rawDateStr = dateString,
-                  let dateParsed = NightscoutUtils.parseDate(rawDateStr) else {
+                  let dateParsed = NightscoutUtils.parseDate(rawDateStr, prepared: dates) else {
                 continue
             }
 
@@ -44,7 +44,7 @@ extension MainViewController {
                 let priorDateStr = priorEntry?["timestamp"] as? String
                 ?? priorEntry?["created_at"] as? String
                 if let rawPrior = priorDateStr,
-                   let priorDateParsed = NightscoutUtils.parseDate(rawPrior) {
+                   let priorDateParsed = NightscoutUtils.parseDate(rawPrior, prepared: dates) {
 
                     let priorDateTimeStamp = priorDateParsed.timeIntervalSince1970
                     let priorDuration = priorEntry?["duration"] as? Double ?? 0.0
@@ -105,7 +105,7 @@ extension MainViewController {
                 let nextDateStr = nextEntry?["timestamp"] as? String
                 ?? nextEntry?["created_at"] as? String
                 if let rawNext = nextDateStr,
-                   let nextDateParsed = NightscoutUtils.parseDate(rawNext) {
+                   let nextDateParsed = NightscoutUtils.parseDate(rawNext, prepared: dates) {
 
                     let nextDateTimeStamp = nextDateParsed.timeIntervalSince1970
                     if nextDateTimeStamp < (dateTimeStamp + (duration * 60)) {

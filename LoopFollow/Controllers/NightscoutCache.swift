@@ -82,11 +82,7 @@ struct TreatmentJSON: Codable, Equatable {
     /// Preserve fractional seconds and timezone offsets for sensor ownership boundaries.
     static func parseTrioSentAt(_ raw: String?) -> Date? {
         guard let raw else { return nil }
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = formatter.date(from: raw) { return date }
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter.date(from: raw)
+        return NightscoutUtils.parseISODate(raw)
     }
 
     /// Build a `TreatmentJSON` from the raw Nightscout dictionary returned by `/treatments`.

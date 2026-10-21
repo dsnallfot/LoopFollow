@@ -46,13 +46,7 @@ public struct ShareGlucoseData: Decodable {
         direction = try container.decodeIfPresent(String.self, forKey: .direction)
         // Parse independently of the request decoder's strategy; retain fractional seconds.
         if let raw = try? container.decode(String.self, forKey: .trioSentAt) {
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            trioSentAt = formatter.date(from: raw)
-            if trioSentAt == nil {
-                formatter.formatOptions = [.withInternetDateTime]
-                trioSentAt = formatter.date(from: raw)
-            }
+            trioSentAt = NightscoutUtils.parseISODate(raw)
         } else {
             trioSentAt = nil
         }

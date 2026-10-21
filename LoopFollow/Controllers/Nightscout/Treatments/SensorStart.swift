@@ -19,7 +19,7 @@ extension MainViewController {
     }
     
     // NS Sensor Start Response Processor
-    func processSensorStart(entries: [sageData]) {
+    func processSensorStart(entries: [sageData], dates: [String: Date]? = nil) {
         sensorStartGraphData.removeAll()
         var lastFoundIndex = 0
 
@@ -30,7 +30,7 @@ extension MainViewController {
         for entry in entries {
             let date = entry.created_at
 
-            if let parsedDate = NightscoutUtils.parseDate(date) {
+            if let parsedDate = NightscoutUtils.parseDate(date, prepared: dates) {
                 let dateTimeStamp = parsedDate.timeIntervalSince1970
                 let sgv = findNearestBGbyTime(needle: dateTimeStamp, haystack: bgData, startingIndex: lastFoundIndex)
                 lastFoundIndex = sgv.foundIndex

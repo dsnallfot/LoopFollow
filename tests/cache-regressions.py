@@ -54,6 +54,14 @@ enum UserDefaultsRepository {
     static let downloadTreatments = Setting()
 }
 class NightscoutUtils {
+    static func parseISODate(_ raw: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: raw) { return date }
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.date(from: raw)
+    }
+
     enum EventType { case sgv, treatments }
     static var reply: Result<Any, Error> = .success([])
     static func executeDynamicRequest(eventType: EventType, parameters: [String: String], completion: @escaping (Result<Any, Error>) -> Void) { completion(reply) }

@@ -438,7 +438,40 @@ class NightscoutUtils {
         task.resume()
     }
 
-    static func parseDate(_ rawString: String) -> Date? {
+    // Each worker thread owns its formatters; no mutable formatter or parsing lock is shared with the UI.
+    private final class DateParsers {
+        lazy var legacy: DateFormatter = {
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.calendar = Calendar(identifier: .gregorian)
+            formatter.timeZone = TimeZone(secondsFromGMT: 0)
+            formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+            return formatter
+        }()
+        lazy var fractional: ISO8601DateFormatter = {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            return formatter
+        }()
+        lazy var whole = ISO8601DateFormatter()
+    }
+
+    private static var dateParsers: DateParsers {
+        let key = "LoopFollow.NightscoutUtils.DateParsers"
+        if let parsers = Thread.current.threadDictionary[key] as? DateParsers { return parsers }
+        let parsers = DateParsers()
+        Thread.current.threadDictionary[key] = parsers
+        return parsers
+    }
+
+    static func parseISODate(_ raw: String) -> Date? {
+        let parsers = dateParsers
+        return parsers.fractional.date(from: raw) ?? parsers.whole.date(from: raw)
+    }
+
+    /// A supplied batch is authoritative, including missing/invalid dates: never fall back to UI-thread parsing.
+    static func parseDate(_ rawString: String, prepared: [String: Date]? = nil) -> Date? {
+        if let prepared { return prepared[rawString] }
         var mutableDate = rawString
 
         if mutableDate.hasSuffix("Z") {
@@ -455,12 +488,8 @@ class NightscoutUtils {
             options: .regularExpression
         )
 
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        dateFormatter.locale = Locale(identifier: "en_US")
-        dateFormatter.timeZone = TimeZone(abbreviation: "UTC")
-
-        let result = dateFormatter.date(from: mutableDate)
+        // Preserve the existing treatment timestamp interpretation in this performance patch.
+        let result = dateParsers.legacy.date(from: mutableDate)
         if result == nil {
             LogManager.shared.log(category: .nightscout, message: "Unable to parse string: '\(mutableDate)'", isDebug: true)
         }
