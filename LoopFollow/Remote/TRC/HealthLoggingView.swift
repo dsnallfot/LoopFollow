@@ -195,6 +195,8 @@ struct HealthLoggingView: View {
 private struct SnoozeLoggingControls: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var receiptTracker = RemoteCommandReceiptTracker.shared
+    @ObservedObject private var snoozedUntil = Observable.shared.trioSnoozedUntil
+    @State private var now = Date()
     @State private var duration = 15
     @Binding var isLoading: Bool
     @State private var alert: SnoozeAlert?
@@ -219,6 +221,15 @@ private struct SnoozeLoggingControls: View {
             }
         }
         Section("Snooza alla larm & notiser i Trio") {
+            if let deadline = snoozedUntil.value, deadline > now {
+                Label {
+                    Text("Trio larm är snoozade till kl \(deadline.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).locale(Locale(identifier: "sv_SE"))))")
+                } icon: {
+                    Image(systemName: "info.circle.fill")
+                }
+                .foregroundStyle(.secondary)
+                .listRowSeparator(.visible, edges: .bottom)
+            }
             Picker("Snoozetid", selection: $duration) {
                 ForEach(HealthLoggingRules.snoozeMinutes, id: \.self) { minutes in
                     Text(HealthLoggingRules.snoozeLabel(minutes)).tag(minutes)
@@ -229,6 +240,7 @@ private struct SnoozeLoggingControls: View {
             .disabled(isLoading)
         }
         .listRowBackground(Color(.systemGray).opacity(0.15))
+        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { now = $0 }
 
         LoadingButtonView(
             buttonText: "Skicka Snooze",

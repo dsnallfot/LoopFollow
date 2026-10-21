@@ -12,6 +12,8 @@ import HealthKit
 class Observable {
     static let shared = Observable()
 
+    var trioSnoozedUntil = ObservableValue<Date?>(default: nil)
+
     var tempTarget = ObservableValue<HKQuantity?>(default: nil)
     var override = ObservableValue<String?>(default: nil)
     //var isLastDeviceStatusSuggested = ObservableValue<Bool>(default: false)

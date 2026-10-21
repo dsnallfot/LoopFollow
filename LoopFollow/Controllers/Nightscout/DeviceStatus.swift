@@ -276,6 +276,9 @@ extension MainViewController {
                 infoManager.updateInfoData(type: .activeAlarms, value: activeAlarms.isEmpty ? "Inga" : activeAlarms)
 
                 let snoozedUntil = (additionalInfo?["snoozedUntil"] as? NSNumber)?.doubleValue
+                Observable.shared.trioSnoozedUntil.value = snoozedUntil.flatMap {
+                    $0.isFinite && $0 > 0 ? Date(timeIntervalSince1970: $0) : nil
+                }
                 let snoozeDisplay: String
                 if let snoozedUntil, snoozedUntil.isFinite, snoozedUntil > Date().timeIntervalSince1970 {
                     let timeFormatter = DateFormatter()
