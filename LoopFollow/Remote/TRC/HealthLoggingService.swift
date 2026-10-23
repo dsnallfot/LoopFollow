@@ -13,12 +13,15 @@ final class HealthLoggingService: ObservableObject {
 
     enum LoggingError: LocalizedError {
         case accessDenied, listUnavailable, fetchFailed, pastReminder
+        case siteUploadFailed(String)
         var errorDescription: String? {
             switch self {
             case .accessDenied: return "Loop Follow behöver full åtkomst till Påminnelser. Du kan ändra behörigheten i telefonens Inställningar."
             case .listUnavailable: return "Välj en skrivbar påminnelselista. Om listan är delad behöver du ha rätt att ändra den."
             case .fetchFailed: return "Påminnelserna kunde inte hämtas. Inga poster har ändrats."
             case .pastReminder: return "Påminnelsetiden har redan passerat. Ändra datumet eller antalet timmar."
+            case let .siteUploadFailed(reason):
+                return "Påminnelsen sparades, men site-noteringen kunde inte registreras i Nightscout. Försök igen. \(reason)"
             }
         }
     }
@@ -98,6 +101,19 @@ final class HealthLoggingService: ObservableObject {
             throw error
         }
         return "Påminnelsen sparades i \(calendar.title). \(replaced.count) tidigare bytespåminnelser ersattes."
+    }
+
+    func logSiteChange(kind: HealthLogKind, site: HealthLogSite, pump: HealthLogPump, eventDate: Date,
+                       hours: Int, windowHours: Int, calendarID: String) async throws -> String {
+        let title = HealthLoggingRules.siteNoteTitle(kind: kind, site: site)
+        let message = try await replaceReminder(kind: kind, pump: pump, eventDate: eventDate,
+                                                hours: hours, windowHours: windowHours, calendarID: calendarID)
+        do {
+            try await upload(kind: .note, date: eventDate, title: title, body: "")
+        } catch {
+            throw LoggingError.siteUploadFailed(error.localizedDescription)
+        }
+        return "\(message) Site-noteringen registrerades i Nightscout."
     }
 
     func upload(kind: HealthLogKind, date: Date, title: String, body: String) async throws {

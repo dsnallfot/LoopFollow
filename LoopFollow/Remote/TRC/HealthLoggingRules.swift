@@ -24,6 +24,17 @@ enum HealthLogPump: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+enum HealthLogSite: String, CaseIterable, Identifiable {
+    case rightThigh = "Lår (Höger)"
+    case leftThigh = "Lår (Vänster)"
+    case rightAbdomen = "Mage (Höger)"
+    case leftAbdomen = "Mage (Vänster)"
+    case rightUpperArm = "Överarm (Höger)"
+    case leftUpperArm = "Överarm (Vänster)"
+
+    var id: String { rawValue }
+}
+
 enum HealthLoggingRules {
     static let snoozeMinutes = [0] + Array(stride(from: 15, through: 180, by: 15)) + [240, 300, 360, 420, 480]
 
@@ -59,6 +70,11 @@ enum HealthLoggingRules {
         if url == kind.reminderURL { return true }
         let prefixes = kind == .pump ? ["Byt Omnipod inom ", "Byt Medtrum inom "] : ["Byt Sensor inom "]
         return prefixes.contains { title.localizedCaseInsensitiveHasPrefix($0) }
+    }
+
+    static func siteNoteTitle(kind: HealthLogKind, site: HealthLogSite) -> String {
+        precondition(kind.isReminder)
+        return "\(kind == .pump ? "Pumpsite" : "Sensorsite"): \(site.rawValue)"
     }
 
     static func treatment(kind: HealthLogKind, date: Date, title: String, body: String, enteredBy: String) -> [String: Any] {

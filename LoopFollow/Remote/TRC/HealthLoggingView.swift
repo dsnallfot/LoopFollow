@@ -5,6 +5,7 @@ struct HealthLoggingView: View {
     @StateObject private var service = HealthLoggingService()
     @State private var eventDate = Date()
     @State private var kind: HealthLogKind?
+    @State private var site: HealthLogSite?
     @State private var selectedTitle = "Egen rubrik"
     @State private var customTitle = ""
     @State private var noteBody = ""
@@ -36,7 +37,7 @@ struct HealthLoggingView: View {
     private var valid: Bool {
         guard let kind else { return false }
         if kind.isReminder {
-            return service.hasReminderAccess && service.lists.contains(where: { $0.id == listID }) && reminderDate > Date()
+            return site != nil && service.hasReminderAccess && service.lists.contains(where: { $0.id == listID }) && reminderDate > Date()
         }
         return kind == .insulin || !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -58,6 +59,7 @@ struct HealthLoggingView: View {
                 SnoozeLoggingControls(isLoading: $isSaving)
             } else if let kind {
                 if kind.isReminder {
+                    siteSection
                     reminderSection(kind: kind)
                 } else {
                     noteSection
@@ -85,10 +87,21 @@ struct HealthLoggingView: View {
         .navigationBarBackButtonHidden(isSaving)
         .interactiveDismissDisabled(isSaving)
         .task { await loadLists(requestAccess: false) }
+        .onChange(of: kind) { _ in site = nil }
         .alert(item: $result) { result in
             Alert(title: Text(result.success ? "Klart" : "Kunde inte spara"), message: Text(result.text),
                   dismissButton: .default(Text("OK")) { if result.success { dismiss() } })
         }
+    }
+
+    private var siteSection: some View {
+        Section("Site") {
+            Picker("Ange site", selection: $site) {
+                Text("Välj site...").tag(nil as HealthLogSite?)
+                ForEach(HealthLogSite.allCases) { Text($0.rawValue).tag(Optional($0)) }
+            }
+        }
+        .listRowBackground(Color(.systemGray).opacity(0.15))
     }
 
     private func reminderSection(kind: HealthLogKind) -> some View {
@@ -176,7 +189,8 @@ struct HealthLoggingView: View {
             do {
                 let message: String
                 if kind.isReminder {
-                    message = try await service.replaceReminder(kind: kind, pump: pump, eventDate: eventDate,
+                    guard let site else { return }
+                    message = try await service.logSiteChange(kind: kind, site: site, pump: pump, eventDate: eventDate,
                                                                 hours: hours.wrappedValue, windowHours: windowHours.wrappedValue,
                                                                 calendarID: listID)
                 } else {
