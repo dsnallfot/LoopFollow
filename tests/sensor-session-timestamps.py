@@ -15,6 +15,9 @@ view = 'LoopFollow/Views/SensorHistoryView.swift'
 buckets = section(view, 'struct SessionBuckets', 'class SensorHistoryViewController')
 builder = section(view, '    private func buildDexcomOutageItems', '    private func formatTotalDuration').replace('private func', 'func')
 counts = section(view, '    private func computeSessionBuckets', '    func tableView(').replace('private func', 'func')
+metric_source = (repo / 'LoopFollow/Views/SiteSessionAnalytics.swift').read_text()
+metric = metric_source[metric_source.index('struct SiteSessionMetric:'):metric_source.index('struct SiteInsulinData')]
+models += metric
 stubs = '''
 import Foundation
 class LogManager {

@@ -16,6 +16,7 @@ protocol AddManualSensorNoteDelegate: AnyObject {
 class AddManualSensorNoteViewController: ThemedViewController {
     
     weak var delegate: AddManualSensorNoteDelegate?
+    private let sitePicker = SiteSelectionButton()
     private var editingIndex: Int?
     private var editingOriginal: SensorStartHistoryEntry?
 
@@ -23,6 +24,7 @@ class AddManualSensorNoteViewController: ThemedViewController {
         editingIndex = index
         editingOriginal = entry
         if isViewLoaded {
+            sitePicker.configure(site: entry.site)
             datePicker.date = Date(timeIntervalSince1970: entry.date)
             notesTextField.text = entry.note
             self.title = "Redigera sensor"
@@ -55,6 +57,7 @@ class AddManualSensorNoteViewController: ThemedViewController {
         setupUI()
         setupNavigationBar()
         if let existing = editingOriginal {
+            sitePicker.configure(site: existing.site)
             datePicker.date = Date(timeIntervalSince1970: existing.date)
             notesTextField.text = existing.note
             self.title = "Redigera sensor"
@@ -85,10 +88,25 @@ class AddManualSensorNoteViewController: ThemedViewController {
     @objc private func saveTapped() {
         guard let noteText = notesTextField.text, !noteText.isEmpty else { return }
 
-        let updatedEntry = SensorStartHistoryEntry(
-            date: datePicker.date.timeIntervalSince1970,
-            note: noteText
-        )
+        var updatedEntry = editingOriginal ?? SensorStartHistoryEntry(date: datePicker.date.timeIntervalSince1970, note: noteText)
+        if updatedEntry.date != datePicker.date.timeIntervalSince1970 {
+            updatedEntry.sensorErrors = nil
+            updatedEntry.sensorErrorsCalculationVersion = nil
+            updatedEntry.siteErrorSummary = nil
+            if updatedEntry.siteIsManual != true {
+                updatedEntry.site = nil
+                updatedEntry.siteNoteID = nil
+                updatedEntry.siteNoteDate = nil
+            }
+        }
+        updatedEntry.date = datePicker.date.timeIntervalSince1970
+        updatedEntry.note = noteText
+        if sitePicker.wasEdited {
+            updatedEntry.site = sitePicker.selectedSite
+            updatedEntry.siteIsManual = true
+            updatedEntry.siteNoteID = nil
+            updatedEntry.siteNoteDate = nil
+        }
 
         if let idx = editingIndex {
             delegate?.didUpdateManualSensorNote(note: updatedEntry, at: idx)
@@ -100,6 +118,8 @@ class AddManualSensorNoteViewController: ThemedViewController {
     
     private func setupUI() {
         view.addSubview(datePicker)
+        view.addSubview(sitePicker)
+        sitePicker.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(notesTextField)
         
         datePicker.translatesAutoresizingMaskIntoConstraints = false
@@ -112,7 +132,11 @@ class AddManualSensorNoteViewController: ThemedViewController {
             notesTextField.topAnchor.constraint(equalTo: datePicker.bottomAnchor, constant: 20),
             notesTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             notesTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            notesTextField.heightAnchor.constraint(equalToConstant: 40)
+            notesTextField.heightAnchor.constraint(equalToConstant: 40),
+            sitePicker.topAnchor.constraint(equalTo: notesTextField.bottomAnchor, constant: 20),
+            sitePicker.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            sitePicker.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            sitePicker.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
         ])
     }
 }

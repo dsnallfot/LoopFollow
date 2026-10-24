@@ -11,6 +11,9 @@ model_source = (repo / 'LoopFollow/Storage/Storage.swift').read_text()
 start = model_source.index('struct PumpChangeHistoryEntry:')
 end = model_source.index('\n}\n', start) + 3
 model = model_source[start:end]
+metric_source = (repo / 'LoopFollow/Views/SiteSessionAnalytics.swift').read_text()
+metric = metric_source[metric_source.index('struct SiteSessionMetric:'):metric_source.index('struct SiteInsulinData')]
+model += metric
 checks = r'''
 let old = PumpChangeHistoryEntry(date: 0)
 precondition(PumpSessionFilter.omnipod.includes(old))

@@ -63,6 +63,7 @@ extension MainViewController {
             let current = sensorStartHistory[i]
             if let previous = previousHistory.first(where: { $0.date == current.date }),
                previous.sensorUsageWindow(in: previousHistory, now: now) != current.sensorUsageWindow(in: sensorStartHistory, now: now) {
+                sensorStartHistory[i].siteErrorSummary = nil
                 sensorStartHistory[i].sensorErrors = nil
             }
         }

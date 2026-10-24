@@ -115,6 +115,11 @@ struct SensorStartHistoryEntry: Codable, Equatable {
     /// Earliest observed Trio upload; approximates usage start, not activation.
     /// Reuploads must never move this boundary forward.
     var trioSentAt: Date?
+    var site: String?
+    var siteIsManual: Bool?
+    var siteNoteID: String?
+    var siteNoteDate: TimeInterval?
+    var siteErrorSummary: SiteSessionMetric?
 
     var usageStartTimestamp: TimeInterval { trioSentAt?.timeIntervalSince1970 ?? date }
 
@@ -285,6 +290,13 @@ struct PumpChangeHistoryEntry: Codable, Equatable {
 
     /// Pump model from the Site Change notes, separate from session/failure notes.
     var pumpModel: String
+    var site: String?
+    var siteIsManual: Bool?
+    var siteNoteID: String?
+    var siteNoteDate: TimeInterval?
+    var insulinSummary: SiteSessionMetric?
+
+    var tdd: Double? { insulinSummary?.dailyAverage }
 
     init(date: TimeInterval, notes: String? = nil, noteDate: TimeInterval? = nil, pumpModel: String? = nil) {
         self.date = date
@@ -295,7 +307,7 @@ struct PumpChangeHistoryEntry: Codable, Equatable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case date, notes, noteDate, pumpModel
+        case date, notes, noteDate, pumpModel, site, siteIsManual, siteNoteID, siteNoteDate, insulinSummary
     }
 
     init(from decoder: Decoder) throws {
@@ -307,6 +319,11 @@ struct PumpChangeHistoryEntry: Codable, Equatable {
             // Older locally saved/exported entries predate pump model tracking.
             pumpModel: try container.decodeIfPresent(String.self, forKey: .pumpModel) ?? "Omnipod"
         )
+        site = try container.decodeIfPresent(String.self, forKey: .site)
+        siteIsManual = try container.decodeIfPresent(Bool.self, forKey: .siteIsManual)
+        siteNoteID = try container.decodeIfPresent(String.self, forKey: .siteNoteID)
+        siteNoteDate = try container.decodeIfPresent(TimeInterval.self, forKey: .siteNoteDate)
+        insulinSummary = try container.decodeIfPresent(SiteSessionMetric.self, forKey: .insulinSummary)
     }
 
 }

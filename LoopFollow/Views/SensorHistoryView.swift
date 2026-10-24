@@ -6,6 +6,7 @@
 
 //
 import UIKit
+import SwiftUI
 import Charts
 
 struct SessionBuckets {
@@ -139,59 +140,36 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
     // MARK: - Navigation Bar Setup
     
     private func setupNavigationBar() {
-        let isModalRoot = navigationController?.viewControllers.first === self
-
-        // Left side: custom stack
-        let addBtn = UIButton(type: .system)
-        addBtn.setImage(UIImage(systemName: "plus"), for: .normal)
-        addBtn.tintColor = .label
-        addBtn.addTarget(self, action: #selector(addManualSensorNote), for: .touchUpInside)
-
-        let shareBtn = UIButton(type: .system)
-        shareBtn.setImage(UIImage(systemName: "square.and.arrow.up"), for: .normal)
-        shareBtn.tintColor = .label
-        shareBtn.addTarget(self, action: #selector(exportSensorHistory), for: .touchUpInside)
-
-        let importBtn = UIButton(type: .system)
-        importBtn.setImage(UIImage(systemName: "square.and.arrow.down"), for: .normal)
-        importBtn.tintColor = .label
-        importBtn.addTarget(self, action: #selector(importSensorHistory), for: .touchUpInside)
-
-        let leftStack = UIStackView(arrangedSubviews: [addBtn, shareBtn, importBtn])
-        leftStack.axis = .horizontal
-        leftStack.alignment = .center
-        leftStack.spacing = 15
-        leftStack.isLayoutMarginsRelativeArrangement = true
-        leftStack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 2, bottom: 0, trailing: 0)
-
-        [addBtn, shareBtn, importBtn].forEach {
-            $0.contentEdgeInsets = UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2)
+        let more = UIBarButtonItem(image: UIImage(systemName: "ellipsis"), menu: UIMenu(children: [
+            UIAction(title: "Lägg till", image: UIImage(systemName: "plus")) { [weak self] _ in
+                self?.addManualSensorNote()
+            },
+            UIAction(title: "Exportera", image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
+                self?.exportSensorHistory()
+            },
+            UIAction(title: "Importera", image: UIImage(systemName: "square.and.arrow.down")) { [weak self] _ in
+                self?.importSensorHistory()
+            }
+        ]))
+        more.accessibilityLabel = "Fler alternativ"
+        let stats = UIBarButtonItem(image: UIImage(systemName: "chart.bar.xaxis.ascending"),
+                                   style: .plain, target: self, action: #selector(showSessionStats))
+        stats.accessibilityLabel = "Sessionsstatistik"
+        let sites = UIBarButtonItem(image: UIImage(systemName: "figure.stand"),
+                                   style: .plain, target: self, action: #selector(showSiteHistory))
+        sites.accessibilityLabel = "Sitebyten"
+        // UIKit lays out right bar items from right to left.
+        navigationItem.rightBarButtonItems = [more, stats, sites]
+        if navigationController?.viewControllers.first === self {
+            navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Klar", style: .plain,
+                                                               target: self, action: #selector(doneButtonTapped))
         }
+    }
 
-        let leftItem = UIBarButtonItem(customView: leftStack)
-
-        let infoButton = UIBarButtonItem(
-            image: UIImage(systemName: "chart.bar.xaxis.ascending"),
-            style: .plain,
-            target: self,
-            action: #selector(showSessionStats)
-        )
-
-        let doneButton = UIBarButtonItem(
-            title: "Klar",
-            style: .plain,
-            target: self,
-            action: #selector(doneButtonTapped)
-        )
-
-        if isModalRoot {
-            //navigationItem.leftBarButtonItem = leftItem
-            navigationItem.rightBarButtonItems = [doneButton, infoButton, leftItem]
-        } else {
-            navigationItem.leftItemsSupplementBackButton = true
-            //navigationItem.leftBarButtonItems = [leftItem]
-            navigationItem.rightBarButtonItems = [infoButton, leftItem]
-        }
+    @objc private func showSiteHistory() {
+        let controller = UIHostingController(rootView: SiteHistoryView(initialFilter: .sensor))
+        controller.title = "Sitebyten"
+        navigationController?.pushViewController(controller, animated: true)
     }
 
 
@@ -228,6 +206,12 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         sensorHistory = Storage.shared.sensorStartNotes
         sensorHistory.sort { $0.date > $1.date }
         applyFilterAndReload()
+        Task { @MainActor [weak self] in
+            await SiteSessionService.shared.refresh()
+            guard let self else { return }
+            self.sensorHistory = Storage.shared.sensorStartNotes.sorted { $0.date > $1.date }
+            self.applyFilterAndReload()
+        }
     }
 
     private func applyFilterAndReload() {
@@ -324,6 +308,9 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
         composed.append(NSAttributedString(string: "\n", attributes: baseAttrs))
         composed.append(NSAttributedString(string: cleanedNote, attributes: detailsAttrs))
 
+        if let site = entry.site {
+            composed.append(NSAttributedString(string: "\nSite: \(site)", attributes: detailsAttrs))
+        }
         cell.textLabel?.attributedText = composed
         cell.textLabel?.numberOfLines = 0
 
@@ -773,7 +760,7 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
             guard let self = self else { completion(false); return }
             let editVC = AddManualSensorNoteViewController()
             editVC.delegate = self
-            editVC.configureForEditing(entry: entry, index: indexPath.row)
+            editVC.configureForEditing(entry: entry, index: sensorHistory.firstIndex(where: { $0.date == entry.date && $0.note == entry.note }) ?? indexPath.row)
             let nav = UINavigationController(rootViewController: editVC)
             self.present(nav, animated: true)
             completion(true)
@@ -816,6 +803,7 @@ class SensorHistoryViewController: ThemedViewController, UISearchBarDelegate, UI
                 DispatchQueue.main.async {
                     if fileManager.fileExists(atPath: exportURL.path) {
                         let activityVC = UIActivityViewController(activityItems: [exportURL], applicationActivities: nil)
+                        activityVC.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems?.first
                         self.present(activityVC, animated: true)
                     } else {
                         LogManager.shared.log(category: .dexcom, message: "❌ JSON file does not exist at \(exportURL.path)", isDebug: true)
@@ -900,6 +888,13 @@ extension SensorHistoryViewController: UIDocumentPickerDelegate {
                                 updated.sensorErrors = summary
                                 updated.sensorErrorsCalculationVersion = entry.sensorErrorsCalculationVersion
                             }
+                            if entry.site != nil || entry.siteIsManual != nil || entry.siteNoteID != nil {
+                                updated.site = entry.site
+                                updated.siteIsManual = entry.siteIsManual
+                                updated.siteNoteID = entry.siteNoteID
+                                updated.siteNoteDate = entry.siteNoteDate
+                            }
+                            if let summary = entry.siteErrorSummary { updated.siteErrorSummary = summary }
                             updated.retainEarliestTrioSentAt(entry.trioSentAt)
                             storedHistory[idx] = updated
                         } else {
@@ -914,6 +909,7 @@ extension SensorHistoryViewController: UIDocumentPickerDelegate {
                         let current = storedHistory[index]
                         if let previous = previousHistory.first(where: { $0.date == current.date }),
                            previous.sensorUsageWindow(in: previousHistory, now: now) != current.sensorUsageWindow(in: storedHistory, now: now) {
+                            storedHistory[index].siteErrorSummary = nil
                             storedHistory[index].sensorErrors = nil
                             storedHistory[index].sensorErrorsCalculationVersion = nil
                         }

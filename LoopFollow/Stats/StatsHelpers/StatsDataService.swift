@@ -228,6 +228,18 @@ final class StatsCacheManager {
         }
     }
 
+    /// Read-only snapshot for per-pump analytics, using the same basal/bolus source as Statistics.
+    func siteInsulinData() -> SiteInsulinData? {
+        diskLock.lock()
+        defer { diskLock.unlock() }
+        guard let cache = try? readCache() else { return nil }
+        return SiteInsulinData(
+            basal: cache.basal.map { .init(date: $0.date, value: $0.basalRate) }.sorted { $0.date < $1.date },
+            bolus: (cache.bolus + cache.smb).map { .init(date: $0.date, value: $0.value) }.sorted { $0.date < $1.date },
+            availableDays: Set((daysOnDisk ?? [:]).filter { !$0.value.basal.isEmpty }.map { $0.key }),
+            updatedAt: cache.lastUpdated)
+    }
+
     /// MainViewController owns the cumulative history, loaded once before any fetch.
     /// Never merge deleted records back from yesterday's disk snapshot.
     func saveFrom(mainVC: MainViewController) {

@@ -18,6 +18,9 @@ methods = ''.join([
     section(view, '    private func refreshDexcomOutagesCacheIfNeeded', '    private func showSensorErrorAlert('),
     section(view, '    func tableView(_ tableView: UITableView, didSelectRowAt', '    // MARK: - Swipe to Edit/Delete'),
 ]).replace('private func', 'func')
+metric_source = (repo / 'LoopFollow/Views/SiteSessionAnalytics.swift').read_text()
+metric = metric_source[metric_source.index('struct SiteSessionMetric:'):metric_source.index('struct SiteInsulinData')]
+models += metric
 stubs = r'''
 import Foundation
 struct LogManager {
@@ -25,7 +28,15 @@ struct LogManager {
     enum Category { case bluetooth }
     func log(category: Category, message: String) {}
 }
+enum InfoStatusSymbol { case warning, stop }
 struct NightscoutUtils {
+    static func parseISODate(_ raw: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: raw) { return date }
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.date(from: raw)
+    }
     static func parseDate(_ raw: String) -> Date? { TreatmentJSON.parseTrioSentAt(raw) }
 }
 class Storage {
@@ -111,7 +122,7 @@ checks = r'''
         let message = view.messages[0]
         precondition(message.contains("3 st") && message.contains("20 min"))
         precondition(message.contains("Dag 1:   10 min") && message.contains("Dag 2:   10 min"))
-        precondition(view.sessionAppendInfo(forEntry: entry).text.contains("⚠️"), "New errors must update the ongoing row warning")
+        precondition(view.sessionAppendInfo(forEntry: entry).symbols.contains(.warning), "New errors must update the ongoing row warning")
         precondition(view.sensorHistory[0].trioSentAt == nil, "Refresh must replace stale session boundaries")
         precondition(view.tableView.reloads == 2)
         precondition(Storage.shared.sensorStartNotes[0].sensorErrors == nil, "Ongoing summaries must remain live")

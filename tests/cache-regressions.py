@@ -13,6 +13,9 @@ nightscout = nightscout[nightscout.index('struct SGVJSON:'):nightscout.index('//
 nightscout = nightscout.replace('FileManager.default\n            .urls(for: .cachesDirectory, in: .userDomainMask)[0]', 'testRoot')
 stats = (repo / 'LoopFollow/Stats/StatsHelpers/StatsDataService.swift').read_text()
 stats = stats[:stats.index('\nclass StatsDataService {')]
+site_models = (repo / 'LoopFollow/Views/SiteSessionAnalytics.swift').read_text()
+stats += site_models[site_models.index('struct SiteInsulinData'):site_models.index('enum SiteSessionAnalytics')]
+
 fetcher = (repo / 'LoopFollow/Stats/StatsHelpers/StatsDataFetcher.swift').read_text()
 share = (repo / 'LoopFollow/Extensions/ShareClientExtension.swift').read_text()
 share = share[share.index('public struct ShareGlucoseData:'):share.index('private var TrendTable:')]

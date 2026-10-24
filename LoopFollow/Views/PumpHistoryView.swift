@@ -1,4 +1,5 @@
 import UIKit
+import SwiftUI
 import Charts
 import UniformTypeIdentifiers
 
@@ -117,12 +118,19 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
             object: nil
         )
 
+        NotificationCenter.default.addObserver(self, selector: #selector(pumpChangeHistoryUpdated),
+                                               name: NightscoutCache.treatmentsDidChange, object: nil)
         loadPumpHistoryFromStorage()
         fetchInitialPumpChangesIfNeeded()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        loadPumpHistoryFromStorage()
+    }
+
     deinit {
-        NotificationCenter.default.removeObserver(self, name: .pumpChangeHistoryUpdated, object: nil)
+        NotificationCenter.default.removeObserver(self)
     }
 
     @objc private func pumpChangeHistoryUpdated() {
@@ -132,61 +140,36 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
     // MARK: - UI setup
 
     private func setupNavigationBar() {
-        let isModalRoot = navigationController?.viewControllers.first === self
-
-        // --- Left side buttons ---
-        let addBtn = UIButton(type: .system)
-        addBtn.setImage(UIImage(systemName: "plus"), for: .normal)
-        addBtn.tintColor = .label
-        addBtn.addTarget(self, action: #selector(addManualPumpChange), for: .touchUpInside)
-
-        let shareBtn = UIButton(type: .system)
-        shareBtn.setImage(UIImage(systemName: "square.and.arrow.up"), for: .normal)
-        shareBtn.tintColor = .label
-        shareBtn.addTarget(self, action: #selector(exportPumpHistory), for: .touchUpInside)
-
-        let importBtn = UIButton(type: .system)
-        importBtn.setImage(UIImage(systemName: "square.and.arrow.down"), for: .normal)
-        importBtn.tintColor = .label
-        importBtn.addTarget(self, action: #selector(importPumpHistory), for: .touchUpInside)
-
-        let leftStack = UIStackView(arrangedSubviews: [addBtn, shareBtn, importBtn])
-        leftStack.axis = .horizontal
-        leftStack.alignment = .center
-        leftStack.spacing = 15
-        leftStack.isLayoutMarginsRelativeArrangement = true
-        leftStack.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 2, bottom: 0, trailing: 0)
-
-        [addBtn, shareBtn, importBtn].forEach {
-            $0.contentEdgeInsets = UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2)
+        let more = UIBarButtonItem(image: UIImage(systemName: "ellipsis"), menu: UIMenu(children: [
+            UIAction(title: "Lägg till", image: UIImage(systemName: "plus")) { [weak self] _ in
+                self?.addManualPumpChange()
+            },
+            UIAction(title: "Exportera", image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
+                self?.exportPumpHistory()
+            },
+            UIAction(title: "Importera", image: UIImage(systemName: "square.and.arrow.down")) { [weak self] _ in
+                self?.importPumpHistory()
+            }
+        ]))
+        more.accessibilityLabel = "Fler alternativ"
+        let stats = UIBarButtonItem(image: UIImage(systemName: "chart.bar.xaxis.ascending"),
+                                   style: .plain, target: self, action: #selector(showPumpSessionStats))
+        stats.accessibilityLabel = "Sessionsstatistik"
+        let sites = UIBarButtonItem(image: UIImage(systemName: "figure.stand"),
+                                   style: .plain, target: self, action: #selector(showSiteHistory))
+        sites.accessibilityLabel = "Sitebyten"
+        // UIKit lays out right bar items from right to left.
+        navigationItem.rightBarButtonItems = [more, stats, sites]
+        if navigationController?.viewControllers.first === self {
+            navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Klar", style: .plain,
+                                                               target: self, action: #selector(doneTapped))
         }
+    }
 
-        let leftItem = UIBarButtonItem(customView: leftStack)
-
-        let doneBtn = UIBarButtonItem(
-            title: "Klar",
-            style: .plain,
-            target: self,
-            action: #selector(doneTapped)
-        )
-
-        let statsBtn = UIBarButtonItem(
-            image: UIImage(systemName: "chart.bar.xaxis.ascending"),
-            style: .plain,
-            target: self,
-            action: #selector(showPumpSessionStats)
-        )
-
-        if isModalRoot {
-            // Modal: custom buttons replace back button
-            //navigationItem.leftBarButtonItem = []
-            navigationItem.rightBarButtonItems = [doneBtn, statsBtn, leftItem]
-        } else {
-            // Pushed: keep back button, supplement with custom buttons
-            navigationItem.leftItemsSupplementBackButton = true
-            //navigationItem.leftBarButtonItems = []
-            navigationItem.rightBarButtonItems = [statsBtn, leftItem]
-        }
+    @objc private func showSiteHistory() {
+        let controller = UIHostingController(rootView: SiteHistoryView(initialFilter: .pump))
+        controller.title = "Sitebyten"
+        navigationController?.pushViewController(controller, animated: true)
     }
 
     private func setupTableView() {
@@ -273,6 +256,7 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
                 DispatchQueue.main.async {
                     if fileManager.fileExists(atPath: exportURL.path) {
                         let activityVC = UIActivityViewController(activityItems: [exportURL], applicationActivities: nil)
+                        activityVC.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItems?.first
                         self.present(activityVC, animated: true)
                     } else {
                         LogManager.shared.log(category: .treatments, message: "❌ Pump JSON file does not exist at \(exportURL.path)", isDebug: true)
@@ -300,6 +284,12 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
     private func loadPumpHistoryFromStorage() {
         pumpHistory = Storage.shared.pumpChangeHistory.sorted { $0.date > $1.date }
         tableView.reloadData()
+        Task { @MainActor [weak self] in
+            await SiteSessionService.shared.refresh()
+            guard let self else { return }
+            self.pumpHistory = Storage.shared.pumpChangeHistory.sorted { $0.date > $1.date }
+            self.tableView.reloadData()
+        }
     }
 
     // MARK: - Nightscout initial fetch (~90 dagar)
@@ -554,6 +544,9 @@ class PumpHistoryViewController: ThemedViewController, UITableViewDataSource, UI
         composed.append(NSAttributedString(string: "\n", attributes: sessionAttrs))
         composed.append(NSAttributedString(string: "\(entry.pumpModel) startades", attributes: noteBase))
 
+        if let site = entry.site {
+            composed.append(NSAttributedString(string: "\nSite: \(site)", attributes: noteBase))
+        }
         cell.textLabel?.numberOfLines = 0
         cell.textLabel?.attributedText = composed
         
@@ -1101,7 +1094,15 @@ extension PumpHistoryViewController {
                 DispatchQueue.main.async {
                     var storedHistory = Storage.shared.pumpChangeHistory
                     for entry in importedHistory {
-                        if !storedHistory.contains(where: { $0.date == entry.date }) {
+                        if let index = storedHistory.firstIndex(where: { $0.date == entry.date }) {
+                            if entry.site != nil || entry.siteIsManual != nil || entry.siteNoteID != nil {
+                                storedHistory[index].site = entry.site
+                                storedHistory[index].siteIsManual = entry.siteIsManual
+                                storedHistory[index].siteNoteID = entry.siteNoteID
+                                storedHistory[index].siteNoteDate = entry.siteNoteDate
+                            }
+                            if let summary = entry.insulinSummary { storedHistory[index].insulinSummary = summary }
+                        } else {
                             storedHistory.append(entry)
                         }
                     }

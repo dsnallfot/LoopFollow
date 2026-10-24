@@ -8,6 +8,7 @@ protocol AddManualPumpDelegate: AnyObject {
 class AddManualPumpViewController: ThemedViewController {
 
     weak var delegate: AddManualPumpDelegate?
+    private let sitePicker = SiteSelectionButton()
     private var editingIndex: Int?
     private var editingOriginal: PumpChangeHistoryEntry?
 
@@ -15,6 +16,7 @@ class AddManualPumpViewController: ThemedViewController {
         editingIndex = index
         editingOriginal = entry
         if isViewLoaded {
+            sitePicker.configure(site: entry.site)
             datePicker.date = Date(timeIntervalSince1970: entry.date)
             self.title = "Redigera pumpbyte"
             navigationItem.rightBarButtonItem?.title = "Uppdatera"
@@ -39,6 +41,7 @@ class AddManualPumpViewController: ThemedViewController {
         setupNavigationBar()
 
         if let existing = editingOriginal {
+            sitePicker.configure(site: existing.site)
             datePicker.date = Date(timeIntervalSince1970: existing.date)
             self.title = "Redigera pumpbyte"
             navigationItem.rightBarButtonItem?.title = "Uppdatera"
@@ -67,7 +70,21 @@ class AddManualPumpViewController: ThemedViewController {
 
     @objc private func saveTapped() {
         var entry = editingOriginal ?? PumpChangeHistoryEntry(date: datePicker.date.timeIntervalSince1970)
+        if entry.date != datePicker.date.timeIntervalSince1970 {
+            entry.insulinSummary = nil
+            if entry.siteIsManual != true {
+                entry.site = nil
+                entry.siteNoteID = nil
+                entry.siteNoteDate = nil
+            }
+        }
         entry.date = datePicker.date.timeIntervalSince1970
+        if sitePicker.wasEdited {
+            entry.site = sitePicker.selectedSite
+            entry.siteIsManual = true
+            entry.siteNoteID = nil
+            entry.siteNoteDate = nil
+        }
 
         if let idx = editingIndex {
             delegate?.didUpdateManualPumpChange(entry: entry, at: idx)
@@ -79,11 +96,17 @@ class AddManualPumpViewController: ThemedViewController {
 
     private func setupUI() {
         view.addSubview(datePicker)
+        view.addSubview(sitePicker)
+        sitePicker.translatesAutoresizingMaskIntoConstraints = false
         datePicker.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             datePicker.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            datePicker.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20)
+            datePicker.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            sitePicker.topAnchor.constraint(equalTo: datePicker.bottomAnchor, constant: 20),
+            sitePicker.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            sitePicker.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            sitePicker.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
         ])
     }
 }
