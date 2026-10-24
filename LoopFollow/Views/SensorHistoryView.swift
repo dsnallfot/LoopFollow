@@ -895,6 +895,12 @@ extension SensorHistoryViewController: UIDocumentPickerDelegate {
                                 updated.siteNoteDate = entry.siteNoteDate
                             }
                             if let summary = entry.siteErrorSummary { updated.siteErrorSummary = summary }
+                            if let timestamps = entry.suspectedCompressionLows {
+                                updated.suspectedCompressionLows = Array(Set((updated.suspectedCompressionLows ?? []) + timestamps)).sorted()
+                            }
+                            if let observed = entry.compressionLowObservedAt {
+                                updated.compressionLowObservedAt = min(updated.compressionLowObservedAt ?? observed, observed)
+                            }
                             updated.retainEarliestTrioSentAt(entry.trioSentAt)
                             storedHistory[idx] = updated
                         } else {

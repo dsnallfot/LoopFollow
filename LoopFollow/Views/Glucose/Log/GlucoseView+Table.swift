@@ -42,14 +42,16 @@ extension GlucoseView {
             //    cell.textLabel?.text = valueString + " 👐"
             } else if abs(entry.mmol - targetMmol) < 0.02 {
                 cell.textLabel?.text = valueString + " 🎯"
-            } else if isSuspectedCompressionLow(entry: entry) {
-                cell.textLabel?.text = valueString + " 🗜️"
             } else if abs(entry.mmol - 2.2) < 0.04 {
                 cell.textLabel?.text = valueString + " 🆘"
             } else if abs(entry.mmol - 22.2) < 0.04 {
                 cell.textLabel?.text = valueString + " ⚠️"
             } else {
                 cell.textLabel?.text = valueString
+            }
+
+            if isSuspectedCompressionLow(entry: entry) {
+                cell.textLabel?.text = (cell.textLabel?.text ?? valueString) + " 🗜️"
             }
 
             if entry.delayedReading, let sentAt = entry.trioSentAt {

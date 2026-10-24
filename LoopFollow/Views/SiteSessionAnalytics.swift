@@ -123,6 +123,17 @@ struct SiteSessionStatistics {
         }
     }
 
+    func compressionLowCounts(site: HealthLogSite?) -> [Int] {
+        var seen = Set<TimeInterval>()
+        return sensors.compactMap { sensor in
+            guard site == nil || sensor.site == site?.rawValue,
+                  let timestamps = sensor.suspectedCompressionLows,
+                  seen.insert(sensor.usageStartTimestamp).inserted else { return nil }
+            let window = sensor.sensorUsageWindow(in: sensors, now: now)
+            return Set(timestamps.filter { window.contains($0) }).count
+        }
+    }
+
     func sensorMetrics(site: HealthLogSite?) -> [SiteSessionMetric] {
         sensors.compactMap { sensor in
             guard site == nil || sensor.site == site?.rawValue,

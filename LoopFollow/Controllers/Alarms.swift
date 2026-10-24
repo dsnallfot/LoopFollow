@@ -83,7 +83,6 @@ extension MainViewController {
         let latestIOBValue = latestIOB?.value ?? 0.0
         let cobString = latestCOB?.formattedValue() ?? "--"
         
-        let compressionLowDropMultiplier: Float = 2.0
         
         var skipZero = false
         if UserDefaultsRepository.alertIgnoreZero.value && currentBG == 0 {
@@ -112,38 +111,17 @@ extension MainViewController {
             deltas.append(0)
         }
         
-        // Heuristic to detect a suspected compression low (sensor being pressed)
-        var isSuspectedCompressionLow = false
-        if !skipZero {
-            // 1) Current BG is low (at or below the configured low alert threshold)
-            let lowThreshold = UserDefaultsRepository.alertLowBG.value
-            if Float(currentBG) <= lowThreshold {
-                // 2) Latest drop is clearly steeper (>= 100% larger in magnitude) than the previous drops
-                let lastDelta = Float(deltas[0])
-                let previousDelta1 = Float(deltas[1])
-                let previousDelta2 = Float(deltas[2])
-                let previousMaxMagnitude = max(abs(previousDelta1), abs(previousDelta2))
-                
-                // Only consider the pattern if we really have a drop now
-                if lastDelta < 0,
-                   previousMaxMagnitude > 0,
-                   abs(lastDelta) >= previousMaxMagnitude * compressionLowDropMultiplier {
-                    
-                    // 3) IOB is low
-                    if latestIOBValue < 0.3 {
-                        isSuspectedCompressionLow = true
-                        LogManager.shared.log(
-                            category: .alarm,
-                            message: "Suspected compression low. currentBG: \(currentBG), lastDelta: \(lastDelta), prevDeltas: [\(previousDelta1), \(previousDelta2)], IOB: \(latestIOBValue)",
-                            isDebug: true
-                        )
-                    }
-                }
-            }
-        }
-        
-        
+        // Keep the alarm's IOB gate while sharing its glucose criterion with historical analysis.
+        let isSuspectedCompressionLow = !skipZero && latestIOBValue < 0.3 &&
+            SuspectedCompressionLowHistory.matches(current: Double(currentBG), deltas: deltas.map(Double.init),
+                lowThreshold: Double(UserDefaultsRepository.alertLowBG.value))
+
         let currentBGTime = bgs[bgs.count - 1].date
+        if currentBG > 0 {
+            Storage.shared.recordCompressionLowObservation(timestamp: currentBGTime,
+                suspected: isSuspectedCompressionLow,
+                recovered: Float(currentBG) > UserDefaultsRepository.alertLowBG.value, now: now)
+        }
         var numLoops = 0
         var playSound = true
         checkQuietHours()

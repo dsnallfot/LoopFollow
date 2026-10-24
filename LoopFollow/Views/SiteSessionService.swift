@@ -18,12 +18,14 @@ final class SiteSessionService {
                 let sensors = Storage.shared.sensorStartNotes
                 let outages = Storage.shared.dexcomSensorErrorOutagesCache
                 let refreshedAt = Storage.shared.dexcomSensorErrorOutagesRefreshedAt
+                let compressionHistory = Storage.shared.suspectedCompressionLowHistory
                 let result = await worker.refresh(pumps: pumps, sensors: sensors, outages: outages,
-                                                  outagesRefreshedAt: refreshedAt, now: Date())
+                                                  outagesRefreshedAt: refreshedAt, now: Date(), compressionHistory: compressionHistory)
                 guard Self.same(pumps, Storage.shared.pumpChangeHistory),
                       Self.same(sensors, Storage.shared.sensorStartNotes),
                       outages == Storage.shared.dexcomSensorErrorOutagesCache,
-                      refreshedAt == Storage.shared.dexcomSensorErrorOutagesRefreshedAt else { continue }
+                      refreshedAt == Storage.shared.dexcomSensorErrorOutagesRefreshedAt,
+                      compressionHistory == Storage.shared.suspectedCompressionLowHistory else { continue }
                 let changed = !Self.same(pumps, result.pumps) || !Self.same(sensors, result.sensors)
                 if !Self.same(pumps, result.pumps) { Storage.shared.pumpChangeHistory = result.pumps }
                 if !Self.same(sensors, result.sensors) { Storage.shared.sensorStartNotes = result.sensors }
@@ -56,7 +58,8 @@ private actor SiteSessionWorker {
     private var notesKey = ""
 
     func refresh(pumps originalPumps: [PumpChangeHistoryEntry], sensors originalSensors: [SensorStartHistoryEntry],
-                 outages: [DexcomSensorErrorOutageCacheItem], outagesRefreshedAt: Date?, now: Date) -> SiteSessionRefresh {
+                 outages: [DexcomSensorErrorOutageCacheItem], outagesRefreshedAt: Date?, now: Date,
+                 compressionHistory: SuspectedCompressionLowHistory = .init()) -> SiteSessionRefresh {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: now)
         let days = max(1, NightscoutCache.retentionDays)
@@ -79,7 +82,7 @@ private actor SiteSessionWorker {
             notesKey = key
         }
         var pumps = originalPumps
-        var sensors = originalSensors
+        var sensors = compressionHistory.reconciled(originalSensors)
         let pumpLinks = SiteSessionAnalytics.linkedNotes(notes, starts: pumps.map(\.date), kind: .pump)
         let sensorLinks = SiteSessionAnalytics.linkedNotes(notes, starts: sensors.map(\.date), kind: .sensor)
         let insulin = StatsCacheManager.shared.siteInsulinData()

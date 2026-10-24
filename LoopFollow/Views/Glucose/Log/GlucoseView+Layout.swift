@@ -14,6 +14,7 @@ extension GlucoseView {
         reloadButtonView.addTarget(self, action: #selector(refreshButtonTapped), for: .touchUpInside)
         reloadButtonView.frame = CGRect(x: 0, y: 0, width: 32, height: 32)
         reloadButtonView.accessibilityLabel = "Uppdatera glukos"
+        reloadButtonView.accessibilityHint = "Håll inne för att återfylla 90 dagar och beräkna misstänkta compression lows."
 
         let longPress = UILongPressGestureRecognizer(target: self, action: #selector(refreshButtonLongPressed(_:)))
         reloadButtonView.addGestureRecognizer(longPress)

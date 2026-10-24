@@ -36,6 +36,7 @@ class Storage {
     var sensorStartNotes: [SensorStartHistoryEntry] = []
     var dexcomSensorErrorOutagesCache: [DexcomSensorErrorOutageCacheItem] = []
     var dexcomSensorErrorOutagesRefreshedAt: Date?
+    var suspectedCompressionLowHistory = SuspectedCompressionLowHistory()
 }
 struct NightscoutCache {
     static var retentionDays = 91
@@ -211,7 +212,88 @@ func note(_ id: String, _ time: Double, _ value: String, type: String = "Note") 
         approx(stats.sensorDurationDays(site: .leftUpperArm), 1)
         precondition(stats.pumpMetrics(site: .leftThigh).isEmpty)
         approx(SiteSessionAnalytics.dailyAverage(stats.sensorMetrics(site: .leftUpperArm)), 60)
-        print("Site session analytics regressions passed")
+        // Persistent compression-low observations: same reading/restart, episode grouping, recovery,
+        // sensor boundaries, late metadata, zero vs missing history, and site averages.
+        var compression = SuspectedCompressionLowHistory()
+        var observedSensors = [SensorStartHistoryEntry(date: 0, note: "old"), SensorStartHistoryEntry(date: 4000, note: "new")]
+        observedSensors[0].site = "Lår (Höger)"
+        observedSensors[1].site = "Överarm (Vänster)"
+        precondition(compression.observe(timestamp: 1000, suspected: true, recovered: false, now: 1000, sensors: &observedSensors))
+        precondition(!compression.observe(timestamp: 1000, suspected: true, recovered: false, now: 1001, sensors: &observedSensors))
+        compression = try JSONDecoder().decode(SuspectedCompressionLowHistory.self, from: JSONEncoder().encode(compression))
+        precondition(!compression.observe(timestamp: 1000, suspected: true, recovered: false, now: 1001, sensors: &observedSensors))
+        precondition(compression.observe(timestamp: 1300, suspected: true, recovered: false, now: 1300, sensors: &observedSensors))
+        precondition(compression.events.count == 1 && observedSensors[0].suspectedCompressionLows == [1000])
+        precondition(compression.observe(timestamp: 1600, suspected: false, recovered: true, now: 1600, sensors: &observedSensors))
+        precondition(compression.observe(timestamp: 1900, suspected: true, recovered: false, now: 1900, sensors: &observedSensors))
+        precondition(compression.events.count == 2)
+        precondition(compression.observe(timestamp: 3800, suspected: true, recovered: false, now: 3800, sensors: &observedSensors))
+        precondition(compression.events.count == 3, "30 minute gap starts a new episode")
+        precondition(compression.observe(timestamp: 4000, suspected: true, recovered: false, now: 4000, sensors: &observedSensors))
+        precondition(compression.events.count == 4 && observedSensors[1].suspectedCompressionLows == [4000], "new sensor owns exact boundary")
+        precondition(!compression.observe(timestamp: 4300, suspected: true, recovered: false, now: 5000, sensors: &observedSensors))
+        precondition(!compression.observe(timestamp: 6000, suspected: true, recovered: false, now: 5000, sensors: &observedSensors))
+        var late = SuspectedCompressionLowHistory()
+        var missingSensors: [SensorStartHistoryEntry] = []
+        precondition(late.observe(timestamp: 300, suspected: true, recovered: false, now: 300, sensors: &missingSensors))
+        missingSensors = late.reconciled([SensorStartHistoryEntry(date: 0, note: "late")])
+        precondition(missingSensors[0].suspectedCompressionLows == [300])
+        observedSensors.append(SensorStartHistoryEntry(date: 5000, note: "observed zero", site: "Överarm (Vänster)"))
+        precondition(compression.observe(timestamp: 5300, suspected: false, recovered: true, now: 5300, sensors: &observedSensors))
+        precondition(observedSensors[2].suspectedCompressionLows == [])
+        observedSensors.append(SensorStartHistoryEntry(date: -5000, note: "legacy"))
+        let compressionStats = SiteSessionStatistics(pumps: [], sensors: observedSensors, currentPumpMetric: nil, now: Date(timeIntervalSince1970: 5400))
+        precondition(compressionStats.compressionLowCounts(site: nil) == [3, 1, 0])
+        approx(SiteSessionAnalytics.mean(compressionStats.compressionLowCounts(site: .leftUpperArm).map(Double.init)), 0.5)
+        precondition(compressionStats.compressionLowCounts(site: .rightAbdomen).isEmpty)
+        let imported = compression.reconciled(observedSensors)
+        precondition(imported[0].suspectedCompressionLows == [1000, 1900, 3800], "timestamp union prevents double counts")
+        observedSensors[1].trioSentAt = Date(timeIntervalSince1970: 3900)
+        let repaired = compression.reconciled(observedSensors)
+        precondition(repaired[1].suspectedCompressionLows == [4000])
+        let legacySensor = try JSONDecoder().decode(SensorStartHistoryEntry.self, from: Data(#"{"date":0,"note":"legacy"}"#.utf8))
+        precondition(legacySensor.suspectedCompressionLows == nil)
+        let persistedSensor = try JSONDecoder().decode(SensorStartHistoryEntry.self, from: JSONEncoder().encode(imported[0]))
+        precondition(persistedSensor.suspectedCompressionLows == imported[0].suspectedCompressionLows)
+
+        var legacyHistory = try JSONDecoder().decode(SuspectedCompressionLowHistory.self, from:
+            Data(#"{"events":[{"timestamp":300,"lastDetectedAt":300},{"timestamp":900,"lastDetectedAt":900}],"lastReading":900,"episodeActive":true}"#.utf8))
+        var legacySessions = [SensorStartHistoryEntry(date: 0, note: "legacy")]
+        legacyHistory.mergeHistorical([.init(timestamp: 1200, suspected: false, recovered: true, live: false)], sensors: &legacySessions)
+        precondition(legacyHistory.events.count == 2, "migration retains previously distinct episodes")
+        let samples = [100, 98, 94, 70, 40, 110, 108, 104, 70].enumerated().map {
+            SGVJSON(date: Double($0.offset) * 300, sgv: $0.element)
+        }
+        let calculated = SuspectedCompressionLowHistory.calculateSuspectedCompressionLows(samples.reversed() + samples,
+            from: 900, to: 2400, lowThreshold: 75)
+        precondition(calculated.filter(\.suspected).map(\.timestamp) == [900, 2400])
+        precondition(SuspectedCompressionLowHistory.calculateSuspectedCompressionLows(samples,
+            from: 900, to: 2400, lowThreshold: 60).filter(\.suspected).isEmpty)
+        let gapped = [SGVJSON(date: 0, sgv: 100), SGVJSON(date: 300, sgv: 98),
+                      SGVJSON(date: 600, sgv: 94), SGVJSON(date: 2000, sgv: 70)]
+        precondition(SuspectedCompressionLowHistory.calculateSuspectedCompressionLows(gapped,
+            from: 0, to: 2400, lowThreshold: 75).isEmpty, "do not infer drops over missing data")
+        var backfilled = SuspectedCompressionLowHistory()
+        var sessions = [SensorStartHistoryEntry(date: 0, note: "first"), SensorStartHistoryEntry(date: 2000, note: "second")]
+        backfilled.mergeHistorical(calculated, sensors: &sessions)
+        precondition(sessions[0].suspectedCompressionLows == [900] && sessions[1].suspectedCompressionLows == [2400])
+        let firstPass = backfilled
+        backfilled.mergeHistorical(calculated, sensors: &sessions)
+        precondition(firstPass == backfilled, "repeat backfill is idempotent")
+        precondition(backfilled.observe(timestamp: 2400, suspected: false, recovered: false, now: 2400, sensors: &sessions))
+        backfilled.mergeHistorical(calculated, sensors: &sessions)
+        precondition(!backfilled.hitTimestamps.contains(2400), "live IOB veto survives later backfill")
+        precondition(sessions[1].suspectedCompressionLows == [], "a removed candidate cannot survive in the session attribute")
+        backfilled = try JSONDecoder().decode(SuspectedCompressionLowHistory.self, from: JSONEncoder().encode(backfilled))
+        precondition(backfilled.hitTimestamps == [900])
+        // A newly found earlier hit merges an existing episode, without leaving its old start counted.
+        var merged = SuspectedCompressionLowHistory()
+        var oneSensor = [SensorStartHistoryEntry(date: 0, note: "one")]
+        _ = merged.observe(timestamp: 1200, suspected: true, recovered: false, now: 1200, sensors: &oneSensor)
+        merged.mergeHistorical([.init(timestamp: 900, suspected: true, recovered: false, live: false)], sensors: &oneSensor)
+        precondition(merged.events.count == 1 && oneSensor[0].suspectedCompressionLows == [900])
+        precondition(Set(merged.hitTimestamps) == [900, 1200], "all hit readings get markers but only one episode is counted")
+        print("Site session analytics and compression-low regressions passed")
     }
 }
 '''
@@ -220,7 +302,9 @@ with tempfile.TemporaryDirectory(prefix='site-sessions-') as directory:
     source = directory / 'checks.swift'
     source.write_text(stubs + json_models + models + read('LoopFollow/Remote/TRC/HealthLoggingRules.swift')
                       + read('LoopFollow/Views/SiteHistoryRules.swift') + read('LoopFollow/Stats/StatsHelpers/StatsBasalEngine.swift')
-                      + read('LoopFollow/Views/SiteSessionAnalytics.swift') + read('LoopFollow/Views/SiteSessionService.swift') + checks)
+                      + read('LoopFollow/Views/SiteSessionAnalytics.swift')
+                      + section('LoopFollow/Controllers/SuspectedCompressionLowTracker.swift', 'struct SuspectedCompressionLowHistory:', 'extension Storage')
+                      + read('LoopFollow/Views/SiteSessionService.swift') + checks)
     binary = directory / 'checks'
     subprocess.run(['xcrun', 'swiftc', '-parse-as-library', '-swift-version', '5', '-module-cache-path', '/tmp/site-session-test-modules', str(source), '-o', str(binary)], check=True)
     subprocess.run([str(binary)], check=True)

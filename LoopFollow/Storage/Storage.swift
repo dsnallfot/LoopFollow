@@ -120,6 +120,9 @@ struct SensorStartHistoryEntry: Codable, Equatable {
     var siteNoteID: String?
     var siteNoteDate: TimeInterval?
     var siteErrorSummary: SiteSessionMetric?
+    /// nil = no observations; [] = observed with no suspected events.
+    var suspectedCompressionLows: [TimeInterval]?
+    var compressionLowObservedAt: TimeInterval?
 
     var usageStartTimestamp: TimeInterval { trioSentAt?.timeIntervalSince1970 ?? date }
 

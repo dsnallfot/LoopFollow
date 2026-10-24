@@ -39,8 +39,12 @@ struct SiteHistoryView: View {
                             .font(.caption).foregroundStyle(.secondary)
                     }
 
+                    Divider()
                     statistics
-                    if filter != .all { sessionStatisticsSection }
+                    if filter != .all {
+                        Divider()
+                        sessionStatisticsSection
+                    }
 
                 }
                 .padding()
@@ -75,13 +79,20 @@ struct SiteHistoryView: View {
                 Spacer()
                 if isLoading { ProgressView().accessibilityLabel("Läser siteloggar") }
             }
+            SiteComparisonChart(bars: countBars, unit: "Antal", decimals: 0, isLoading: isLoading, selectedSite: selectedSite)
             VStack(spacing: 0) {
-                countRow("Alla siteloggar", count: summary.entries.count)
-                Divider()
-                countRow("Pumpsiteloggar", count: summary.pumpCount)
-                Divider()
-                countRow("Sensorsiteloggar", count: summary.sensorCount)
-                Divider()
+                if filter == .all {
+                    countRow("Alla siteloggar", count: summary.entries.count)
+                    Divider()
+                }
+                if filter != .sensor {
+                    countRow("Pumpsiteloggar", count: summary.pumpCount)
+                    Divider()
+                }
+                if filter != .pump {
+                    countRow("Sensorsiteloggar", count: summary.sensorCount)
+                    Divider()
+                }
                 countRow(selectedSite?.rawValue ?? "Välj en site i figuren",
                          count: selectedSite.map { summary.count(at: $0) })
             }
@@ -95,42 +106,119 @@ struct SiteHistoryView: View {
         }
     }
 
-    private var sessionStatisticsSection: some View {
-        let pump = filter == .pump
-        let allMetrics = pump ? sessionStatistics?.pumpMetrics(site: nil) ?? [] : sessionStatistics?.sensorMetrics(site: nil) ?? []
-        let siteMetrics = selectedSite.map { site in
-            pump ? sessionStatistics?.pumpMetrics(site: site) ?? [] : sessionStatistics?.sensorMetrics(site: site) ?? []
-        } ?? []
-        let allDuration = pump ? sessionStatistics?.pumpDurationHours(site: nil) : sessionStatistics?.sensorDurationDays(site: nil)
-        let siteDuration = selectedSite.flatMap { site in
-            pump ? sessionStatistics?.pumpDurationHours(site: site) : sessionStatistics?.sensorDurationDays(site: site)
+    private var countBars: [SiteComparisonBar] {
+        var bars: [SiteComparisonBar]
+        switch filter {
+        case .all:
+            bars = [.init(label: "Total", value: Double(summary.entries.count)),
+                    .init(label: "Pumpar", value: Double(summary.pumpCount)),
+                    .init(label: "Sensorer", value: Double(summary.sensorCount))]
+        case .pump: bars = [.init(label: "Alla pumpar", value: Double(summary.pumpCount))]
+        case .sensor: bars = [.init(label: "Alla sensorer", value: Double(summary.sensorCount))]
         }
+        return bars + HealthLogSite.allCases.compactMap { site in
+            let count = summary.count(at: site)
+            return count > 0 ? SiteComparisonBar(site: site, value: Double(count)) : nil
+        }
+    }
+
+    private func comparisonBars(_ value: (HealthLogSite?) -> Double?) -> [SiteComparisonBar] {
+        var bars: [SiteComparisonBar] = []
+        if let total = value(nil) {
+            bars.append(.init(label: filter == .pump ? "Alla pumpar" : "Alla sensorer", value: total))
+        }
+        bars += HealthLogSite.allCases.compactMap { site in
+            value(site).map { SiteComparisonBar(site: site, value: $0) }
+        }
+        return bars
+    }
+
+    private func duration(at site: HealthLogSite?) -> Double? {
+        filter == .pump ? sessionStatistics?.pumpDurationHours(site: site) : sessionStatistics?.sensorDurationDays(site: site)
+    }
+
+    private func dailyMetrics(at site: HealthLogSite?) -> [SiteSessionMetric] {
+        filter == .pump ? sessionStatistics?.pumpMetrics(site: site) ?? [] : sessionStatistics?.sensorMetrics(site: site) ?? []
+    }
+
+    private func compressionCounts(at site: HealthLogSite?) -> [Int] {
+        sessionStatistics?.compressionLowCounts(site: site) ?? []
+    }
+
+    private var sessionStatisticsSection: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            durationSection
+            Divider()
+            dailyMetricSection
+            if filter == .sensor {
+                Divider()
+                compressionSection
+            }
+        }
+    }
+
+    private var durationSection: some View {
+        let pump = filter == .pump
         return VStack(alignment: .leading, spacing: 10) {
-            Text("Sessionsstatistik").font(.headline)
+            Text("Sessioner").font(.headline)
+            SiteComparisonChart(bars: comparisonBars { duration(at: $0) },
+                unit: pump ? "Timmar" : "Dagar", decimals: pump ? 0 : 1, isLoading: isLoading, selectedSite: selectedSite)
             VStack(spacing: 0) {
-                metricRow("Medel sessionslängd (Alla)", value: allDuration, unit: pump ? "h" : "dagar", decimals: pump ? 0 : 1)
+                metricRow("Medel sessionslängd (Alla)", value: duration(at: nil), unit: pump ? "h" : "dagar", decimals: pump ? 0 : 1)
                 Divider()
-                metricRow(pump ? "TDD (Alla)" : "Medel sensorfel/dag (Alla)",
-                          value: SiteSessionAnalytics.dailyAverage(allMetrics), unit: pump ? "E" : "min", decimals: pump ? 1 : 0)
-                Divider()
-                metricRow("\(selectedSite?.rawValue ?? "Vald site") sessionslängd", value: siteDuration,
-                          unit: pump ? "h" : "dagar", decimals: pump ? 0 : 1)
-                Divider()
-                metricRow("\(selectedSite?.rawValue ?? "Vald site") \(pump ? "TDD" : "sensorfel/dag")",
-                          value: SiteSessionAnalytics.dailyAverage(siteMetrics), unit: pump ? "E" : "min", decimals: pump ? 1 : 0)
+                metricRow("\(selectedSite?.rawValue ?? "Vald site") sessionslängd",
+                    value: selectedSite.flatMap { duration(at: $0) }, unit: pump ? "h" : "dagar", decimals: pump ? 0 : 1)
             }
             .background(Color(.systemGray).opacity(0.15), in: RoundedRectangle(cornerRadius: 14))
-            Text("Sessionslängd gäller avslutade sessioner i sparad historik, även de utan site. Dygnsvärden är tidsvägda och kräver tillgängligt underlag. – betyder att underlag eller site-val saknas.")
+            Text("Medellängd för avslutade sessioner. Alla omfattar även sessioner utan angiven site. – betyder att underlag eller site-val saknas.")
                 .font(.caption).foregroundStyle(.secondary)
-            Text("\(pump ? "TDD" : "Sensorfel"): \(allMetrics.count) sessioner totalt, \(siteMetrics.count) för vald site.")
-                .font(.caption).foregroundStyle(.secondary)
-            if pump {
-                Text("TDD = basal + bolus/SMB per 24 timmar. Pågående pump ingår preliminärt när underlag finns. Underlaget hämtas från den lokala statistikcachen.")
-                    .font(.caption).foregroundStyle(.secondary)
-            } else {
-                Text("Sensorfel gäller avslutade sessioner med verifierade feltider och täckning för hela sessionen. Äldre textsammanfattningar räknas inte som numeriskt underlag.")
-                    .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private var dailyMetricSection: some View {
+        let pump = filter == .pump
+        let allMetrics = dailyMetrics(at: nil)
+        let siteMetrics = selectedSite.map { dailyMetrics(at: $0) } ?? []
+        return VStack(alignment: .leading, spacing: 10) {
+            Text(pump ? "TDD" : "Sensorfel").font(.headline)
+            SiteComparisonChart(bars: comparisonBars { SiteSessionAnalytics.dailyAverage(dailyMetrics(at: $0)) },
+                unit: pump ? "E/dygn" : "Min/dag", decimals: pump ? 1 : 0, isLoading: isLoading, selectedSite: selectedSite)
+            VStack(spacing: 0) {
+                metricRow(pump ? "TDD (Alla)" : "Medel sensorfel/dag (Alla)",
+                    value: SiteSessionAnalytics.dailyAverage(allMetrics), unit: pump ? "E" : "min", decimals: pump ? 1 : 0)
+                Divider()
+                metricRow("\(selectedSite?.rawValue ?? "Vald site") \(pump ? "TDD" : "sensorfel/dag")",
+                    value: SiteSessionAnalytics.dailyAverage(siteMetrics), unit: pump ? "E" : "min", decimals: pump ? 1 : 0)
             }
+            .background(Color(.systemGray).opacity(0.15), in: RoundedRectangle(cornerRadius: 14))
+            Text("Tidsvägda dygnsmedelvärden: \(allMetrics.count) sessioner totalt, \(siteMetrics.count) för vald site.")
+                .font(.caption).foregroundStyle(.secondary)
+            Text(pump
+                 ? "TDD = basal + bolus + SMB per 24 timmar. Pågående pump ingår preliminärt när underlag finns. Underlaget hämtas från den lokala statistikcachen."
+                 : "Sensorfel gäller avslutade sessioner med verifierade feltider och täckning för hela sessionen. Äldre textsammanfattningar räknas inte som numeriskt underlag.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private var compressionSection: some View {
+        let allCounts = compressionCounts(at: nil)
+        let siteCounts = selectedSite.map { compressionCounts(at: $0) } ?? []
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("Compression lows").font(.headline)
+            SiteComparisonChart(bars: comparisonBars { SiteSessionAnalytics.mean(compressionCounts(at: $0).map(Double.init)) },
+                unit: "Antal/session", decimals: 1, isLoading: isLoading, selectedSite: selectedSite)
+            VStack(spacing: 0) {
+                metricRow("Comp. low (Alla)", value: allCounts.isEmpty ? nil : Double(allCounts.reduce(0, +)), unit: "st", decimals: 0)
+                Divider()
+                metricRow("Comp. low \(selectedSite?.rawValue ?? "Vald site")", value: siteCounts.isEmpty ? nil : Double(siteCounts.reduce(0, +)), unit: "st", decimals: 0)
+                Divider()
+                metricRow("Per session (Alla)", value: SiteSessionAnalytics.mean(allCounts.map(Double.init)), unit: "st", decimals: 1)
+                Divider()
+                metricRow("Per session (\(selectedSite?.rawValue ?? "Vald site"))", value: SiteSessionAnalytics.mean(siteCounts.map(Double.init)), unit: "st", decimals: 1)
+            }
+            .background(Color(.systemGray).opacity(0.15), in: RoundedRectangle(cornerRadius: 14))
+            Text("Comp. low är misstänkta episoder, inte bekräftade sensorfel. Historisk återfyllning använder glukosmönstret utan IOB-kontroll; nya larmträffar använder även aktuellt IOB. Medelvärdet omfattar \(allCounts.count) observerade sessioner, varav \(siteCounts.count) på vald site. Pågående och delvis observerade sessioner ingår; äldre sessioner utan insamling ingår inte.")
+                .font(.caption).foregroundStyle(.secondary)
         }
     }
 
@@ -154,6 +242,125 @@ struct SiteHistoryView: View {
         }
         .padding(.horizontal, 14).padding(.vertical, 11)
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Category labels are independent of the selected body region: every chart compares all available sites.
+private struct SiteComparisonBar: Identifiable {
+    let label: String
+    let value: Double
+    var id: String { label }
+    var site: HealthLogSite? { HealthLogSite(rawValue: label) }
+    var shortLabel: String {
+        label.replacingOccurrences(of: " (Höger)", with: "\nHöger")
+            .replacingOccurrences(of: " (Vänster)", with: "\nVänster")
+            .replacingOccurrences(of: "Alla ", with: "Alla\n")
+    }
+
+    init(label: String, value: Double) { self.label = label; self.value = value }
+    init(site: HealthLogSite, value: Double) { self.init(label: site.rawValue, value: value) }
+}
+
+/// Lightweight SwiftUI chart, avoiding the app's legacy Charts module name collision with Swift Charts.
+private struct SiteComparisonChart: View {
+    let bars: [SiteComparisonBar]
+    let unit: String
+    let decimals: Int
+    let isLoading: Bool
+    let selectedSite: HealthLogSite?
+    private let plotHeight: CGFloat = 200
+
+    private var tickStep: Double {
+        let raw = max(bars.map(\.value).max() ?? 0, 1) / 4
+        let magnitude = pow(10, floor(log10(raw)))
+        let normalized = raw / magnitude
+        let step = (normalized <= 1 ? 1.0 : normalized <= 2 ? 2.0 : normalized <= 5 ? 5.0 : 10.0) * magnitude
+        return decimals == 0 ? max(1, step) : step
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(unit).font(.caption).foregroundStyle(.secondary)
+            if isLoading {
+                ProgressView("Läser statistik…").frame(maxWidth: .infinity).frame(height: 240)
+            } else if bars.isEmpty {
+                Text("Inget beräkningsunderlag ännu")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity).frame(height: 160)
+            } else {
+                GeometryReader { geometry in
+                    let width = max(geometry.size.width - 52, CGFloat(bars.count) * 68)
+                    HStack(alignment: .top, spacing: 8) {
+                        ZStack(alignment: .trailing) {
+                            ForEach(0...4, id: \.self) { tick in
+                                Text(String(format: "%.*f", decimals == 0 ? 0 : (tickStep < 1 ? 1 : 0), Double(tick) * tickStep))
+                                    .font(.caption2).monospacedDigit()
+                                    .position(x: 22, y: plotHeight - CGFloat(tick) / 4 * plotHeight)
+                            }
+                        }
+                        .foregroundStyle(.secondary)
+                        .frame(width: 44, height: plotHeight)
+                        .accessibilityHidden(true)
+
+                        ScrollView(.horizontal) {
+                            VStack(spacing: 0) {
+                                ZStack(alignment: .bottom) {
+                                    ForEach(0...4, id: \.self) { tick in
+                                        Path { path in
+                                            let y = plotHeight - CGFloat(tick) / 4 * plotHeight
+                                            path.move(to: CGPoint(x: 0, y: y))
+                                            path.addLine(to: CGPoint(x: width, y: y))
+                                        }
+                                        .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                                    }
+                                    HStack(alignment: .bottom, spacing: 0) {
+                                        ForEach(Array(bars.enumerated()), id: \.element.id) { index, bar in
+                                            RoundedRectangle(cornerRadius: 4)
+                                                .fill(Color(hue: 0.76, saturation: 0.72 - Double(index) * 0.045,
+                                                            brightness: 0.65 + Double(index) * 0.04))
+                                                .opacity(selectedSite == nil || bar.site == selectedSite ? 1 : 0.4)
+                                                .frame(width: 30, height: max(2, CGFloat(bar.value / (tickStep * 4)) * plotHeight))
+                                                .overlay {
+                                                    RoundedRectangle(cornerRadius: 4)
+                                                        .stroke(selectedSite != nil && bar.site == selectedSite ? Color.accentColor : .clear, lineWidth: 3)
+                                                }
+                                                .overlay(alignment: .top) {
+                                                    Text(String(format: "%.*f", decimals, bar.value))
+                                                        .font(.caption2).monospacedDigit().fixedSize()
+                                                        .offset(y: -18)
+                                                }
+                                                .frame(maxWidth: .infinity, alignment: .bottom)
+                                                .accessibilityElement(children: .ignore)
+                                                .accessibilityLabel(bar.label)
+                                                .accessibilityAddTraits(selectedSite != nil && bar.site == selectedSite ? .isSelected : [])
+                                                .accessibilityValue(String(format: "%.*f %@", decimals, bar.value, unit))
+                                        }
+                                    }
+                                }
+                                .frame(height: plotHeight)
+                                HStack(alignment: .top, spacing: 0) {
+                                    ForEach(bars) { bar in
+                                        Text(bar.shortLabel).font(.caption2)
+                                            .fontWeight(selectedSite != nil && bar.site == selectedSite ? .bold : .regular)
+                                            .foregroundStyle(selectedSite != nil && bar.site == selectedSite ? Color.accentColor : .primary)
+                                            .multilineTextAlignment(.center)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                            .frame(maxWidth: .infinity)
+                                            .accessibilityHidden(true)
+                                    }
+                                }
+                                .padding(.top, 8)
+                            }
+                            .padding(.top, 20)
+                            .frame(width: width)
+                        }
+                        .padding(.top, -20)
+                    }
+                }
+                .frame(height: 264)
+            }
+        }
+        .padding(.top, 12)
     }
 }
 

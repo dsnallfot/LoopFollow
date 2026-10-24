@@ -17,7 +17,7 @@ extension GlucoseView {
     }
 
     @objc func refreshButtonLongPressed(_ recognizer: UILongPressGestureRecognizer) {
-        guard recognizer.state == .began else { return }
+        guard recognizer.state == .began, !isCompressionBackfillRunning else { return }
 
         showRefreshIndicator()
         if dataMode == .sensorErrors {
@@ -28,11 +28,32 @@ extension GlucoseView {
             }
             return
         }
+        isCompressionBackfillRunning = true
         Task {
             await backfillLastDays(initialBackfillDays)
-            await MainActor.run {
-                self.loadBG(for: self.selectedDate)
-            }
+            let end = Date()
+            let start = end.addingTimeInterval(-90 * 24 * 3600)
+            let threshold = Double(UserDefaultsRepository.alertLowBG.value)
+            let observations = await Task.detached(priority: .utility) {
+                let (readings, _) = await NightscoutCache.loadWindow(from: start.addingTimeInterval(-30 * 60), to: end)
+                return SuspectedCompressionLowHistory.calculateSuspectedCompressionLows(readings,
+                    from: start.timeIntervalSince1970, to: end.timeIntervalSince1970, lowThreshold: threshold)
+            }.value
+            // Read current storage after the await so live detections and edits during the scan are retained.
+            var history = Storage.shared.suspectedCompressionLowHistory
+            var sensors = Storage.shared.sensorStartNotes
+            history.mergeHistorical(observations, sensors: &sensors)
+            Storage.shared.suspectedCompressionLowHistory = history
+            Storage.shared.sensorStartNotes = sensors
+            NotificationCenter.default.post(name: SiteSessionService.didUpdate, object: nil)
+            isCompressionBackfillRunning = false
+            self.loadBG(for: self.selectedDate)
+            let message = observations.isEmpty
+                ? "Det finns inte tillräckligt med sammanhängande glukosdata att analysera. Befintliga träffar finns kvar."
+                : "Analyserade \(observations.count) glukosvärden från de senaste 90 dagarnas tillgängliga data. 🗜️ visar misstänkta träffar; sitestatistiken räknar sammanhängande episoder. Historiken använder glukosmönstret och din nuvarande låggräns, utan kontroll av historiskt IOB."
+            let alert = UIAlertController(title: "Återfyllning av comp. low", message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            if self.viewIfLoaded?.window != nil, self.presentedViewController == nil { self.present(alert, animated: true) }
         }
     }
 

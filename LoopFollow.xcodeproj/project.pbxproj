@@ -248,6 +248,7 @@
 		AF51EE250000000000000010 /* SiteSessionAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF51EE250000000000000000 /* SiteSessionAnalytics.swift */; };
 		AF51EE250000000000000011 /* SiteSessionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF51EE250000000000000001 /* SiteSessionService.swift */; };
 		AF51EE250000000000000012 /* SiteSelectionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF51EE250000000000000002 /* SiteSelectionButton.swift */; };
+		AF51EE260000000000000001 /* SuspectedCompressionLowTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF51EE260000000000000000 /* SuspectedCompressionLowTracker.swift */; };
 		AF9AA6F440DD29E5A71AC79F /* DailyStatsAveragesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8D5B9FECE08781975F73ED /* DailyStatsAveragesView.swift */; };
 		B3C3A2B57C9B3A3184808D9B /* ProfileSchedulesView+ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63B9AB09DD8ADC1C18CC6C98 /* ProfileSchedulesView+ChartData.swift */; };
 		B3CC2E9DD89C56E451A81DCD /* GlucoseStatsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE1DA4A768C40370D634A338 /* GlucoseStatsViewController.swift */; };
@@ -832,6 +833,7 @@
 		AF51EE250000000000000000 /* SiteSessionAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteSessionAnalytics.swift; sourceTree = "<group>"; };
 		AF51EE250000000000000001 /* SiteSessionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteSessionService.swift; sourceTree = "<group>"; };
 		AF51EE250000000000000002 /* SiteSelectionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteSelectionButton.swift; sourceTree = "<group>"; };
+		AF51EE260000000000000000 /* SuspectedCompressionLowTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuspectedCompressionLowTracker.swift; sourceTree = "<group>"; };
 		B04F8CA9CB690D162D4A5666 /* TreatmentsTableView+Details.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TreatmentsTableView+Details.swift"; sourceTree = "<group>"; };
 		B0E6836F88802B9F5E37B15C /* Value1TableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Value1TableViewCell.swift; sourceTree = "<group>"; };
 		B170EDB204752212C8002F11 /* UserProfileImageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileImageManager.swift; sourceTree = "<group>"; };
@@ -2302,6 +2304,7 @@
 			children = (
 				DD7E19802ACDA0EA00DBD158 /* Nightscout */,
 				FC16A97C24996747003D6245 /* Alarms.swift */,
+				AF51EE260000000000000000 /* SuspectedCompressionLowTracker.swift */,
 				15D048BDD829414B9686D470 /* AlarmKit/LoopFollowAlarmKit.swift */,
 				D96C0B7F105742ABA046EB57 /* AlarmKit/AlarmKitSettings.swift */,
 				FC7CE589248ABEA3001F83B8 /* AlarmSound.swift */,
@@ -2998,6 +3001,7 @@
 				C3446EA976E973B0869E85D4 /* ProfileSchedulesViewModel+Training.swift in Sources */,
 				DD9ACA042D32821400415D8A /* DeviceStatusTask.swift in Sources */,
 				FC16A97D24996747003D6245 /* Alarms.swift in Sources */,
+				AF51EE260000000000000001 /* SuspectedCompressionLowTracker.swift in Sources */,
 				F79546CD774347D5B8953378 /* AlarmKit/LoopFollowAlarmKit.swift in Sources */,
 				7C3A08FF386D4066A4A2FFD3 /* AlarmKit/AlarmKitSettings.swift in Sources */,
 				6508DEBE2EDF1419009F84FE /* NightscoutDayReportViewController.swift in Sources */,

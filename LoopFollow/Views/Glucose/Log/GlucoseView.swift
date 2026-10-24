@@ -20,6 +20,16 @@ final class GlucoseView: ThemedViewController, UITableViewDataSource, UITableVie
     /// Dexcom+Nightscout-mergade värden för vald dag.
     var allValuesDayEntries: [Reading] = []
 
+    var compressionHitSeconds: Set<Int> = []
+    var isCompressionBackfillRunning = false
+
+    @objc func compressionHistoryChanged() {
+        compressionHitSeconds = Set(Storage.shared.suspectedCompressionLowHistory.hitTimestamps.map { Int($0.rounded()) })
+        tableView.reloadData()
+    }
+
+    deinit { NotificationCenter.default.removeObserver(self) }
+
     var dataMode: GlucoseDataMode = .allValues
 
     // How many days back the manual backfill refresh should fetch (used by reload button)
@@ -99,6 +109,9 @@ final class GlucoseView: ThemedViewController, UITableViewDataSource, UITableVie
         setupTableView()
         setupHeader()
         setupConstraints()
+        compressionHistoryChanged()
+        NotificationCenter.default.addObserver(self, selector: #selector(compressionHistoryChanged),
+            name: SiteSessionService.didUpdate, object: nil)
 
         // Date picker bounds roughly follow NS-only glucose cache retention
         let cal = Calendar.current
@@ -126,6 +139,7 @@ final class GlucoseView: ThemedViewController, UITableViewDataSource, UITableVie
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        compressionHistoryChanged()
 
         Task {
             // Always keep NS-only cache fresh for last 24h when opening the view
