@@ -134,6 +134,27 @@ struct SiteSessionStatistics {
         }
     }
 
+    /// Time-weighted episode rate. Do not dilute a partially collected session with
+    /// time before its first observation, or treat a session without collection as zero.
+    func compressionLowsPerDay(site: HealthLogSite?) -> Double? {
+        var seen = Set<TimeInterval>()
+        var seconds: TimeInterval = 0
+        var count = 0
+        for sensor in sensors {
+            guard site == nil || sensor.site == site?.rawValue,
+                  let timestamps = sensor.suspectedCompressionLows,
+                  let observedAt = sensor.compressionLowObservedAt, observedAt.isFinite,
+                  seen.insert(sensor.usageStartTimestamp).inserted else { continue }
+            let window = sensor.sensorUsageWindow(in: sensors, now: now)
+            let start = max(window.lowerBound, observedAt)
+            let end = window.upperBound
+            guard start.isFinite, end.isFinite, end > start else { continue }
+            seconds += end - start
+            count += Set(timestamps.filter { $0 >= start && $0 < end }).count
+        }
+        return seconds > 0 ? Double(count) * 86400 / seconds : nil
+    }
+
     func sensorMetrics(site: HealthLogSite?) -> [SiteSessionMetric] {
         sensors.compactMap { sensor in
             guard site == nil || sensor.site == site?.rawValue,

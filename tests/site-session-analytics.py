@@ -246,6 +246,26 @@ func note(_ id: String, _ time: Double, _ value: String, type: String = "Note") 
         precondition(compressionStats.compressionLowCounts(site: nil) == [3, 1, 0])
         approx(SiteSessionAnalytics.mean(compressionStats.compressionLowCounts(site: .leftUpperArm).map(Double.init)), 0.5)
         precondition(compressionStats.compressionLowCounts(site: .rightAbdomen).isEmpty)
+        // Rates use summed exposure, not an unweighted mean of per-session rates.
+        let day: Double = 86400
+        let rateSensors = [
+            SensorStartHistoryEntry(date: 0, note: "short", site: "Lår (Höger)",
+                suspectedCompressionLows: [100, 200, 200], compressionLowObservedAt: 0),
+            SensorStartHistoryEntry(date: day, note: "long", site: "Lår (Vänster)",
+                suspectedCompressionLows: [day+100, day+200, day+300, day+400, day+500, day+600], compressionLowObservedAt: day),
+            SensorStartHistoryEntry(date: 4*day, note: "partial zero", site: "Lår (Höger)",
+                suspectedCompressionLows: [], compressionLowObservedAt: 5*day),
+            SensorStartHistoryEntry(date: 6*day, note: "unknown", site: "Lår (Höger)")
+        ]
+        let rates = SiteSessionStatistics(pumps: [], sensors: rateSensors, currentPumpMetric: nil, now: Date(timeIntervalSince1970: 7*day))
+        approx(rates.compressionLowsPerDay(site: nil), 8.0 / 5.0)
+        approx(rates.compressionLowsPerDay(site: .leftThigh), 2)
+        approx(rates.compressionLowsPerDay(site: .rightThigh), 1)
+        precondition(rates.compressionLowsPerDay(site: .leftUpperArm) == nil)
+        let justStarted = SiteSessionStatistics(pumps: [], sensors: [rateSensors[0]], currentPumpMetric: nil, now: Date(timeIntervalSince1970: 0))
+        precondition(justStarted.compressionLowsPerDay(site: nil) == nil)
+        let ongoing = SiteSessionStatistics(pumps: [], sensors: [rateSensors[0]], currentPumpMetric: nil, now: Date(timeIntervalSince1970: day / 2))
+        approx(ongoing.compressionLowsPerDay(site: nil), 4)
         let imported = compression.reconciled(observedSensors)
         precondition(imported[0].suspectedCompressionLows == [1000, 1900, 3800], "timestamp union prevents double counts")
         observedSensors[1].trioSentAt = Date(timeIntervalSince1970: 3900)

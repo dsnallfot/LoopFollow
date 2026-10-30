@@ -184,8 +184,8 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
             // Bakgrundsaktivitet, Sensorbyten synk, Fjärrkommandon inställningar, Kalender, Apple Watch
             return 5
         case .systemLog:
-            // Se dagens logg, Dela logg
-            return 2
+            // Se dagens logg, Se gårdagens logg, Dela logg
+            return 3
         case .appInfo:
             return appInfoRows.count
         }
@@ -302,6 +302,9 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
             let cell = tableView.dequeueReusableCell(withIdentifier: "SystemLogCell") ?? UITableViewCell(style: .default, reuseIdentifier: "SystemLogCell")
             if indexPath.row == 0 {
                 cell.textLabel?.text = "Se dagens logg"
+                cell.accessoryType = .disclosureIndicator
+            } else if indexPath.row == 1 {
+                cell.textLabel?.text = "Se gårdagens logg"
                 cell.accessoryType = .disclosureIndicator
             } else {
                 cell.textLabel?.text = "Dela logg"
@@ -544,6 +547,10 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
                 // Se dagens logg
                 let controller = makeLogViewController()
                 navigationController?.pushViewController(controller, animated: true)
+            } else if indexPath.row == 1 {
+                guard let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) else { return }
+                let controller = makeLogViewController(logDate: yesterday)
+                navigationController?.pushViewController(controller, animated: true)
             } else {
                 // Dela logg
                 shareLogs()
@@ -729,8 +736,8 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
     }
 
     @available(iOS 26.0, *)
-    private func makeLogViewController() -> UIViewController {
-        let viewModel = LogViewModel()
+    private func makeLogViewController(logDate: Date? = nil) -> UIViewController {
+        let viewModel = LogViewModel(logDate: logDate)
 
         let isDark = UserDefaultsRepository.forceDarkMode.value || self.traitCollection.userInterfaceStyle == .dark
         let logView = LogView(viewModel: viewModel, onDone: { [weak self] in
@@ -740,7 +747,7 @@ class SettingsViewController: ThemedViewController, NightscoutSettingsViewModelD
             .environment(\.colorScheme, isDark ? .dark : .light)
 
         let hostingController = UIHostingController(rootView: logView)
-        hostingController.title = "Dagens logg"
+        hostingController.title = logDate == nil ? "Dagens logg" : "Gårdagens logg"
         hostingController.overrideUserInterfaceStyle = isDark ? .dark : self.traitCollection.userInterfaceStyle
         hostingController.hidesBottomBarWhenPushed = false
         return hostingController

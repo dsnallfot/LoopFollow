@@ -4,6 +4,9 @@ import Foundation
 import Combine
 
 class LogViewModel: ObservableObject {
+    @Published var statisticsLogEntries: [LogEntry] = []
+    let logDate: Date?
+
     @Published var allLogEntries: [LogEntry] = []
     @Published var filteredLogEntries: [LogEntry] = []
     @Published var selectedCategory: LogManager.Category? = nil
@@ -30,12 +33,15 @@ class LogViewModel: ObservableObject {
     }
 
     private var cancellables = Set<AnyCancellable>()
+    private let historicalLogFileURL: URL?
 
     /// Hårt tak för hur många loggrader vi visar (nyaste först).
     /// Du kan justera den här uppåt/nedåt om du vill.
     private let maxDisplayedLines = 5000
 
-    init() {
+    init(logDate: Date? = nil) {
+        self.logDate = logDate
+        historicalLogFileURL = logDate.map { LogManager.shared.logFileURL(for: $0) }
         let defaults = UserDefaults.standard
 
         // Restore selected category from UserDefaults, if any
@@ -78,12 +84,14 @@ class LogViewModel: ObservableObject {
             .store(in: &cancellables)
 
         // ⚡️ Throttle/debounce logguppdateringar så vi inte läser filen 50 ggr/sek
-        LogManager.shared.logUpdateSubject
-            .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
-            .sink { [weak self] in
-                self?.loadLogEntries()
-            }
-            .store(in: &cancellables)
+        if historicalLogFileURL == nil {
+            LogManager.shared.logUpdateSubject
+                .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
+                .sink { [weak self] in
+                    self?.loadLogEntries()
+                }
+                .store(in: &cancellables)
+        }
 
         // Initial inläsning
         loadLogEntries()
@@ -93,10 +101,11 @@ class LogViewModel: ObservableObject {
         DispatchQueue.global(qos: .background).async { [weak self] in
             guard let self = self else { return }
             let logManager = LogManager.shared
-            let logFileURL = logManager.currentLogFileURL
+            let logFileURL = self.historicalLogFileURL ?? logManager.currentLogFileURL
 
             guard FileManager.default.fileExists(atPath: logFileURL.path) else {
                 DispatchQueue.main.async {
+                    self.statisticsLogEntries = []
                     self.allLogEntries = []
                     self.filteredLogEntries = []
                 }
@@ -113,6 +122,8 @@ class LogViewModel: ObservableObject {
                     .enumerated()
                     .filter { !$0.element.isEmpty }   // släng tomma
 
+                let statisticsEntries = enumeratedLines.map { LogEntry(id: $0.offset, text: $0.element) }
+
                 // Behåll bara de senaste maxDisplayedLines raderna (baserat på filens naturliga ordning)
                 if enumeratedLines.count > maxDisplayedLines {
                     enumeratedLines = Array(enumeratedLines.suffix(maxDisplayedLines))
@@ -127,6 +138,7 @@ class LogViewModel: ObservableObject {
                 let newestFirst = Array(entriesForward.reversed())
 
                 DispatchQueue.main.async {
+                    self.statisticsLogEntries = statisticsEntries
                     self.allLogEntries = newestFirst
                     // Kör om filtreringen med nuvarande inställningar
                     self.filterLogs(category: self.selectedCategory,
@@ -136,6 +148,7 @@ class LogViewModel: ObservableObject {
             } catch {
                 print("Error reading log file: \(error)")
                 DispatchQueue.main.async {
+                    self.statisticsLogEntries = []
                     self.allLogEntries = []
                     self.filteredLogEntries = []
                 }

@@ -205,19 +205,19 @@ struct SiteHistoryView: View {
         let siteCounts = selectedSite.map { compressionCounts(at: $0) } ?? []
         return VStack(alignment: .leading, spacing: 10) {
             Text("Compression lows").font(.headline)
-            SiteComparisonChart(bars: comparisonBars { SiteSessionAnalytics.mean(compressionCounts(at: $0).map(Double.init)) },
-                unit: "Antal/session", decimals: 1, isLoading: isLoading, selectedSite: selectedSite)
+            SiteComparisonChart(bars: comparisonBars { sessionStatistics?.compressionLowsPerDay(site: $0) },
+                unit: "Antal/dygn", decimals: 2, isLoading: isLoading, selectedSite: selectedSite)
             VStack(spacing: 0) {
                 metricRow("Comp. low (Alla)", value: allCounts.isEmpty ? nil : Double(allCounts.reduce(0, +)), unit: "st", decimals: 0)
                 Divider()
                 metricRow("Comp. low \(selectedSite?.rawValue ?? "Vald site")", value: siteCounts.isEmpty ? nil : Double(siteCounts.reduce(0, +)), unit: "st", decimals: 0)
                 Divider()
-                metricRow("Per session (Alla)", value: SiteSessionAnalytics.mean(allCounts.map(Double.init)), unit: "st", decimals: 1)
+                metricRow("Per dygn (Alla)", value: sessionStatistics?.compressionLowsPerDay(site: nil), unit: "st", decimals: 2)
                 Divider()
-                metricRow("Per session (\(selectedSite?.rawValue ?? "Vald site"))", value: SiteSessionAnalytics.mean(siteCounts.map(Double.init)), unit: "st", decimals: 1)
+                metricRow("Per dygn (\(selectedSite?.rawValue ?? "Vald site"))", value: selectedSite.flatMap { sessionStatistics?.compressionLowsPerDay(site: $0) }, unit: "st", decimals: 2)
             }
             .background(Color(.systemGray).opacity(0.15), in: RoundedRectangle(cornerRadius: 14))
-            Text("Comp. low är misstänkta episoder, inte bekräftade sensorfel. Historisk återfyllning använder glukosmönstret utan IOB-kontroll; nya larmträffar använder även aktuellt IOB. Medelvärdet omfattar \(allCounts.count) observerade sessioner, varav \(siteCounts.count) på vald site. Pågående och delvis observerade sessioner ingår; äldre sessioner utan insamling ingår inte.")
+            Text("Comp. low är misstänkta episoder, inte bekräftade sensorfel. Historisk återfyllning använder glukosmönstret utan IOB-kontroll; nya larmträffar använder även aktuellt IOB. Antal/dygn = totalt antal episoder delat med sammanlagd tid i dygn. Tiden räknas från första registrerade observationen i varje session till nästa sensorbyte, eller nu för pågående sensor. Sessioner utan känd observationsstart ingår inte i dygnsmedelvärdet.")
                 .font(.caption).foregroundStyle(.secondary)
         }
     }
@@ -293,7 +293,7 @@ private struct SiteComparisonChart: View {
                     HStack(alignment: .top, spacing: 8) {
                         ZStack(alignment: .trailing) {
                             ForEach(0...4, id: \.self) { tick in
-                                Text(String(format: "%.*f", decimals == 0 ? 0 : (tickStep < 1 ? 1 : 0), Double(tick) * tickStep))
+                                Text(String(format: "%.*f", decimals, Double(tick) * tickStep))
                                     .font(.caption2).monospacedDigit()
                                     .position(x: 22, y: plotHeight - CGFloat(tick) / 4 * plotHeight)
                             }

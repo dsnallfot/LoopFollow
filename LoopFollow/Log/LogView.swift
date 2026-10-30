@@ -144,12 +144,13 @@ struct LogView: View {
             LogViewChart(
                 title: chartTitle,
                 // För special-statistik vill vi utgå från "hela" loggen (inte nödvändigtvis bara sökträffarna).
-                allLogEntries: viewModel.allLogEntries,
+                allLogEntries: viewModel.statisticsLogEntries,
+                logDate: viewModel.logDate,
                 series: series
             )
         }
         .sheet(isPresented: $isHeartbeatPresented) {
-            HeartbeatView()
+            HeartbeatView(logDate: viewModel.logDate)
                 .presentationBackground(
                     LinearGradient(
                         colors: ThemedViewController.themeGradientColors(intensity: 1.0).map { Color($0) },
@@ -164,8 +165,10 @@ struct LogView: View {
 
 @available(iOS 16.0, *)
 private struct HeartbeatView: UIViewControllerRepresentable {
+    let logDate: Date?
+
     func makeUIViewController(context: Context) -> UINavigationController {
-        let vc = HeartbeatStatsViewController()
+        let vc = HeartbeatStatsViewController(logDate: logDate)
         let nav = UINavigationController(rootViewController: vc)
         
         // Gör navigation controllern helt transparent så att sheet-bakgrunden syns igenom
@@ -236,6 +239,8 @@ private final class HeartbeatStatsViewController: ThemedTableViewController {
         }
     }
 
+    private let logDate: Date?
+    private var selectedDate: Date { logDate ?? Date() }
     private let expectedPerDay = 288
     private var selectedPeriod: PeriodOption = .d7
     private var selectedValues: [DayValue] = []
@@ -289,7 +294,8 @@ private final class HeartbeatStatsViewController: ThemedTableViewController {
         return formatter
     }()
 
-    init() {
+    init(logDate: Date?) {
+        self.logDate = logDate
         super.init(style: .insetGrouped)
     }
 
@@ -390,7 +396,7 @@ private final class HeartbeatStatsViewController: ThemedTableViewController {
 
     private func buildValues(daysBack: Int) -> [DayValue] {
         let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
+        let today = calendar.startOfDay(for: selectedDate)
         let historyByDate = Dictionary(
             uniqueKeysWithValues: Storage.shared.bluetoothPingDailyHistory.map { ($0.date, $0.count) }
         )
@@ -487,12 +493,9 @@ private final class HeartbeatStatsViewController: ThemedTableViewController {
 
         switch row {
         case .today:
-            let todayString = dayFormatter.string(from: Date())
-            let todayCount = Storage.shared.bluetoothPingCurrentDate.value == todayString
-                ? Storage.shared.bluetoothPingCurrentCount.value
-                : 0
-            let expected = expectedHeartbeats(for: Date())
-            return countExpectedPercentText(count: todayCount, expected: expected)
+            guard let value = selectedValues.last else { return "–" }
+            let expected = expectedHeartbeats(for: value.date)
+            return countExpectedPercentText(count: value.count, expected: expected)
 
         case .average:
             let activeValues = selectedValues.filter { $0.count > 0 }
@@ -585,7 +588,7 @@ private final class HeartbeatStatsViewController: ThemedTableViewController {
         cell.detailTextLabel?.font = .monospacedDigitSystemFont(ofSize: 17, weight: .regular)
 
         let row = StatRow.allCases[indexPath.row]
-        cell.textLabel?.text = row.label
+        cell.textLabel?.text = row == .today && logDate != nil ? "Heartbeats igår" : row.label
         cell.detailTextLabel?.text = valueText(for: row)
 
         return cell
@@ -683,6 +686,9 @@ private final class HeartbeatBarMarkerView: MarkerView {
 private struct LogViewChart: View {
     let title: String
     let allLogEntries: [LogEntry]
+    let logDate: Date?
+    private var selectedDate: Date { logDate ?? Date() }
+    private var dayLabel: String { logDate == nil ? "idag" : "igår" }
     struct Series: Identifiable {
         let id: Int
         let label: String
@@ -701,9 +707,8 @@ private struct LogViewChart: View {
     }
 
     private var pointsBySeries: [(series: Series, points: [ChartPoint])] {
-        let now = Date()
         let calendar = Calendar.current
-        let dayStart = calendar.startOfDay(for: now)
+        let dayStart = calendar.startOfDay(for: selectedDate)
         let nextDayStart = calendar.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart.addingTimeInterval(24 * 3600)
 
         // Datumformatter för loggens prefix: [HH:mm:ss]
@@ -725,7 +730,7 @@ private struct LogViewChart: View {
                 return nil
             }
 
-            // Kombinera tid med dagens datum
+            // Kombinera tid med den valda loggdagens datum
             let comps = calendar.dateComponents([.hour, .minute, .second], from: timeOnly)
             guard var combined = calendar.date(byAdding: comps, to: todayStart) else {
                 return nil
@@ -759,7 +764,7 @@ private struct LogViewChart: View {
         let value: String
     }
 
-    private func parseTimeToday(from line: String, calendar: Calendar, todayStart: Date, dayStart: Date, nextDayStart: Date, timeFormatter: DateFormatter) -> Date? {
+    private func parseLogTime(from line: String, calendar: Calendar, todayStart: Date, dayStart: Date, nextDayStart: Date, timeFormatter: DateFormatter) -> Date? {
         // Förväntat format: "[21:34:12] ..."
         guard let firstOpen = line.firstIndex(of: "["),
               let firstClose = line[firstOpen...].firstIndex(of: "]") else {
@@ -771,7 +776,7 @@ private struct LogViewChart: View {
             return nil
         }
 
-        // Kombinera tid med dagens datum
+        // Kombinera tid med den valda loggdagens datum
         let comps = calendar.dateComponents([.hour, .minute, .second], from: timeOnly)
         guard let combined = calendar.date(byAdding: comps, to: todayStart) else {
             return nil
@@ -788,7 +793,7 @@ private struct LogViewChart: View {
     private var specialStatsRows: [StatRow] {
         let now = Date()
         let calendar = Calendar.current
-        let dayStart = calendar.startOfDay(for: now)
+        let dayStart = calendar.startOfDay(for: selectedDate)
         let nextDayStart = calendar.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart.addingTimeInterval(24 * 3600)
 
         // Datumformatter för loggens prefix: [HH:mm:ss]
@@ -798,12 +803,12 @@ private struct LogViewChart: View {
 
         let todayStart = dayStart
 
-        // 1) BLE Ping lyckades: räkna faktiska loggar med "Bluetooth ping received" inom dagens intervall
+        // 1) BLE Ping lyckades: räkna faktiska loggar med "Bluetooth ping received" inom den valda loggdagens intervall
         let pingNeedle = "Bluetooth ping received"
 
         let pingActual = allLogEntries.reduce(into: 0) { acc, entry in
             guard entry.text.localizedCaseInsensitiveContains(pingNeedle) else { return }
-            guard let d = parseTimeToday(from: entry.text,
+            guard let d = parseLogTime(from: entry.text,
                                          calendar: calendar,
                                          todayStart: todayStart,
                                          dayStart: dayStart,
@@ -814,8 +819,8 @@ private struct LogViewChart: View {
             acc += 1
         }
 
-        // 2) Förväntade: 1 per 5-minutersfönster från midnatt till NU
-        let elapsed = max(0, now.timeIntervalSince(dayStart))
+        // 2) Förväntade: 1 per 5 minuter, hela dygnet för historiska loggar.
+        let elapsed = max(0, min(now, nextDayStart).timeIntervalSince(dayStart))
         let expected = max(1, Int(elapsed / 300.0) )//+ 1)
 
         let percent: Double = expected > 0 ? (Double(pingActual) / Double(expected)) * 100.0 : 0
@@ -823,11 +828,11 @@ private struct LogViewChart: View {
 
         let pingValue = "\(pingActual)/\(expected) (\(percentString))"
 
-        // 3) Antal omstarter: räkna loggar med "App started" idag
+        // 3) Antal omstarter i den valda loggfilen.
         let restartNeedle = "App started"
         let restartCount = allLogEntries.reduce(into: 0) { acc, entry in
             guard entry.text.localizedCaseInsensitiveContains(restartNeedle) else { return }
-            guard let d = parseTimeToday(from: entry.text,
+            guard let d = parseLogTime(from: entry.text,
                                          calendar: calendar,
                                          todayStart: todayStart,
                                          dayStart: dayStart,
@@ -839,14 +844,14 @@ private struct LogViewChart: View {
 
         let restartValue = "\(restartCount) st"
         
-        // 4) Antal errors: räkna loggar med "error" och/eller "failed" idag
+        // 4) Antal loggrader med "error" och/eller "failed" i den valda loggfilen.
         let errorNeedle1 = "error"
         let errorNeedle2 = "failed"
         let errorCount = allLogEntries.reduce(into: 0) { acc, entry in
             let text = entry.text
             guard text.localizedCaseInsensitiveContains(errorNeedle1)
                     || text.localizedCaseInsensitiveContains(errorNeedle2) else { return }
-            guard let d = parseTimeToday(from: text,
+            guard let d = parseLogTime(from: text,
                                          calendar: calendar,
                                          todayStart: todayStart,
                                          dayStart: dayStart,
@@ -880,20 +885,20 @@ private struct LogViewChart: View {
                                 .foregroundColor(.secondary)
                                 .padding(.horizontal)
                         } else {
-                            ScatterLogChartView(series: pointsBySeries)
+                            ScatterLogChartView(series: pointsBySeries, logDate: selectedDate)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 480)
                                 .padding(.horizontal)
                             HStack{
                                 Spacer()
-                                Text("Y-axel: minut i timmen (0–60)   •   X-axel: 00:00 → 24:00 (idag)")
+                                Text("Y-axel: minut i timmen (0–60)   •   X-axel: 00:00 → 24:00 (\(dayLabel))")
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                                     .padding(.leading, 8)
                                     .padding(.bottom, 20)
                                 Spacer()
                             }
-                            Text("Systemstatus idag")
+                            Text("Systemstatus \(dayLabel)")
                                 .font(.headline)
                                 .fontWeight(.semibold)
                                 .foregroundColor(.secondary)
@@ -942,6 +947,7 @@ private struct LogViewChart: View {
 @available(iOS 16.0, *)
 private struct ScatterLogChartView: UIViewRepresentable {
     let series: [(series: LogViewChart.Series, points: [LogViewChart.ChartPoint])]
+    let logDate: Date
 
     func makeUIView(context: Context) -> ScatterChartView {
         let chartView = ScatterChartView()
@@ -1010,7 +1016,7 @@ private struct ScatterLogChartView: UIViewRepresentable {
             return
         }
 
-        let end = Date()
+        let end = logDate
 
         // Viktigt: ordna serierna så att de ritas i rätt "lager" (0 underst, 1 mitten, 2 överst)
         let orderedSeries = series.sorted(by: { $0.series.id < $1.series.id })
