@@ -134,9 +134,31 @@ extension MainViewController {
         }
     }
     
+    private func updateTrioDosingMode(_ rawMode: String?) {
+        guard let rawMode, !rawMode.isEmpty else {
+            infoManager.setPriority(false, for: .trioDosingMode)
+            infoManager.clearInfoData(type: .trioDosingMode)
+            return
+        }
+
+        let dosingMode: String
+        switch rawMode {
+        case "closed": dosingMode = "Sluten"
+        case "open": dosingMode = "Öppen"
+        case "lowGlucoseSuspend": dosingMode = "Låg susp"
+        case "basalTesting": dosingMode = "Basaltest"
+        default: dosingMode = "Okänt läge"
+        }
+        infoManager.updateInfoData(type: .trioDosingMode, value: dosingMode)
+        infoManager.setPriority(rawMode != "closed", for: .trioDosingMode)
+    }
+
     // NS Device Status Response Processor
     func updateDeviceStatusDisplay(jsonDeviceStatus: [[String:AnyObject]]) {
         infoManager.clearInfoData(types: [.iob, .cob, .override, .battery, .pump, .target, .isf, .carbRatio, .updated, .recBolus, .tdd])
+
+        let openAPS = jsonDeviceStatus.first?["openaps"] as? [String: AnyObject]
+        updateTrioDosingMode(openAPS?["dosingMode"] as? String)
 
         if jsonDeviceStatus.count == 0 {
             LogManager.shared.log(category: .deviceStatus, message: "Device status is empty")
@@ -432,7 +454,7 @@ extension MainViewController {
         }
 
         // OpenAPS - handle new data
-        if let lastLoopRecord = lastDeviceStatus?["openaps"] as! [String : AnyObject]? {
+        if let lastLoopRecord = openAPS {
             DeviceStatusOpenAPS(formatter: formatter, lastDeviceStatus: lastDeviceStatus, lastLoopRecord: lastLoopRecord)
         }
 
