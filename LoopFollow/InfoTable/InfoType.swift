@@ -69,7 +69,7 @@ enum InfoType: Int, CaseIterable {
         case .latestRestart: return "Trio upptid"
         case .activeAlarms: return "Trio larm"
         case .snoozedUntil: return "Trio snoozad"
-        case .trioDosingMode: return "Trio Loop"
+        case .trioDosingMode: return "Trio läge"
         }
     }
 

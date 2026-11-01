@@ -143,9 +143,9 @@ extension MainViewController {
 
         let dosingMode: String
         switch rawMode {
-        case "closed": dosingMode = "Sluten"
-        case "open": dosingMode = "Öppen"
-        case "lowGlucoseSuspend": dosingMode = "Låg susp"
+        case "closed": dosingMode = "Sluten loop"
+        case "open": dosingMode = "Öppen loop"
+        case "lowGlucoseSuspend": dosingMode = "Låg suspend"
         case "basalTesting": dosingMode = "Basaltest"
         default: dosingMode = "Okänt läge"
         }
