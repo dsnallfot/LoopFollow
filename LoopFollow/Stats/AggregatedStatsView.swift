@@ -482,6 +482,7 @@ struct StatCard: View {
     var tooltipCurrent: Double? = nil
     var tooltipPrevious: Double? = nil
     var periodLabel: String? = nil
+    var tooltipFractionDigits: Int = 1
     @Binding var showAllTooltips: Bool
     @Binding var tooltipResetToken: Int
 
@@ -593,15 +594,14 @@ struct StatCard: View {
 
     private var tooltipValuePair: (prev: Double, curr: Double)? {
         if let current = tooltipCurrent,
-           let previous = tooltipPrevious,
-           previous != 0 {
+           let previous = tooltipPrevious {
             return (previous, current)
         }
         return nil
     }
 
     private var tooltipPercentChangeText: String? {
-        guard let pair = tooltipValuePair else { return nil }
+        guard let pair = tooltipValuePair, pair.prev != 0 else { return nil }
         let pct = (pair.curr - pair.prev) / pair.prev * 100.0
         
         let rawLabel = periodLabel ?? "fg period"
@@ -627,15 +627,18 @@ struct StatCard: View {
     
     private func tooltipChangeString(for pair: (prev: Double, curr: Double)) -> String {
         if let unit = unit {
-            return String(format: "%.1f ⇢ %.1f %@", pair.prev, pair.curr, unit)
+            return String(format: "%.*f ⇢ %.*f %@", tooltipFractionDigits, pair.prev, tooltipFractionDigits, pair.curr, unit)
         } else {
-            return String(format: "%.1f ⇢ %.1f", pair.prev, pair.curr)
+            return String(format: "%.*f ⇢ %.*f", tooltipFractionDigits, pair.prev, tooltipFractionDigits, pair.curr)
         }
     }
 }
 
 struct StatsGridView: View {
     @ObservedObject var simpleStats: SimpleStatsViewModel
+    @AppStorage("AggregatedStatsShowPumpCommands") private var showPumpCommands = false
+    @AppStorage("AggregatedStatsShowNetMealBolus") private var showNetMealBolus = false
+    @AppStorage("AggregatedStatsShowMeanSMB") private var showMeanSMB = false
     @Binding var showGMI: Bool
     @Binding var showStdDev: Bool
     @Binding var showAvgGlucose: Bool
@@ -755,18 +758,22 @@ struct StatsGridView: View {
                 .buttonStyle(PlainButtonStyle())
                 
                 if hasCarbData {
-                    StatCard(
-                        title: "Verklig insulinkvot",
-                        value: formatCarbRatio(simpleStats.realCarbRatio),
-                        unit: "g/E",
-                        color: .mint,
-                        trendArrow: showTrends ? simpleStats.realCarbRatioTrend : nil,
-                        tooltipCurrent: simpleStats.realCarbRatio,
-                        tooltipPrevious: simpleStats.prevRealCarbRatio,
-                        periodLabel: periodLabel,
-                        showAllTooltips: $showAllTooltips,
-                        tooltipResetToken: $tooltipResetToken
-                    )
+                    Button(action: { showNetMealBolus.toggle() }) {
+                        StatCard(
+                            title: showNetMealBolus ? "Måltidsbolus Netto" : "Verklig insulinkvot",
+                            value: showNetMealBolus ? formatInsulin(simpleStats.netMealBolus) : formatCarbRatio(simpleStats.realCarbRatio),
+                            unit: showNetMealBolus ? (isTodayOnly || isOneDayOnly ? "E" : "E/dag") : "g/E",
+                            color: .mint,
+                            isInteractive: true,
+                            trendArrow: showTrends ? (showNetMealBolus ? simpleStats.netMealBolusTrend : simpleStats.realCarbRatioTrend) : nil,
+                            tooltipCurrent: showNetMealBolus ? simpleStats.netMealBolus : simpleStats.realCarbRatio,
+                            tooltipPrevious: showNetMealBolus ? simpleStats.prevNetMealBolus : simpleStats.prevRealCarbRatio,
+                            periodLabel: periodLabel,
+                            showAllTooltips: $showAllTooltips,
+                            tooltipResetToken: $tooltipResetToken
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 } else {
                     Color.clear
                         .frame(maxWidth: .infinity)
@@ -775,18 +782,23 @@ struct StatsGridView: View {
             // Insulin total & Kolhydrater Hstack
             HStack(spacing: 16) {
                 if hasInsulinData {
-                    StatCard(
-                        title: isTodayOnly ? "Insulin Totalt" : "Insulin Totalt (TDD)",
-                        value: formatInsulin(simpleStats.totalDailyDose),
-                        unit: isTodayOnly || isOneDayOnly ? "E" : "E/dag",
-                        color: .blue,
-                        trendArrow: showTrends ? simpleStats.totalDailyDoseTrend : nil,
-                        tooltipCurrent: simpleStats.totalDailyDose,
-                        tooltipPrevious: simpleStats.prevTotalDailyDose,
-                        periodLabel: periodLabel,
-                        showAllTooltips: $showAllTooltips,
-                        tooltipResetToken: $tooltipResetToken
-                    )
+                    Button(action: { showPumpCommands.toggle() }) {
+                        StatCard(
+                            title: showPumpCommands ? "Antal Pumpkommandon" : (isTodayOnly ? "Insulin Totalt" : "Insulin Totalt (TDD)"),
+                            value: showPumpCommands ? formatCarbs(simpleStats.pumpCommandsPerDay) : formatInsulin(simpleStats.totalDailyDose),
+                            unit: showPumpCommands ? "st/dag" : (isTodayOnly || isOneDayOnly ? "E" : "E/dag"),
+                            color: .blue,
+                            isInteractive: true,
+                            trendArrow: showTrends ? (showPumpCommands ? simpleStats.pumpCommandsPerDayTrend : simpleStats.totalDailyDoseTrend) : nil,
+                            tooltipCurrent: showPumpCommands ? simpleStats.pumpCommandsPerDay : simpleStats.totalDailyDose,
+                            tooltipPrevious: showPumpCommands ? simpleStats.prevPumpCommandsPerDay : simpleStats.prevTotalDailyDose,
+                            periodLabel: periodLabel,
+                            tooltipFractionDigits: showPumpCommands ? 0 : 1,
+                            showAllTooltips: $showAllTooltips,
+                            tooltipResetToken: $tooltipResetToken
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
                 if hasCarbData {
                     Button(action: {
@@ -814,8 +826,8 @@ struct StatsGridView: View {
                 }
             }
         
-            // Bolus total & Måltidsbolus Hstack
-            if hasInsulinData && hasCarbData {
+            // Bolus total & Manuell Bolus/SMB Hstack
+            if hasInsulinData {
                 HStack(spacing: 16) {
                     StatCard(
                         title: "Bolus Totalt",
@@ -829,22 +841,31 @@ struct StatsGridView: View {
                         showAllTooltips: $showAllTooltips,
                         tooltipResetToken: $tooltipResetToken
                     )
-                    StatCard(
-                        title: "Måltidsbolus Netto",
-                        value: formatInsulin(simpleStats.netMealBolus),
-                        unit: isTodayOnly || isOneDayOnly ? "E" : "E/dag",
-                        color: .mint,
-                        trendArrow: showTrends ? simpleStats.netMealBolusTrend : nil,
-                        tooltipCurrent: simpleStats.netMealBolus,
-                        tooltipPrevious: simpleStats.prevNetMealBolus,
-                        periodLabel: periodLabel,
-                        showAllTooltips: $showAllTooltips,
-                        tooltipResetToken: $tooltipResetToken
-                    )
+                    Button(action: {
+                        showSMB.toggle()
+                        Storage.shared.showSMB.value = showSMB
+                    }) {
+                        StatCard(
+                            title: showSMB ? "SMB" : "Manuell Bolus",
+                            value: formatInsulin(showSMB ? simpleStats.avgSMB : simpleStats.avgManualBolus),
+                            unit: isTodayOnly || isOneDayOnly ? "E" : "E/dag",
+                            color: showSMB ? .cyan : .indigo,
+                            isInteractive: true,
+                            trendArrow: showTrends
+                                ? (showSMB ? simpleStats.avgSMBTrend : simpleStats.avgManualBolusTrend)
+                                : nil,
+                            tooltipCurrent: showSMB ? simpleStats.avgSMB : simpleStats.avgManualBolus,
+                            tooltipPrevious: showSMB ? simpleStats.prevAvgSMB : simpleStats.prevAvgManualBolus,
+                            periodLabel: periodLabel,
+                            showAllTooltips: $showAllTooltips,
+                            tooltipResetToken: $tooltipResetToken
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
             
-            // Basal & Bolus Hstack
+            // Basal & SMB-statistik Hstack
             if hasInsulinData {
                 HStack(spacing: 16) {
                     Button(action: {
@@ -869,22 +890,18 @@ struct StatsGridView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                     
-                    Button(action: {
-                        showSMB.toggle()
-                        Storage.shared.showSMB.value = showSMB
-                    }) {
+                    Button(action: { showMeanSMB.toggle() }) {
                         StatCard(
-                            title: showSMB ? "SMB" : "Manuell Bolus",
-                            value: formatInsulin(showSMB ? simpleStats.avgSMB : simpleStats.avgManualBolus),
-                            unit: isTodayOnly || isOneDayOnly ? "E" : "E/dag",
-                            color: showSMB ? .cyan : .indigo,
+                            title: showMeanSMB ? "Medel SMB" : "Antal SMB",
+                            value: showMeanSMB ? formatInsulin(simpleStats.meanSMB) : formatCarbs(simpleStats.smbCountPerDay),
+                            unit: showMeanSMB ? "E" : "st/dag",
+                            color: .cyan,
                             isInteractive: true,
-                            trendArrow: showTrends
-                                ? (showSMB ? simpleStats.avgSMBTrend : simpleStats.avgManualBolusTrend)
-                                : nil,
-                            tooltipCurrent: showSMB ? simpleStats.avgSMB : simpleStats.avgManualBolus,
-                            tooltipPrevious: showSMB ? simpleStats.prevAvgSMB : simpleStats.prevAvgManualBolus,
+                            trendArrow: showTrends ? (showMeanSMB ? simpleStats.meanSMBTrend : simpleStats.smbCountPerDayTrend) : nil,
+                            tooltipCurrent: showMeanSMB ? simpleStats.meanSMB : simpleStats.smbCountPerDay,
+                            tooltipPrevious: showMeanSMB ? simpleStats.prevMeanSMB : simpleStats.prevSMBCountPerDay,
                             periodLabel: periodLabel,
+                            tooltipFractionDigits: showMeanSMB ? 2 : 0,
                             showAllTooltips: $showAllTooltips,
                             tooltipResetToken: $tooltipResetToken
                         )

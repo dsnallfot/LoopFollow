@@ -50,6 +50,17 @@ class SimpleStatsViewModel: ObservableObject {
     @Published var avgSMB: Double?
     @Published var avgSMBTrend: StatsTrendArrow = .none
 
+    @Published var pumpCommandsPerDay: Double?
+    @Published var prevPumpCommandsPerDay: Double?
+    @Published var pumpCommandsPerDayTrend: StatsTrendArrow = .none
+
+    @Published var smbCountPerDay: Double?
+    @Published var meanSMB: Double?
+    @Published var prevSMBCountPerDay: Double?
+    @Published var prevMeanSMB: Double?
+    @Published var smbCountPerDayTrend: StatsTrendArrow = .none
+    @Published var meanSMBTrend: StatsTrendArrow = .none
+
     @Published var netMealBolus: Double?
     @Published var netMealBolusTrend: StatsTrendArrow = .none
 
@@ -173,6 +184,9 @@ class SimpleStatsViewModel: ObservableObject {
 
         let previousInterval = dataService.previousStatsInterval()
         
+        calculatePumpCommandStatistics(in: currentInterval)
+        calculateSMBStatistics(in: currentInterval)
+
         let bgData = dataService.getBGData(in: currentInterval)
         guard !bgData.isEmpty else { return }
 
@@ -606,6 +620,51 @@ class SimpleStatsViewModel: ObservableObject {
         }
     }
 
+    private func calculatePumpCommandStatistics(in interval: DateInterval) {
+        let calendar = Calendar.current
+        let days = dataService.isTodayOnly ? 1 : max(calendar.dateComponents([.day], from: interval.start, to: interval.end).day ?? 1, 1)
+        pumpCommandsPerDay = dataService.getPumpCommandCount(in: interval).map { Double($0) / Double(days) }
+        prevPumpCommandsPerDay = nil
+        pumpCommandsPerDayTrend = .none
+
+        guard let previousStart = calendar.date(byAdding: .day, value: -days, to: interval.start) else { return }
+        let previousEnd = dataService.isTodayOnly
+            ? previousStart.addingTimeInterval(interval.duration)
+            : interval.start
+        let previousInterval = DateInterval(start: previousStart, end: previousEnd)
+        prevPumpCommandsPerDay = dataService.getPumpCommandCount(in: previousInterval).map { Double($0) / Double(days) }
+        pumpCommandsPerDayTrend = StatsTrendCalculator.arrow(current: pumpCommandsPerDay, previous: prevPumpCommandsPerDay)
+    }
+
+    private func calculateSMBStatistics(in interval: DateInterval) {
+        let calendar = Calendar.current
+        let days = dataService.isTodayOnly ? 1 : max(calendar.dateComponents([.day], from: interval.start, to: interval.end).day ?? 1, 1)
+        func statistics(in window: DateInterval) -> SMBStatistics {
+            let entries = dataService.getSMBData(in: window)
+                .filter { $0.date < window.end.timeIntervalSince1970 }
+            return SMBStatistics(doses: entries.map { $0.value }, days: days)
+        }
+
+        let current = statistics(in: interval)
+        smbCountPerDay = current.countPerDay
+        meanSMB = current.meanDose
+        prevSMBCountPerDay = nil
+        prevMeanSMB = nil
+        smbCountPerDayTrend = .none
+        meanSMBTrend = .none
+
+        // Compare whole calendar days, including across daylight-saving changes.
+        guard let previousStart = calendar.date(byAdding: .day, value: -days, to: interval.start) else { return }
+        let previousEnd = dataService.isTodayOnly
+            ? previousStart.addingTimeInterval(interval.duration)
+            : interval.start
+        let previous = statistics(in: DateInterval(start: previousStart, end: previousEnd))
+        prevSMBCountPerDay = previous.countPerDay
+        prevMeanSMB = previous.meanDose
+        smbCountPerDayTrend = StatsTrendCalculator.arrow(current: smbCountPerDay, previous: prevSMBCountPerDay)
+        meanSMBTrend = StatsTrendCalculator.arrow(current: meanSMB, previous: prevMeanSMB)
+    }
+
     private func calculateTotalBasal(basalData: [MainViewController.basalGraphStruct]) -> Double {
         guard !basalData.isEmpty else { return 0.0 }
 
@@ -834,5 +893,34 @@ class SimpleStatsViewModel: ObservableObject {
             current = next
         }
         return max(total, 0)
+    }
+}
+
+/// Mean dose is per delivered SMB, while the count is averaged over all selected days.
+struct SMBStatistics {
+    let countPerDay: Double
+    let meanDose: Double?
+
+    init(doses: [Double], days: Int) {
+        let delivered = doses.filter { $0.isFinite && $0 > 0 }
+        countPerDay = Double(delivered.count) / Double(max(days, 1))
+        meanDose = delivered.isEmpty ? nil : delivered.reduce(0, +) / Double(delivered.count)
+    }
+}
+
+/// Nightscout may label pump boluses as Bolus, Meal Bolus or Correction Bolus.
+/// Automatic boluses count once regardless of which of those labels is used.
+struct PumpCommandStatistics {
+    static func isCommand(eventType: String, insulin: Double?) -> Bool {
+        switch eventType {
+        case "Temp Basal":
+            // Setting zero basal or cancelling a temp basal is also a pump command.
+            return true
+        case "Bolus", "Meal Bolus", "Correction Bolus", "SMB":
+            guard let insulin else { return false }
+            return insulin.isFinite && insulin > 0
+        default:
+            return false
+        }
     }
 }

@@ -123,6 +123,9 @@ class StatsDataFetcher {
             switch result {
             case let .success(data):
                 if let entries = data as? [[String: AnyObject]], entries.count < estimatedCount {
+                    // Preserve original treatment events for command counts; basal graph
+                    // points also contain synthetic ends and cannot be used for this.
+                    NightscoutCache.refreshTreatmentsWindow(from: startDate, to: endDate, entries: entries)
                     DispatchQueue.main.async {
                         self.fetchAndMergeBolusData(entries: entries, days: days, mainVC: mainVC)
                         self.fetchAndMergeSMBData(entries: entries, days: days, mainVC: mainVC)

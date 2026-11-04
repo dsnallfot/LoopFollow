@@ -811,6 +811,27 @@ class StatsDataService {
         return mainVC.statsBolusData.filter { $0.date >= start && $0.date <= end }
     }
 
+    /// Count original treatments, never the synthetic points used to draw basal delivery.
+    /// Missing day files produce no value rather than an understated count.
+    func getPumpCommandCount(in interval: DateInterval) -> Int? {
+        let calendar = Calendar.current
+        var day = calendar.startOfDay(for: interval.start)
+        var seenIDs = Set<String>()
+        var count = 0
+        while day < interval.end {
+            guard let treatments = try? NightscoutCache.readTreatmentsForSearch(day) else { return nil }
+            for treatment in treatments where treatment.created_at >= interval.start && treatment.created_at < interval.end {
+                if PumpCommandStatistics.isCommand(eventType: treatment.eventType, insulin: treatment.insulin),
+                   seenIDs.insert(treatment._id).inserted {
+                    count += 1
+                }
+            }
+            guard let nextDay = calendar.date(byAdding: .day, value: 1, to: day) else { return nil }
+            day = nextDay
+        }
+        return count
+    }
+
     func getSMBData(in interval: DateInterval) -> [MainViewController.bolusGraphStruct] {
         guard let mainVC = mainViewController else { return [] }
         let start = interval.start.timeIntervalSince1970
