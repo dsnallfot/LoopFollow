@@ -79,7 +79,7 @@ struct SiteHistoryView: View {
                 Spacer()
                 if isLoading { ProgressView().accessibilityLabel("Läser siteloggar") }
             }
-            SiteComparisonChart(bars: countBars, unit: "Antal", decimals: 0, isLoading: isLoading, selectedSite: selectedSite)
+            SiteComparisonChart(bars: countBars, unit: "Antal", decimals: 0, isLoading: isLoading, selectedSite: $selectedSite)
             VStack(spacing: 0) {
                 if filter == .all {
                     countRow("Alla siteloggar", count: summary.entries.count)
@@ -93,7 +93,7 @@ struct SiteHistoryView: View {
                     countRow("Sensorsiteloggar", count: summary.sensorCount)
                     Divider()
                 }
-                countRow(selectedSite?.rawValue ?? "Välj en site i figuren",
+                countRow(selectedSite?.rawValue ?? "Välj en site i figuren eller grafen",
                          count: selectedSite.map { summary.count(at: $0) })
             }
             .background(Color(.systemGray).opacity(0.15), in: RoundedRectangle(cornerRadius: 14))
@@ -162,7 +162,7 @@ struct SiteHistoryView: View {
         return VStack(alignment: .leading, spacing: 10) {
             Text("Sessioner").font(.headline)
             SiteComparisonChart(bars: comparisonBars { duration(at: $0) },
-                unit: pump ? "Timmar" : "Dagar", decimals: pump ? 0 : 1, isLoading: isLoading, selectedSite: selectedSite)
+                unit: pump ? "Timmar" : "Dagar", decimals: pump ? 0 : 1, isLoading: isLoading, selectedSite: $selectedSite)
             VStack(spacing: 0) {
                 metricRow("Medel sessionslängd (Alla)", value: duration(at: nil), unit: pump ? "h" : "dagar", decimals: pump ? 0 : 1)
                 Divider()
@@ -182,7 +182,7 @@ struct SiteHistoryView: View {
         return VStack(alignment: .leading, spacing: 10) {
             Text(pump ? "TDD" : "Sensorfel").font(.headline)
             SiteComparisonChart(bars: comparisonBars { SiteSessionAnalytics.dailyAverage(dailyMetrics(at: $0)) },
-                unit: pump ? "E/dygn" : "Min/dag", decimals: pump ? 1 : 0, isLoading: isLoading, selectedSite: selectedSite)
+                unit: pump ? "E/dygn" : "Min/dag", decimals: pump ? 1 : 0, isLoading: isLoading, selectedSite: $selectedSite)
             VStack(spacing: 0) {
                 metricRow(pump ? "TDD (Alla)" : "Medel sensorfel/dag (Alla)",
                     value: SiteSessionAnalytics.dailyAverage(allMetrics), unit: pump ? "E" : "min", decimals: pump ? 1 : 0)
@@ -206,7 +206,7 @@ struct SiteHistoryView: View {
         return VStack(alignment: .leading, spacing: 10) {
             Text("Compression lows").font(.headline)
             SiteComparisonChart(bars: comparisonBars { sessionStatistics?.compressionLowsPerDay(site: $0) },
-                unit: "Antal/dygn", decimals: 2, isLoading: isLoading, selectedSite: selectedSite)
+                unit: "Antal/dygn", decimals: 2, isLoading: isLoading, selectedSite: $selectedSite)
             VStack(spacing: 0) {
                 metricRow("Comp. low (Alla)", value: allCounts.isEmpty ? nil : Double(allCounts.reduce(0, +)), unit: "st", decimals: 0)
                 Divider()
@@ -267,8 +267,14 @@ private struct SiteComparisonChart: View {
     let unit: String
     let decimals: Int
     let isLoading: Bool
-    let selectedSite: HealthLogSite?
+    @Binding var selectedSite: HealthLogSite?
     private let plotHeight: CGFloat = 200
+
+    private func select(_ bar: SiteComparisonBar) {
+        withAnimation(.easeInOut(duration: 0.18)) {
+            selectedSite = selectedSite == bar.site ? nil : bar.site
+        }
+    }
 
     private var tickStep: Double {
         let raw = max(bars.map(\.value).max() ?? 0, 1) / 4
@@ -315,38 +321,47 @@ private struct SiteComparisonChart: View {
                                     }
                                     HStack(alignment: .bottom, spacing: 0) {
                                         ForEach(Array(bars.enumerated()), id: \.element.id) { index, bar in
-                                            RoundedRectangle(cornerRadius: 4)
-                                                .fill(Color(hue: 0.76, saturation: 0.72 - Double(index) * 0.045,
-                                                            brightness: 0.65 + Double(index) * 0.04))
-                                                .opacity(selectedSite == nil || bar.site == selectedSite ? 1 : 0.4)
-                                                .frame(width: 30, height: max(2, CGFloat(bar.value / (tickStep * 4)) * plotHeight))
-                                                .overlay {
-                                                    RoundedRectangle(cornerRadius: 4)
-                                                        .stroke(selectedSite != nil && bar.site == selectedSite ? Color.accentColor : .clear, lineWidth: 3)
-                                                }
-                                                .overlay(alignment: .top) {
-                                                    Text(String(format: "%.*f", decimals, bar.value))
-                                                        .font(.caption2).monospacedDigit().fixedSize()
-                                                        .offset(y: -18)
-                                                }
-                                                .frame(maxWidth: .infinity, alignment: .bottom)
-                                                .accessibilityElement(children: .ignore)
-                                                .accessibilityLabel(bar.label)
-                                                .accessibilityAddTraits(selectedSite != nil && bar.site == selectedSite ? .isSelected : [])
-                                                .accessibilityValue(String(format: "%.*f %@", decimals, bar.value, unit))
+                                            Button { select(bar) } label: {
+                                                RoundedRectangle(cornerRadius: 4)
+                                                    .fill(Color(hue: 0.76, saturation: 0.72 - Double(index) * 0.045,
+                                                                brightness: 0.65 + Double(index) * 0.04))
+                                                    .opacity(selectedSite == nil || bar.site == selectedSite ? 1 : 0.4)
+                                                    .frame(width: 30, height: max(2, CGFloat(bar.value / (tickStep * 4)) * plotHeight))
+                                                    .overlay {
+                                                        RoundedRectangle(cornerRadius: 4)
+                                                            .stroke(selectedSite != nil && bar.site == selectedSite ? Color.accentColor : .clear, lineWidth: 3)
+                                                    }
+                                                    .overlay(alignment: .top) {
+                                                        Text(String(format: "%.*f", decimals, bar.value))
+                                                            .font(.caption2).monospacedDigit().fixedSize()
+                                                            .offset(y: -18)
+                                                    }
+                                                    .frame(maxWidth: .infinity, minHeight: plotHeight, alignment: .bottom)
+                                                    .contentShape(Rectangle())
+                                            }
+                                            .buttonStyle(.plain)
+                                            .accessibilityLabel(bar.label)
+                                            .accessibilityAddTraits(selectedSite != nil && bar.site == selectedSite ? .isSelected : [])
+                                            .accessibilityValue(String(format: "%.*f %@", decimals, bar.value, unit))
+                                            .accessibilityHint(bar.site == nil ? "Visa alla siter" : "Tryck för att välja eller avmarkera denna site")
                                         }
                                     }
                                 }
                                 .frame(height: plotHeight)
                                 HStack(alignment: .top, spacing: 0) {
                                     ForEach(bars) { bar in
-                                        Text(bar.shortLabel).font(.caption2)
-                                            .fontWeight(selectedSite != nil && bar.site == selectedSite ? .bold : .regular)
-                                            .foregroundStyle(selectedSite != nil && bar.site == selectedSite ? Color.accentColor : .primary)
-                                            .multilineTextAlignment(.center)
-                                            .fixedSize(horizontal: false, vertical: true)
-                                            .frame(maxWidth: .infinity)
-                                            .accessibilityHidden(true)
+                                        Button { select(bar) } label: {
+                                            Text(bar.shortLabel).font(.caption2)
+                                                .fontWeight(selectedSite != nil && bar.site == selectedSite ? .bold : .regular)
+                                                .foregroundStyle(selectedSite != nil && bar.site == selectedSite ? Color.accentColor : .primary)
+                                                .multilineTextAlignment(.center)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                                .frame(maxWidth: .infinity)
+                                                .frame(minHeight: 44, alignment: .top)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .buttonStyle(.plain)
+                                        .accessibilityHidden(true)
                                     }
                                 }
                                 .padding(.top, 8)
