@@ -27,6 +27,7 @@ let CBCentralManagerOptionRestoreIdentifierKey = "restore"
 let CBCentralManagerRestoredStatePeripheralsKey = "peripherals"
 let CBCentralManagerRestoredStateScanServicesKey = "services"
 let CBAdvertisementDataServiceUUIDsKey = "advertisement"
+let CBConnectPeripheralOptionStartDelayKey = "startDelay"
 class CBCharacteristic {
     let uuid: CBUUID
     var isNotifying = false
@@ -61,11 +62,12 @@ class CBCentralManager {
     let options: [String: Any]?
     var retrieved: [CBPeripheral] = []
     var connects = 0, cancels = 0
+    var lastConnectOptions: [String: Any]?
     init(delegate: CBCentralManagerDelegate, queue: DispatchQueue?, options: [String: Any]?) {
         self.delegate = delegate; self.options = options; Self.created.append(self)
     }
     func retrievePeripherals(withIdentifiers: [UUID]) -> [CBPeripheral] { retrieved }
-    func connect(_ peripheral: CBPeripheral, options: [String: Any]?) { connects += 1; peripheral.state = .connecting }
+    func connect(_ peripheral: CBPeripheral, options: [String: Any]?) { connects += 1; lastConnectOptions = options; peripheral.state = .connecting }
     func cancelPeripheralConnection(_ peripheral: CBPeripheral) { cancels += 1; peripheral.state = .disconnecting }
     func scanForPeripherals(withServices: [CBUUID]?, options: [String: Any]?) { isScanning = true }
     func stopScan() { isScanning = false }
@@ -134,6 +136,7 @@ class Delegate: BluetoothDeviceDelegate {
         pending.state = .disconnected
         device.centralManager(central, didDisconnectPeripheral: pending, error: nil)
         precondition(central.connects == 1 && UIApplication.shared.live.isEmpty)
+        precondition((central.lastConnectOptions?[CBConnectPeripheralOptionStartDelayKey] as? NSNumber)?.intValue == 30)
         device.disconnect()
         pending.state = .disconnected
         device.centralManager(central, didDisconnectPeripheral: pending, error: nil)
@@ -149,10 +152,22 @@ class Delegate: BluetoothDeviceDelegate {
         let discovered = CBPeripheral(id)
         device.centralManager(central, didDiscover: discovered, advertisementData: [:], rssi: -50)
         precondition(discovered.state == .connecting && !central.isScanning)
+        precondition(central.lastConnectOptions == nil) // Initial acquisition remains immediate.
         discovered.state = .connected
         device.centralManager(central, didConnect: discovered)
         precondition(discovered.serviceDiscoveries == 1) // Missing cached services.
         device.disconnect()
+        // RileyLink reconnects immediately, without Dexcom's start delay.
+        let riley = RileyLinkHeartbeatBluetoothDevice(address: UUID().uuidString, name: "RileyLink", bluetoothDeviceDelegate: delegate)
+        let rileyCentral = CBCentralManager.created.last!
+        let rileyPeripheral = CBPeripheral(UUID(uuidString: riley.deviceAddress)!)
+        rileyCentral.retrieved = [rileyPeripheral]
+        rileyCentral.state = .poweredOn
+        riley.connect()
+        rileyPeripheral.state = .disconnected
+        riley.centralManager(rileyCentral, didDisconnectPeripheral: rileyPeripheral, error: nil)
+        precondition(rileyCentral.connects == 2 && rileyCentral.lastConnectOptions == nil)
+        riley.disconnect()
         // Actual BLEManager init + poweredOn + repeated selection must retain one owner.
         let selected = BLEDevice(id: UUID(), name: "Dexcom", rssi: -50)
         Storage.shared.selectedBLEDevice.value = selected

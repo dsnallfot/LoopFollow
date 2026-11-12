@@ -303,8 +303,12 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
 
         let peripheralName = peripheral.name ?? "Unknown"
         let errorMessage = error?.localizedDescription ?? "No error details provided"
+        let errorDetails = error.map { error in
+            let nsError = error as NSError
+            return " (domain=\(nsError.domain), code=\(nsError.code))"
+        } ?? ""
 
-        LogManager.shared.log(category: .bluetooth, message: "Failed to connect to peripheral '\(peripheralName)' (UUID: \(peripheral.identifier.uuidString)). Error: \(errorMessage). Retrying...")
+        LogManager.shared.log(category: .bluetooth, message: "Failed to connect to peripheral '\(peripheralName)' (UUID: \(peripheral.identifier.uuidString)). Error: \(errorMessage)\(errorDetails). Retrying...")
 
         endBackgroundTask()
         if shouldMaintainConnection, central.state == .poweredOn {
@@ -347,7 +351,14 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
         }
 
         if shouldMaintainConnection, central.state == .poweredOn, let ownPeripheral = self.peripheral {
-            centralManager?.connect(ownPeripheral, options: nil)
+            let delay = reconnectDelayAfterDisconnect()
+            var options: [String: Any]?
+            if delay > 0 {
+                // Register now so CoreBluetooth owns the delay even if the app is suspended.
+                options = [CBConnectPeripheralOptionStartDelayKey: NSNumber(value: delay)]
+                LogManager.shared.log(category: .bluetooth, message: "[BLE] Reconnecting with a \(delay)s start delay")
+            }
+            central.connect(ownPeripheral, options: options)
         }
     }
 
@@ -470,6 +481,12 @@ class BluetoothDevice: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate 
                 return "nfcScanNeeded"
             }
         }
+    }
+
+    /// Whole seconds, matching G7SensorKit's integer NSNumber connection option.
+    /// Applied only after disconnect; initial connections and failed attempts remain immediate.
+    func reconnectDelayAfterDisconnect() -> Int {
+        return 0
     }
 
     func expectedHeartbeatInterval() -> TimeInterval? {

@@ -35,6 +35,11 @@ class DexcomHeartbeatBluetoothDevice: BluetoothDevice {
         super.centralManager(central, didDisconnectPeripheral: peripheral, error: error)
     }
 
+    override func reconnectDelayAfterDisconnect() -> Int {
+        // Let the current advertising window end before waiting for the next cycle.
+        return 30
+    }
+
     override func expectedHeartbeatInterval() -> TimeInterval? {
         return 5 * 60 // 5 minutes in seconds
     }
