@@ -25,7 +25,7 @@ extension ProfileSchedulesViewModel {
 
             for t in treatments {
                 guard t.eventType == "Note", let note = t.notes else { continue }
-                guard note.contains("Justerad") || note.contains("ändrades") else { continue }
+                guard note.contains("Justerad") || note.contains("ändrades") || note.contains("Sparad profil") else { continue }
 
                 let n = normalize(note) // tar bort _ - och mellanslag osv
 

@@ -245,7 +245,7 @@ final class TrioSettingsLogView: ThemedViewController, UITableViewDataSource, UI
 
                 guard
                     let note = t.notes,
-                    note.contains("Justerad") || note.contains("ändrades")
+                    note.contains("Justerad") || note.contains("ändrades") || note.contains("Sparad profil")
                 else {
                     return nil
                 }

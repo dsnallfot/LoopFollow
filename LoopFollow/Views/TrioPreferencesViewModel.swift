@@ -178,7 +178,7 @@ class TrioPreferencesViewModel: ObservableObject {
 
             let noteTreatments = treatments.filter { t in
                 guard t.eventType == "Note", let note = t.notes else { return false }
-                return note.contains("Justerad") || note.contains("ändrades")
+                return note.contains("Justerad") || note.contains("ändrades") || note.contains("Sparad profil")
             }
 
             var latest: [String: Date] = [:]
